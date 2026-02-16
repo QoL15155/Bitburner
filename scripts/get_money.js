@@ -1,8 +1,8 @@
 /** @param {NS} ns */
 export async function main(ns) {
-  const args = ns.flags([['help', false]]);
+  const args = ns.flags([['help', false], ['h', false]]);
   const target = args._[0];
-  if (args.help || !target) {
+  if (args.help || args.h || !target) {
     ns.tprint("This script will attack server for money.");
     ns.tprint(`USAGE: run ${ns.getScriptName()} SERVER_NAME`);
     ns.tprint("Example:");

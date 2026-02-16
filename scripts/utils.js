@@ -1,10 +1,11 @@
-/* Recursively scans all hosts in the network 
-  @return list of servers in the network
-*/
-export function list_servers(ns) {
-  
-  /* Scans for children of the current host */
-  function scan_host(server_name, parent_name) {
+/** Returns a list of child hosts for a given server, 
+ * excluding the parent server
+ * @param {NS} ns
+ * @param {string} server_name
+ * @param {string} parent_name
+ * @return {array} list of child hosts
+ */
+export function scan_host(ns, server_name, parent_name) {
     const fname = "scan_host";
     let children = ns.scan(server_name);
     
@@ -14,24 +15,31 @@ export function list_servers(ns) {
       if (idx != -1) {
         children.splice(idx, 1);
       } else {
-        ns.printf("[%s] %s: Didn't find parent - %s", fname, server_name, parent_name);
-        ns.tprint("[%s] %s: Didn't find parent - %s", fname, server_name, parent_name);
+        ns.alert(`[${fname}] ${server_name}: Didn't find parent ${parent_name}`);
       }
     }
 
     if (children.length > 0) {
-      ns.printf("[%s] Server: %s. Hosts: %s", fname, server_name, children);
+      ns.printf(`[${fname}] Server: ${server_name}. Hosts: ${children}`);
     }
 
     return children;
   }
 
+/** Recursively scans all hosts in the network 
+ * 
+ * @param {NS} ns 
+ * @return list of servers in the network
+ */
+export function list_servers(ns) {
+  
+  /* Scans for children of the current host */
   function scan_hosts_rec(server_name, parent) {
     var known_hosts = []
     if (server_name != "home")
       known_hosts = known_hosts.concat(server_name);
 
-    var children = scan_host(server_name, parent);
+    var children = scan_host(ns, server_name, parent);
     let len_children = children.length;
     if (len_children > 0) {
       for (let i = 0; i < len_children; i++) {
@@ -51,6 +59,12 @@ export function list_servers(ns) {
   return server_list;
 }
 
+ /** Checks if server can be hacked 
+  * based on current hacking level and programs available
+  * @param {NS} ns 
+  * @param {string} server_name
+  * @return {boolean} true if server can be hacked, false otherwise
+  **/
 export function can_hack_server(ns, server_name) {
 
   /* Calculates number of ports that can be hacked 
@@ -86,9 +100,15 @@ export function can_hack_server(ns, server_name) {
   return true;
 }
 
+/** Hacks a server if possible
+ * @param {NS} ns
+ * @param {string} server_name
+ * @param {boolean} validate
+ * @return {boolean} true if server was compromised, false otherwise
+ */
 export function hack_server(ns, server_name, validate=true) {
   if (validate && !can_hack_server(ns, server_name)) {
-    return;
+    return false;
   }
 
   if (ns.fileExists("BruteSSH.exe", "home"))
@@ -101,13 +121,32 @@ export function hack_server(ns, server_name, validate=true) {
   return ns.nuke(server_name);
 }
 
+/** Run a command on terminal
+ * 
+ * @param {string} command
+ */
+export async function run_terminal_command(ns, command) {
+  // Work around the RAM cost of document
+  const doc = eval('document');
+  // Acquire a reference to the terminal text field
+  const terminalInput = doc.getElementById("terminal-input");
+  // Get a reference to the React event handler.
+  const handler = Object.keys(terminalInput)[1];
+  //Create an enter press
+  const enterPress = new KeyboardEvent('keydown',
+    {
+      bubbles: true,
+      cancelable: true,
+      keyCode: 13
+    });
 
-/** @param {NS} ns */
-export async function main(ns) {
+    // Run the command
+    terminalInput.value = command;
+    terminalInput[handler].onChange({ target: terminalInput });
+    terminalInput.dispatchEvent(enterPress);
 
-  var result = list_servers(ns);
-  ns.print(result);
-  // Scanned Hosts: 70
-  // Scanned hosts: 95 (anaylze 5)
-  ns.printf("Scanned hosts: %d", result.length);
+    // Sleep in case the command we ran is async.
+    while (terminalInput.disabled) {
+      await ns.sleep(1000);
+    }
 }
