@@ -18,12 +18,10 @@ export function find_contracts_servers(ns)
   )
 }
 
-
-
 /** @param {NS} ns */
 export async function main(ns) {
-  const args = ns.flags([["help", false]]);
-  if (args.help) {
+  const args = ns.flags([["help", false], ["h", false]]);
+  if (args.help || args.h) {
     ns.tprint("This script helps you find an unsolved coding contract.");
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
     ns.tprint("Example:");
@@ -33,8 +31,5 @@ export async function main(ns) {
 
   find_contracts_servers(ns);
   // ns.share();
-
   // var contract =  getContract("contract-253383.cct", "aevum-police");
-
-
 }
