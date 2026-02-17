@@ -8,6 +8,7 @@ import { connect_to_server } from "./connect.js"
  * @return {boolean} true if backdoored successfully, false otherwise
  */
 async function get_backdoor(ns, server_name) {
+
   var result = hack_server(ns, server_name);
   if (!result) {
     ns.tprint(`Failed to hack ${server_name}`);
@@ -27,7 +28,7 @@ async function get_backdoor(ns, server_name) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  const servers_to_backdoor = ["CSEC", "avmnite-02h", "I.I.I.I"];
+  const servers_to_backdoor = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z"];
 
   const args = ns.flags([['help', false]]);
   if (args.help || args.h) {
@@ -37,7 +38,7 @@ export async function main(ns) {
     ns.tprint("===============");
     ns.tprint("");
     ns.tprint("The script will backdoor TARGET_SERVER if specified.");
-    ns.tprint( " If TARGET_SERVER is not specified, it will backdoor the following servers:");
+    ns.tprint("If TARGET_SERVER is not specified, it will backdoor the following servers:");
     for (const server of servers_to_backdoor) {
       ns.tprint(`- ${server}`);
     }

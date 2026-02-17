@@ -1,8 +1,7 @@
-import { list_servers } from "./utils.js"
+import { can_hack_server, list_servers } from "./utils.js"
 
 /* returns the server with most money */
-export function get_money_server_2(ns, server_list) 
-{
+export function get_money_server_2(ns, server_list) {
   var g_max_money = 0;
   var g_best_server = "";
 
@@ -17,7 +16,8 @@ export function get_money_server_2(ns, server_list)
 
     ns.printf("[%s] Level: %d, Max Money: %d", server_name, required_level, max_money);
 
-    if (max_money > g_max_money && required_level <= g_hacking_level) {
+    if (max_money > g_max_money && (required_level <= g_hacking_level)
+      && can_hack_server(ns, server_name)) {
       g_max_money = max_money;
       g_best_server = server_name;
     }
@@ -34,8 +34,7 @@ export function get_money_server_2(ns, server_list)
   return g_best_server;
 }
 
-export function get_money_server(ns)
-{
+export function get_money_server(ns) {
   var host_list = list_servers(ns);
   return get_money_server_2(ns, host_list);
 }
@@ -43,11 +42,11 @@ export function get_money_server(ns)
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([["help", false]]);
-    if (args.help) {
-        ns.tprint("Find the best server to hack money from");
-        ns.tprint(`Usage:`);
-        ns.tprint(`> run ${ns.getScriptName()}`);
-        return;
-    }
+  if (args.help) {
+    ns.tprint("Find the best server to hack money from");
+    ns.tprint(`Usage:`);
+    ns.tprint(`> run ${ns.getScriptName()}`);
+    return;
+  }
   get_money_server(ns);
 }

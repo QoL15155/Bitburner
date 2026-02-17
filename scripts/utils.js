@@ -6,25 +6,25 @@
  * @return {array} list of child hosts
  */
 export function scan_host(ns, server_name, parent_name) {
-    const fname = "scan_host";
-    let children = ns.scan(server_name);
-    
-      // remove parent from list
-    if (parent_name != "") {
-      let idx = children.indexOf(parent_name);
-      if (idx != -1) {
-        children.splice(idx, 1);
-      } else {
-        ns.alert(`[${fname}] ${server_name}: Didn't find parent ${parent_name}`);
-      }
-    }
+  const fname = "scan_host";
+  let children = ns.scan(server_name);
 
-    if (children.length > 0) {
-      ns.printf(`[${fname}] Server: ${server_name}. Hosts: ${children}`);
+  // remove parent from list
+  if (parent_name != "") {
+    let idx = children.indexOf(parent_name);
+    if (idx != -1) {
+      children.splice(idx, 1);
+    } else {
+      ns.alert(`[${fname}] ${server_name}: Didn't find parent ${parent_name}`);
     }
-
-    return children;
   }
+
+  if (children.length > 0) {
+    ns.printf(`[${fname}] Server: ${server_name}. Hosts: ${children}`);
+  }
+
+  return children;
+}
 
 /** Recursively scans all hosts in the network 
  * 
@@ -32,7 +32,7 @@ export function scan_host(ns, server_name, parent_name) {
  * @return list of servers in the network
  */
 export function list_servers(ns) {
-  
+
   /* Scans for children of the current host */
   function scan_hosts_rec(server_name, parent) {
     var known_hosts = []
@@ -59,12 +59,12 @@ export function list_servers(ns) {
   return server_list;
 }
 
- /** Checks if server can be hacked 
-  * based on current hacking level and programs available
-  * @param {NS} ns 
-  * @param {string} server_name
-  * @return {boolean} true if server can be hacked, false otherwise
-  **/
+/** Checks if server can be hacked 
+ * based on current hacking level and programs available
+ * @param {NS} ns 
+ * @param {string} server_name
+ * @return {boolean} true if server can be hacked, false otherwise
+ **/
 export function can_hack_server(ns, server_name) {
 
   /* Calculates number of ports that can be hacked 
@@ -80,7 +80,10 @@ export function can_hack_server(ns, server_name) {
     if (!ns.fileExists("relaySMTP.exe", "home"))
       return 2;
 
-    return 3;
+    if (!ns.fileExists("HTTPWorm.exe", "home"))
+      return 3;
+
+    return 4;
   }
 
   // Required Hacking skill
@@ -106,7 +109,7 @@ export function can_hack_server(ns, server_name) {
  * @param {boolean} validate
  * @return {boolean} true if server was compromised, false otherwise
  */
-export function hack_server(ns, server_name, validate=true) {
+export function hack_server(ns, server_name, validate = true) {
   if (validate && !can_hack_server(ns, server_name)) {
     return false;
   }
@@ -117,6 +120,8 @@ export function hack_server(ns, server_name, validate=true) {
     ns.ftpcrack(server_name);
   if (ns.fileExists("relaySMTP.exe", "home"))
     ns.relaysmtp(server_name);
+  if (ns.fileExists("HTTPWorm.exe", "home"))
+    ns.httpworm(server_name);
 
   return ns.nuke(server_name);
 }
@@ -140,13 +145,13 @@ export async function run_terminal_command(ns, command) {
       keyCode: 13
     });
 
-    // Run the command
-    terminalInput.value = command;
-    terminalInput[handler].onChange({ target: terminalInput });
-    terminalInput.dispatchEvent(enterPress);
+  // Run the command
+  terminalInput.value = command;
+  terminalInput[handler].onChange({ target: terminalInput });
+  terminalInput.dispatchEvent(enterPress);
 
-    // Sleep in case the command we ran is async.
-    while (terminalInput.disabled) {
-      await ns.sleep(1000);
-    }
+  // Sleep in case the command we ran is async.
+  while (terminalInput.disabled) {
+    await ns.sleep(1000);
+  }
 }
