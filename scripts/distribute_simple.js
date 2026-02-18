@@ -101,11 +101,11 @@ export async function main(ns) {
     const ramUsed = ns.getServerUsedRam(serverName);
     const ramDiff = ramMax - ramUsed;
     if (ramDiff < progData.scriptMemory) {
-      ns.printf(`[${fname}]Memory is full.Max Ram: ${ramMax}, Used RAM: ${ramUsed}`);
+      ns.printf(`[${fname}] Memory is full.Max Ram: ${ramMax}, Used RAM: ${ramUsed}`);
       return 0;
     }
     const threads = Math.floor(ramDiff / progData.scriptMemory);
-    ns.printf(`[${fname}]Max Ram: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
+    ns.printf(`[${fname}] Max Ram: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
     return threads;
   }
 
@@ -129,9 +129,9 @@ export async function main(ns) {
     ns.scp(scriptName, serverName);
     const ppid = ns.exec(scriptName, serverName, threads, targetServer.name, targetServer.maxMoney, targetServer.minSecurity);
     if (ppid) {
-      ns.printf(`[${fname}]PID: ${ppid}`);
+      ns.printf(`[${fname}] PID: ${ppid}`);
     } else {
-      ns.tprint(`[${fname}]Failed to execute script on ${serverName}.`);
+      ns.tprint(`[${fname}] Failed to execute script on ${serverName}.`);
       return false;
     }
     return ppid != 0;
@@ -151,7 +151,7 @@ export async function main(ns) {
     }
 
     if (distributeScript(serverName)) {
-      ns.tprint(`[${fname}]Successfully distributed script to ${serverName}`);
+      ns.tprint(`[${fname}] Successfully distributed script to ${serverName}`);
       distributedHosts++;
     }
   }

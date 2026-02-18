@@ -83,7 +83,10 @@ export function can_hack_server(ns, server_name) {
     if (!ns.fileExists("HTTPWorm.exe", "home"))
       return 3;
 
-    return 4;
+    if (!ns.fileExists("SQLInject.exe", "home"))
+      return 4;
+
+    return 5;
   }
 
   // Required Hacking skill
@@ -122,6 +125,8 @@ export function hack_server(ns, server_name, validate = true) {
     ns.relaysmtp(server_name);
   if (ns.fileExists("HTTPWorm.exe", "home"))
     ns.httpworm(server_name);
+  if (ns.fileExists("SQLInject.exe", "home"))
+    ns.sqlinject(server_name);
 
   return ns.nuke(server_name);
 }
