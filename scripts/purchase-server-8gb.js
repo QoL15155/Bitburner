@@ -22,6 +22,7 @@ export async function main(ns) {
   if (!targetServer) {
     targetServer = "n00dles";
   }
+  ns.tprint(`Target server: ${targetServer}`);
 
   ns.disableLog("sleep");
 
@@ -44,26 +45,31 @@ export async function main(ns) {
   // Iterator we'll use for our loop
   let i = purchasedServers.length;
 
-  // Continuously try to purchase servers until we've reached the maximum
-  // amount of servers
+  // Continuously try to purchase servers until we've reached the maximum amount of servers
   while (i < ns.getPurchasedServerLimit()) {
     // Check if we have enough money to purchase a server
     if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(RAM)) {
-      ns.printf("Purchasing server #%d", i);
-
-      // If we have enough money, then:
-      //  1. Purchase the server
-      //  2. Copy our hacking script onto the newly-purchased server
-      //  3. Run our hacking script on the newly-purchased server with threads
-      //  4. Increment our iterator to indicate that we've bought a new server
-      let hostname = ns.purchaseServer("pserv-" + i, RAM);
-      ns.scp(scriptName, hostname);
-      ns.exec(scriptName, hostname, threads, targetServer);
+      purchase_server(i);
       ++i;
+    } else {
+      // Make the script wait for a second before looping again.
+      // Removing this line will cause an infinite loop and crash the game.
+      await ns.sleep(waitTime);
     }
+  }
 
-    //Make the script wait for a second before looping again.
-    //Removing this line will cause an infinite loop and crash the game.
-    await ns.sleep(waitTime);
+  ns.tprint(`[+] Purchased ${i} servers with ${RAM} GB of RAM each.`);
+
+  function purchase_server(i) {
+    ns.printf("Purchasing server #%d", i);
+
+    // If we have enough money, then:
+    //  1. Purchase the server
+    //  2. Copy our hacking script onto the newly-purchased server
+    //  3. Run our hacking script on the newly-purchased server with threads
+    //  4. Increment our iterator to indicate that we've bought a new server
+    let hostname = ns.purchaseServer("pserv-" + i, RAM);
+    ns.scp(scriptName, hostname);
+    ns.exec(scriptName, hostname, threads, targetServer);
   }
 }
