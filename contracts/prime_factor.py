@@ -7,6 +7,9 @@ A prime factor is a factor that is a prime number. What is the largest prime fac
 
 """
 
+import argparse
+from gettext import find
+
 
 def find_largest_prime_factor(n):
     largest_factor = None
@@ -25,10 +28,28 @@ def find_largest_prime_factor(n):
     if n > 2:
         largest_factor = n
 
-    return str(largest_factor)
+    return largest_factor
+
+
+def test():
+    assert find_largest_prime_factor(971392119) == 17041967
+    assert find_largest_prime_factor(56086774) == 1649611
 
 
 if __name__ == "__main__":
-    n = 971392119
-    result = find_largest_prime_factor(n)
-    print(result)
+    parser = argparse.ArgumentParser(
+        description="Find the largest prime factor of a number"
+    )
+    parser.add_argument(
+        "number", type=int, help="The number to find the largest prime factor for"
+    )
+    parser.add_argument("--test", action="store_true", help="Run the test case")
+
+    args = parser.parse_args()
+
+    if args.test:
+        test()
+        print("Test passed!")
+
+    result = find_largest_prime_factor(args.number)
+    print(f"The largest prime factor of {args.number} is: {result}")
