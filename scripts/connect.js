@@ -43,13 +43,7 @@ function find_path(ns, target_server) {
  * @return {boolean} true if connected successfully, false otherwise
 */
 export async function connect_to_server(ns, target_server) {
-  var path = find_path(ns, target_server);
-  if (path.length == 0) {
-    ns.tprint(`Failed to find path to ${target_server}`);
-    return false;
-  }
-
-  var path = find_path(ns, target_server);
+  const path = find_path(ns, target_server);
   if (path.length == 0) {
     ns.tprint(`Failed to find path to ${target_server}`);
     return false;

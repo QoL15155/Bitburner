@@ -23,23 +23,65 @@ export async function main(ns) {
     ns.tprint("\tTARGET_SERVER : specify target server for the script. If not specified, the script will try to find the best target server for money farming.");
     ns.tprint("");
     ns.tprint("Example:");
-    ns.tprint(`> run ${ns.getScriptName()} n00dles`);
+    ns.tprint(`> run ${ns.getScriptName()} n00dles --kill_all`);
     return;
   }
 
-  const killCurrentScript = args.kill_script || args.k;
-  const killAllScripts = args.kill_all;
+  ns.disableLog("getHackingLevel");
+  ns.disableLog("getServerRequiredHackingLevel");
+  ns.disableLog("getServerNumPortsRequired");
+  ns.disableLog("getServerMaxRam");
+  ns.disableLog("getServerUsedRam");
+  ns.disableLog("brutessh");
+  ns.disableLog("ftpcrack");
+  ns.disableLog("nuke");
 
+  const progData = {
+    killCurrentScript: args.kill_script || args.k,
+    killAllScripts: args.kill_all,
+
+    // Script Information
+    scriptName: scriptName,
+    scriptMemory: ns.getScriptRam(scriptName),
+  };
+
+  if (progData.scriptMemory == 0) {
+    ns.tprint(`[${fname}] Failed to read script RAM. ${scriptName}`);
+    return;
+  }
+  ns.printf(`[${fname}] Memory script requires: ${progData.scriptMemory}`);
+
+  const serverList = list_servers(ns);
   const myServers = ns.getPurchasedServers();
+
+  let targetServerName = args._[0];
+  if (!targetServerName) {
+    targetServerName = get_money_server_2(ns, serverList);
+  }
+
+  const targetServer = {
+    name: targetServerName,
+    maxMoney: ns.getServerMaxMoney(targetServerName),
+    minSecurity: ns.getServerMinSecurityLevel(targetServerName)
+  }
+
+  print(`[${fname}] Target: ${targetServerName}(Max Money: $${targetServer.maxMoney}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`);
 
   // Count the number of hacked hosts
   let distributedHosts = 0;
+  serverList.forEach(distributeToServer);
 
-  const scriptMem = ns.getScriptRam(scriptName);
-  if (scriptMem == 0) {
-    ns.tprint(`[${fname}] Failed to read script RAM. ${scriptName}`);
+  // Hacked hosts: 44
+  print(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts`);
+
+  ns.tprint(`[${fname}] Running script at 'home'.`);
+  distributeScript("home");
+
+  /** Prints message both to stdout and log file */
+  function print(msg) {
+    ns.printf(msg);
+    ns.tprint(msg);
   }
-  ns.printf(`[${fname}] Memory script requires: ${scriptMem}`);
 
   function isMyServer(serverName) {
     if (serverName == "home" ||
@@ -53,17 +95,17 @@ export async function main(ns) {
     const ramMax = ns.getServerMaxRam(serverName)
     if (ramMax == 0) {
       // not enough memory
-      ns.printf(`[${fname}] has 0 RAM`);
+      ns.printf(`[${fname}]has 0 RAM`);
       return 0;
     }
     const ramUsed = ns.getServerUsedRam(serverName);
     const ramDiff = ramMax - ramUsed;
-    if (ramDiff < scriptMem) {
-      ns.printf(`[${fname}] Memory is full. Max Ram: ${ramMax}, Used RAM: ${ramUsed}`);
+    if (ramDiff < progData.scriptMemory) {
+      ns.printf(`[${fname}]Memory is full.Max Ram: ${ramMax}, Used RAM: ${ramUsed}`);
       return 0;
     }
-    const threads = Math.floor(ramDiff / scriptMem);
-    ns.printf(`[${fname}] Max Ram: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
+    const threads = Math.floor(ramDiff / progData.scriptMemory);
+    ns.printf(`[${fname}]Max Ram: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
     return threads;
   }
 
@@ -71,9 +113,9 @@ export async function main(ns) {
     const fname = "distributeScript";
 
     // Kill previous runs
-    if (killAllScripts) {
+    if (progData.killAllScripts) {
       ns.killall(serverName);
-    } else if (killCurrentScript) {
+    } else if (progData.killCurrentScript) {
       ns.scriptKill(scriptName, serverName);
     }
 
@@ -85,11 +127,11 @@ export async function main(ns) {
 
     // Copy script and run it 
     ns.scp(scriptName, serverName);
-    let ppid = ns.exec(scriptName, serverName, threads, targetServer, moneyThresh, securityThresh);
+    const ppid = ns.exec(scriptName, serverName, threads, targetServer.name, targetServer.maxMoney, targetServer.minSecurity);
     if (ppid) {
-      ns.printf(`[${fname}] PID: ${ppid}`);
+      ns.printf(`[${fname}]PID: ${ppid}`);
     } else {
-      ns.tprint(`[${fname}] Failed to execute script on ${serverName}.`);
+      ns.tprint(`[${fname}]Failed to execute script on ${serverName}.`);
       return false;
     }
     return ppid != 0;
@@ -109,39 +151,8 @@ export async function main(ns) {
     }
 
     if (distributeScript(serverName)) {
-      ns.tprint(`[${fname}] Successfully distributed script to ${serverName}`);
+      ns.tprint(`[${fname}]Successfully distributed script to ${serverName}`);
       distributedHosts++;
     }
   }
-
-  ns.disableLog("getHackingLevel");
-  ns.disableLog("getServerRequiredHackingLevel");
-  ns.disableLog("getServerNumPortsRequired");
-  ns.disableLog("getServerMaxRam");
-  ns.disableLog("getServerUsedRam");
-  ns.disableLog("brutessh");
-  ns.disableLog("ftpcrack");
-  ns.disableLog("nuke");
-
-  const serverList = list_servers(ns);
-  ns.printf(`[${fname}] Servers: ${serverList.length}`);
-
-  let targetServer = args.target;
-  if (!targetServer) {
-    targetServer = get_money_server_2(ns, serverList);
-  }
-  const moneyThresh = ns.getServerMaxMoney(targetServer);
-  const securityThresh = ns.getServerMinSecurityLevel(targetServer);
-
-  ns.printf(`[${fname}] Target server: ${targetServer}`);
-  ns.tprint(`[${fname}] Target server: ${targetServer}`);
-
-  serverList.forEach(distributeToServer);
-
-  // Hacked hosts: 44
-  ns.tprint(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts`);
-  ns.printf(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts`);
-
-  ns.tprint(`[${fname}] Running script at 'home'.`);
-  distributeScript("home");
 }

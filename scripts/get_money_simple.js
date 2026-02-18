@@ -3,9 +3,9 @@ export async function main(ns) {
 
   const args = ns.flags([['help', false], ['h', false]]);
   const targetServer = args._[0];
-  const moneyThresh = args._[1];
-  const securityThresh = args._[2];
-  if (args.help || args.h || !targetServer || !moneyThresh || !securityThresh) {
+  const maxMoney = args._[1];
+  const minSecurity = args._[2];
+  if (args.help || args.h || !targetServer || !maxMoney || !minSecurity) {
     ns.tprint(`USAGE: run ${ns.getScriptName()} SERVER_NAME SERVER_MAX_MONEY SERVER_MIN_SECURITY_LEVEL`);
     ns.tprint("");
     ns.tprint("This script will attack server for money.");
@@ -22,10 +22,10 @@ export async function main(ns) {
 
   // Infinite loop that continuously hacks/grows/weakens the target server
   while (true) {
-    if (ns.getServerSecurityLevel(targetServer) > securityThresh) {
+    if (ns.getServerSecurityLevel(targetServer) > minSecurity) {
       // If the server's security level is above our threshold, weaken it
       await ns.weaken(targetServer);
-    } else if (ns.getServerMoneyAvailable(targetServer) < moneyThresh) {
+    } else if (ns.getServerMoneyAvailable(targetServer) < maxMoney) {
       // If the server's money is less than our threshold, grow it
       await ns.grow(targetServer);
     } else {
