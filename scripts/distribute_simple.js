@@ -1,4 +1,4 @@
-import { hack_server, list_servers } from "./utils.js"
+import { getRootAccess, list_servers } from "./utils.js"
 import { get_money_server_2 } from "./money_info.js"
 
 /** @param {NS} ns */
@@ -32,9 +32,12 @@ export async function main(ns) {
   ns.disableLog("getServerNumPortsRequired");
   ns.disableLog("getServerMaxRam");
   ns.disableLog("getServerUsedRam");
+  ns.disableLog("nuke");
   ns.disableLog("brutessh");
   ns.disableLog("ftpcrack");
-  ns.disableLog("nuke");
+  ns.disableLog("relaysmtp");
+  ns.disableLog("httpworm");
+  ns.disableLog("sqlinject");
 
   const progData = {
     killCurrentScript: args.kill_script || args.k,
@@ -95,17 +98,17 @@ export async function main(ns) {
     const ramMax = ns.getServerMaxRam(serverName)
     if (ramMax == 0) {
       // not enough memory
-      ns.printf(`[${fname}]has 0 RAM`);
+      ns.printf(`[${fname}] has 0 RAM`);
       return 0;
     }
     const ramUsed = ns.getServerUsedRam(serverName);
     const ramDiff = ramMax - ramUsed;
     if (ramDiff < progData.scriptMemory) {
-      ns.printf(`[${fname}] Memory is full.Max Ram: ${ramMax}, Used RAM: ${ramUsed}`);
+      ns.printf(`[${fname}] Memory is full. Max RAM: ${ramMax}, Used RAM: ${ramUsed}`);
       return 0;
     }
     const threads = Math.floor(ramDiff / progData.scriptMemory);
-    ns.printf(`[${fname}] Max Ram: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
+    ns.printf(`[${fname}] Max RAM: ${ramMax}, Used RAM: ${ramUsed}, Threads: ${threads}`);
     return threads;
   }
 
@@ -140,14 +143,10 @@ export async function main(ns) {
   function distributeToServer(serverName) {
     const fname = "distributeToServer";
 
-    ns.printf("=> [%s] Server: %s", fname, serverName);
-    if (isMyServer(serverName)) {
-      ns.printf("[%s] my server", fname);
-    } else {
-      ns.printf("[%s] Trying to hack server.", fname);
-      if (!hack_server(ns, serverName)) {
-        return;
-      }
+    ns.printf(`${fname}] Server: ${serverName}`);
+    if (!isMyServer(serverName) && !getRootAccess(ns, serverName)) {
+      ns.tprint(`[${fname}] Failed to get root access to ${serverName}. Skipping...`);
+      return;
     }
 
     if (distributeScript(serverName)) {

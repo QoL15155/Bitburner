@@ -1,3 +1,5 @@
+//#region Host Scanning
+
 /** Returns a list of child hosts for a given server, 
  * excluding the parent server
  * @param {NS} ns
@@ -54,23 +56,31 @@ export function list_servers(ns) {
   }
 
   ns.disableLog("scan");
-  var server_list = scan_hosts_rec("home", "");
+  const serverList = scan_hosts_rec("home", "");
   ns.enableLog("scan");
-  return server_list;
+  return serverList;
 }
 
-/** Checks if server can be hacked 
- * based on current hacking level and programs available
- * @param {NS} ns 
- * @param {string} server_name
- * @return {boolean} true if server can be hacked, false otherwise
- **/
-export function can_hack_server(ns, server_name) {
+//#endregion Host Scanning
 
-  /* Calculates number of ports that can be hacked 
-    Based on programs installed on the machine
-  */
-  function get_hacked_ports(ns) {
+//#region Hack Server
+
+/**
+ * Checks if player can get root access to the server 
+ * based on available hacking programs and opens necessary ports 
+ * 
+ * @param {NS} ns
+ * @param {string} serverName
+ * @return {number} number of threads that can be run on the server
+ */
+function canGetRootAccess(ns, server_name) {
+
+  const hacked_ports = getAvailablePorts(ns);
+  const requiredPorts = ns.getServerNumPortsRequired(server_name);
+  return hacked_ports >= requiredPorts;
+
+  // Calculates number of ports that can be hacked based on programs installed on the machine
+  function getAvailablePorts(ns) {
     if (!ns.fileExists("BruteSSH.exe", "home"))
       return 0;
 
@@ -88,32 +98,11 @@ export function can_hack_server(ns, server_name) {
 
     return 5;
   }
-
-  // Required Hacking skill
-  var required_level = ns.getServerRequiredHackingLevel(server_name);
-  if (ns.getHackingLevel() < required_level) {
-    ns.printf("[can_hack_server] Server doesn't meet hacking level requirements: %s - %d", server_name, required_level);
-    return false;
-  }
-
-  var hacked_ports = get_hacked_ports(ns);
-  var required_ports = ns.getServerNumPortsRequired(server_name);
-  if (hacked_ports < required_ports) {
-    ns.printf("[can_hack_server] Server doesn't meet port requirement: %s - %d", server_name, required_ports);
-    return false;
-  }
-
-  return true;
 }
 
-/** Hacks a server if possible
- * @param {NS} ns
- * @param {string} server_name
- * @param {boolean} validate
- * @return {boolean} true if server was compromised, false otherwise
- */
-export function hack_server(ns, server_name, validate = true) {
-  if (validate && !can_hack_server(ns, server_name)) {
+export function getRootAccess(ns, server_name) {
+  if (!canGetRootAccess(ns, server_name)) {
+    ns.printf("[getRootAccess] Can't get root access to %s. Not enough ports can be hacked.", server_name);
     return false;
   }
 
@@ -131,7 +120,48 @@ export function hack_server(ns, server_name, validate = true) {
   return ns.nuke(server_name);
 }
 
-/** Run a command on terminal
+/** 
+ * Checks if server can be hacked based on current hacking level and programs available
+ * @param {NS} ns 
+ * @param {string} server_name
+ * @return {boolean} true if server can be hacked, false otherwise
+ **/
+export function can_hack_server(ns, server_name) {
+
+  if (!canGetRootAccess(ns, server_name)) {
+    return false;
+  }
+
+  // Required Hacking skill
+  const required_level = ns.getServerRequiredHackingLevel(server_name);
+  if (ns.getHackingLevel() < required_level) {
+    ns.printf("[can_hack_server] Server doesn't meet hacking level requirements: %s - %d", server_name, required_level);
+    return false;
+  }
+
+  return true;
+}
+
+/** 
+ * Hacks a server if possible
+ * 
+ * @param {NS} ns
+ * @param {string} server_name
+ * @param {boolean} validate
+ * @return {boolean} true if server was compromised, false otherwise
+ */
+export function hack_server(ns, server_name, validate = true) {
+  if (validate && !can_hack_server(ns, server_name)) {
+    return false;
+  }
+
+  return getRootAccess(ns, server_name);
+}
+
+//#endregion Hack Server
+
+/** 
+ * Run a command on terminal
  * 
  * @param {string} command
  */
