@@ -3,6 +3,7 @@ import { arrayJumpingGame } from "./contracts/array_jumping_game.js";
 import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.js";
 import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
 import { algorithmicStockTrader3 } from "./contracts/algorithmic_stock_trader_3.js";
+import { algorithmicStockTrader4 } from "./contracts/algorithmic_stock_trader_4.js";
 import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
 import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
 import { findSquareRoot } from "./contracts/square_root.js";
@@ -58,8 +59,9 @@ export function analyzeContractsServers(ns) {
 
   function GetContractScript(contractType) {
     switch (contractType) {
-      // TODO: make sure this works when result is 1 !
-      // case ns.enums.CodingContractName.ArrayJumpingGame:
+      case ns.enums.CodingContractName.ArrayJumpingGame:
+        // TODO: make sure this works when result is 1 !
+        return { scriptName: "array_jumping_game.js", scriptCallback: nll };
       // return { scriptName: "array_jumping_game.js", scriptCallback: arrayJumpingGame };
       // Stock Trader
       case ns.enums.CodingContractName.AlgorithmicStockTraderI:
@@ -68,8 +70,8 @@ export function analyzeContractsServers(ns) {
         return { scriptName: "algorithmic_stock_trader_2.js", scriptCallback: algorithmicStockTrader2 };
       case ns.enums.CodingContractName.AlgorithmicStockTraderIII:
         return { scriptName: "algorithmic_stock_trader_3.js", scriptCallback: algorithmicStockTrader3 };
-      // case ns.enums.CodingContractName.AlgorithmicStockTraderIV:
-      // return { scriptName: "algorithmic_stock_trader_4.js", scriptCallback: null };
+      case ns.enums.CodingContractName.AlgorithmicStockTraderIV:
+        return { scriptName: "algorithmic_stock_trader_4.js", scriptCallback: algorithmicStockTrader4 };
 
       case ns.enums.CodingContractName.FindLargestPrimeFactor:
         return { scriptName: "largest_prime_factor.js", scriptCallback: findLargestPrimeFactor };
