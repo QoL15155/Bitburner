@@ -8,7 +8,6 @@ A prime factor is a factor that is a prime number. What is the largest prime fac
 """
 
 import argparse
-from gettext import find
 
 
 def find_largest_prime_factor(n):
