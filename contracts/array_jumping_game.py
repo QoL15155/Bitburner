@@ -17,14 +17,14 @@ Your answer should be submitted as 1 or 0, representing true and false respectiv
 """
 
 
-def do_jump(input, position: int) -> list[int] | None:
-    max_jump = input[position]
+def do_jump(jumping_array, position: int) -> list[int] | None:
+    max_jump = jumping_array[position]
 
-    if position + max_jump >= len(input) - 1:
+    if position + max_jump >= len(jumping_array) - 1:
         return [position]
 
     for i in range(max_jump):
-        result = do_jump(input, position + i + 1)
+        result = do_jump(jumping_array, position + i + 1)
         if result is not None:
             result.insert(0, position)
             return result
@@ -32,23 +32,24 @@ def do_jump(input, position: int) -> list[int] | None:
     return None
 
 
-def jumping_game(input: str) -> int:
+def jumping_game(input: str):
     jumps: list[int] = list(map(int, input.split(",")))
     result = do_jump(jumps, 0)
     if result is not None:
         print(f"Jumps: {result}")
+
     return result
 
 
 def test():
-    input = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10"
-    result = jumping_game(input)
-    assert result is not None
+    test1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10"
+    result1 = jumping_game(test1)
+    assert result1 is not None
 
 
 def main() -> None:
-    input = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10"
-    jumping_game(input)
+    input1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10"
+    jumping_game(input1)
 
 
 if __name__ == "__main__":

@@ -1,21 +1,40 @@
 import { analyzeContractsServers } from "./contracts_analyze.js"
 
+// Debug mode flag. 
+// When true, the script will not submit answers to contracts, allowing you to test and debug the solving logic without risking failed attempts.
+// const debug = true;
+const debug = false;
+
 export function solveContract(ns, contract) {
-    print(`Solving contract ${contract}`);
+    const fname = "solveContract";
+    print(`[${fname}] Solving ${contract}`);
 
     const contractData = ns.codingcontract.getData(contract.contractName, contract.serverName);
-    ns.printf(`Contract Data: ${JSON.stringify(contractData)}`);
+    if (typeof (contractData) !== "bigint") {
+        ns.printf(`[${fname}] Contract Data : ${JSON.stringify(contractData)}`);
+    } else {
+        ns.alert(`[${fname}] Contract Data is a BigInt. Can't print it as JSON.`);
+        return;
+    }
+
     const contractAnswer = contract.scriptCallback(contractData);
-    if (!contractAnswer) {
+    if (contractAnswer == null) {
         ns.tprint(`Failed to solve contract ${contract}. No answer found.`);
         return;
     }
-    ns.printf(`Contract Answer: ${contractAnswer}`);
-    const result = ns.codingcontract.attempt(contractAnswer, contract.contractName, contract.serverName);
+    ns.printf(`[${fname}] Contract Answer: ${contractAnswer} (${typeof (contractAnswer)})`);
+
+    if (debug) {
+        ns.tprint(`Debug mode is ON. Not submitting the answer for contract ${contract}.`);
+        // For debugging purposes, we can test the answer before submitting it
+        return;
+    }
+
+    const result = ns.codingcontract.attempt(contractAnswer.toString(), contract.contractName, contract.serverName);
     if (result) {
         ns.tprint(result);
     } else {
-        ns.print(`Failed to solve contract. ${result}`);
+        ns.alert(`[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`);
     }
 
     /** Prints message both to stdout and log file */
@@ -29,10 +48,10 @@ export function solveContract(ns, contract) {
 export async function main(ns) {
     const args = ns.flags([["help", false], ["h", false]]);
     if (args.help || args.h) {
-        ns.tprint("This script analyzes all coding contracts on all servers and finds the ones that can be solved with existing scripts.");
         ns.tprint(`Usage: run ${ns.getScriptName()}`);
-        ns.tprint("Example:");
-        ns.tprint(`> run ${ns.getScriptName()}`);
+        ns.tprint("");
+        ns.tpintf("Contract Solver.");
+        ns.tprint("Analyzes all coding contracts on all servers and finds the ones that can be solved with existing scripts, then solves them.");
         return;
     }
 

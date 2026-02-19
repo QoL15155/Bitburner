@@ -1,6 +1,12 @@
 import { list_servers } from "./utils.js"
-import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
+import { arrayJumpingGame } from "./contracts/array_jumping_game.js";
+import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.js";
 import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
+import { algorithmicStockTrader3 } from "./contracts/algorithmic_stock_trader_3.js";
+import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
+import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
+import { findSquareRoot } from "./contracts/square_root.js";
+import { uniquePathsInGrid } from "./contracts/unqiue_paths_grid_1.js";
 
 class Contract {
   constructor(serverName, contractName, contractType, scriptPath, scriptCallback) {
@@ -52,33 +58,35 @@ export function analyzeContractsServers(ns) {
 
   function GetContractScript(contractType) {
     switch (contractType) {
+      // TODO: make sure this works when result is 1 !
+      // case ns.enums.CodingContractName.ArrayJumpingGame:
+      // return { scriptName: "array_jumping_game.js", scriptCallback: arrayJumpingGame };
+      // Stock Trader
+      case ns.enums.CodingContractName.AlgorithmicStockTraderI:
+        return { scriptName: "algorithmic_stock_trader_1.js", scriptCallback: algorithmicStockTrader1 };
       case ns.enums.CodingContractName.AlgorithmicStockTraderII:
         return { scriptName: "algorithmic_stock_trader_2.js", scriptCallback: algorithmicStockTrader2 };
-      // case ns.enums.CodingContractName.AlgorithmicStockTraderIII:
-      //   return { scriptName: "algorithmic_stock_trader_3.js", scriptCallback: triangleMinimumPathSum };
+      case ns.enums.CodingContractName.AlgorithmicStockTraderIII:
+        return { scriptName: "algorithmic_stock_trader_3.js", scriptCallback: algorithmicStockTrader3 };
+      // case ns.enums.CodingContractName.AlgorithmicStockTraderIV:
+      // return { scriptName: "algorithmic_stock_trader_4.js", scriptCallback: null };
+
+      case ns.enums.CodingContractName.FindLargestPrimeFactor:
+        return { scriptName: "largest_prime_factor.js", scriptCallback: findLargestPrimeFactor };
       case ns.enums.CodingContractName.MinimumPathSumInATriangle:
         return { scriptName: "minimum_path_sum_triangle.js", scriptCallback: triangleMinimumPathSum };
-      // TODO: need to make sure regarding the BigInt support.
-      // case ns.enums.CodingContractName.SquareRoot:
-      //     return "square_root.js";
+      case ns.enums.CodingContractName.SquareRoot:
+        return { scriptName: "square_root.js", scriptCallback: findSquareRoot };
+      // Unique Paths in a Grid
+      case ns.enums.CodingContractName.UniquePathsInAGridI:
+        return { scriptName: "unqiue_paths_grid_1.js", scriptCallback: uniquePathsInGrid };
+
+      // case ns.enums.CodingContractName.TotalWaysToSum:
+      // return { scriptName: "total_ways_to_sum.js", scriptCallback: totalWaysToSum };
       default:
         return null;
     }
   }
-
-
-  // function GetContractScript(contractType) {
-  //   switch (contractType) {
-  //     case ns.enums.CodingContractName.AlgorithmicStockTraderII:
-  //       return "algorithmic_stock_trader_2.js";
-  //     case ns.enums.CodingContractName.MinimumPathSumInATriangle:
-  //       return "fake.js";
-  //     case ns.enums.CodingContractName.SquareRoot:
-  //       return "square_root.js";
-  //     default:
-  //       return null;
-  //   }
-  // }
 }
 
 /** @param {NS} ns */
@@ -92,5 +100,7 @@ export async function main(ns) {
     return;
   }
 
-  analyzeContractsServers(ns);
+  const solvableContracts = analyzeContractsServers(ns);
+  ns.tprint(`=> Found ${solvableContracts.length} solvable contracts.`);
+  // TODO: add statistics
 }
