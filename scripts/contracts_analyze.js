@@ -179,7 +179,7 @@ export async function main(ns) {
     ns.tprint("\t--silent, -s : disable logging to console. Only log to file.");
     ns.tprint("\tFACTION : List contracts for faction. Partial match is supported.");
     ns.tprint("\t--factions : list all factions with associated contracts.");
-    ns.tprint("\t--contract_types : list all unsolved contract types.");
+    ns.tprint("\t--contract_types : list all unsolvable contract types.");
     ns.tprint("");
     ns.tprint("Example:");
     ns.tprint(`> run ${ns.getScriptName()} --factions`);
