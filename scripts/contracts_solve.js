@@ -49,7 +49,12 @@ export function solveContract(ns, contract) {
  * @returns {string[]} - the array of possible autocomplete options
  */
 export function autocomplete(data, args) {
-    const defaultOptions = ["-h", "--help", "--tail"];
+    const helpOptions = ["-h", "--help"];
+    const defaultOptions = helpOptions.concat("--tail");
+
+    if (args.some(a => helpOptions.includes(a))) {
+        return [];
+    }
 
     return [...defaultOptions];
 }
@@ -65,8 +70,10 @@ export async function main(ns) {
         return;
     }
 
-    const solvableContracts = analyzeContractsServers(ns);
-    ns.tprint(`=> Found ${solvableContracts.length} solvable contracts.`);
+    const availableContracts = analyzeContractsServers(ns);
+    const solvableContracts = availableContracts.filter(c => c.scriptCallback != null);
+
+    ns.tprint(`=> Found ${solvableContracts.length}/${availableContracts.length} solvable contracts.`);
     solvableContracts.forEach(solveContract.bind(null, ns));
 
 }

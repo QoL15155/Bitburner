@@ -1,94 +1,139 @@
-import { list_servers } from "./utils.js"
-import { arrayJumpingGame } from "./contracts/array_jumping_game.js";
-import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.js";
-import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
-import { algorithmicStockTrader3 } from "./contracts/algorithmic_stock_trader_3.js";
-import { algorithmicStockTrader4 } from "./contracts/algorithmic_stock_trader_4.js";
-import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
-import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
-import { findSquareRoot } from "./contracts/square_root.js";
-import { uniquePathsInGrid1 } from "./contracts/unique_paths_grid_1.js";
-import { uniquePathsInGrid2 } from "./contracts/unique_paths_grid_2.js";
+import { getContractScript } from "./utils_contracts.js";
+import { searchForServerContracts } from "./utils_contracts.js";
+
+const contractFactionRegex = new RegExp("contract\-[0-9]*\-(.*)\.cct$");
 
 class Contract {
-  constructor(serverName, contractName, contractType, scriptPath, scriptCallback) {
+  constructor(serverName, contractName, contractType, scriptPath, scriptCallback, associatedFaction = null) {
     this.serverName = serverName;
     this.contractName = contractName;
     this.contractType = contractType;
     this.scriptPath = scriptPath;
     this.scriptCallback = scriptCallback;
+    this.associatedFaction = associatedFaction;
   }
 
   toString() {
-    return `Contract(Server: ${this.serverName}, Name: ${this.contractName}, Type: ${this.contractType}, Script: ${this.scriptPath})`;
+    if (this.scriptPath) {
+      return `Contract(Server: ${this.serverName}, Name: ${this.contractName}, Type: ${this.contractType}, Script: ${this.scriptPath})`;
+    }
+
+    return `Contract(Server: ${this.serverName}, filename: ${this.contractName}, Type: ${this.contractType})`;
   }
 }
 
-export function analyzeContractsServers(ns) {
-  const servers = list_servers(ns);
-  const interestingServers = servers.filter(s => ns.ls(s).find(f => f.endsWith("cct")));
-
-  let solvableContracts = [];
+export function analyzeContractsServers(ns, logToConsole = true) {
+  let availableContracts = [];
+  const serversWithContracts = searchForServerContracts(ns);
 
   print("Interesting servers:");
-  interestingServers.forEach(
-    function (serverName) {
-      const contracts = ns.ls(serverName).filter(f => f.endsWith("cct"))
+  serversWithContracts.forEach(
+    function (serverData) {
+      let serverName = serverData.serverName;
       print(`\t - ${serverName} `)
 
-      contracts.forEach(
-        function (filename) {
-          const contractType = ns.codingcontract.getContractType(filename, serverName);
-          const contractScript = GetContractScript(contractType);
+      serverData.contracts.forEach(
+        function (contractName) {
+
+          const contractType = ns.codingcontract.getContractType(contractName, serverName);
+          const contractScript = getContractScript(ns, contractType);
+          let associatedFaction = getAssociatedFaction(contractName);
           if (contractScript) {
-            solvableContracts.push(new Contract(serverName, filename, contractType, contractScript.scriptName, contractScript.scriptCallback));
-            print(`\t\t[*] ${filename} (${contractType}). Script: ${contractScript.scriptName} `);
+            const contract = new Contract(serverName, contractName, contractType, contractScript.scriptName, contractScript.scriptCallback, associatedFaction);
+            availableContracts.push(contract);
+            print(`\t\t[*] ${contractName} (${contractType}). Script: ${contractScript.scriptName}`);
           } else {
-            print(`\t\t${filename} (${contractType})`)
+            const contract = new Contract(serverName, contractName, contractType, null, null, associatedFaction);
+            availableContracts.push(contract);
+            print(`\t\t${contractName} (${contractType})`);
           }
         }
       )
-    }
-  )
-  return solvableContracts
+    });
+
+  return availableContracts;
+
+  function getAssociatedFaction(contractName) {
+    const factionMatch = contractName.match(contractFactionRegex);
+    return factionMatch ? factionMatch[1] : null;
+  }
 
   /** Prints message both to stdout and log file */
   function print(msg) {
     ns.printf(msg);
-    ns.tprint(msg);
-  }
-
-  function GetContractScript(contractType) {
-    switch (contractType) {
-      case ns.enums.CodingContractName.ArrayJumpingGame:
-        return { scriptName: "array_jumping_game.js", scriptCallback: arrayJumpingGame };
-      // Stock Trader
-      case ns.enums.CodingContractName.AlgorithmicStockTraderI:
-        return { scriptName: "algorithmic_stock_trader_1.js", scriptCallback: algorithmicStockTrader1 };
-      case ns.enums.CodingContractName.AlgorithmicStockTraderII:
-        return { scriptName: "algorithmic_stock_trader_2.js", scriptCallback: algorithmicStockTrader2 };
-      case ns.enums.CodingContractName.AlgorithmicStockTraderIII:
-        return { scriptName: "algorithmic_stock_trader_3.js", scriptCallback: algorithmicStockTrader3 };
-      case ns.enums.CodingContractName.AlgorithmicStockTraderIV:
-        return { scriptName: "algorithmic_stock_trader_4.js", scriptCallback: algorithmicStockTrader4 };
-
-      case ns.enums.CodingContractName.FindLargestPrimeFactor:
-        return { scriptName: "largest_prime_factor.js", scriptCallback: findLargestPrimeFactor };
-      case ns.enums.CodingContractName.MinimumPathSumInATriangle:
-        return { scriptName: "minimum_path_sum_triangle.js", scriptCallback: triangleMinimumPathSum };
-      case ns.enums.CodingContractName.SquareRoot:
-        return { scriptName: "square_root.js", scriptCallback: findSquareRoot };
-      // Unique Paths in a Grid
-      case ns.enums.CodingContractName.UniquePathsInAGridI:
-        return { scriptName: "unique_paths_grid_1.js", scriptCallback: uniquePathsInGrid1 };
-      case ns.enums.CodingContractName.UniquePathsInAGridII:
-        return { scriptName: "unique_paths_grid_2.js", scriptCallback: uniquePathsInGrid2 };
-
-      // case ns.enums.CodingContractName.TotalWaysToSum:
-      // return { scriptName: "total_ways_to_sum.js", scriptCallback: totalWaysToSum };
-      default:
-        return null;
+    if (logToConsole) {
+      ns.tprint(msg);
     }
+  }
+}
+
+
+/** 
+ * List all factions with associated contracts and number of contracts for each faction
+ * 
+ * @param {NS} ns - the NS object provided by Bitburner 
+ * @param {Contract[]} contracts - array of Contract objects to analyze
+ */
+function listFactions(ns, contracts) {
+  const factionMap = {};
+  contracts.forEach(c => {
+    if (c.associatedFaction) {
+      if (!factionMap[c.associatedFaction]) {
+        factionMap[c.associatedFaction] = [];
+      }
+      factionMap[c.associatedFaction].push(c);
+    }
+  });
+
+  ns.tprint("Factions with associated contracts:");
+  for (const [factionName, contracts] of Object.entries(factionMap)) {
+    ns.tprint(`\t - ${factionName}: ${contracts.length} contract(s)`);
+  }
+}
+
+
+/** 
+ * List all contracts associated with a given faction
+ * 
+ * @param {NS} ns - the NS object provided by Bitburner
+ * @param {string} factionName - the name of the faction to filter contracts by
+ * @param {Contract[]} contracts - array of Contract objects to analyze
+ */
+function showFactionContracts(ns, factionName, contracts) {
+  const filteredContracts = contracts.filter(c =>
+    c.associatedFaction && (c.associatedFaction.indexOf(factionName)) > -1);
+
+  ns.tprint(`=> Contracts associated with faction '${factionName}': (${filteredContracts.length})`);
+  filteredContracts.forEach(c => ns.tprint(`\t - ${c}`));
+}
+
+
+/**
+ * List all unsolved contract types and the number of contracts for each type
+ * 
+ * @param {NS} ns - the NS object provided by Bitburner
+ * @param {Contract[]} contracts - array of Contract objects to analyze
+ */
+function listUnsolvedContractTypes(ns, contracts) {
+  const typeMap = {};
+  contracts.forEach(c => {
+    if (!c.scriptCallback) {
+      if (!typeMap[c.contractType]) {
+        typeMap[c.contractType] = [];
+      }
+      typeMap[c.contractType].push(c);
+    }
+  });
+
+  // Sort contract types by number of contracts
+  const sortedTypes = Object.entries(typeMap).sort((a, b) => b[1].length - a[1].length);
+  const sortedTypeMap = {};
+  sortedTypes.forEach(([type, contracts]) => {
+    sortedTypeMap[type] = contracts;
+  });
+  ns.tprint("Unsolved contract types:");
+  for (const [typeName, contracts] of Object.entries(sortedTypeMap)) {
+    ns.tprint(`\t - ${contracts.length}\t${typeName}`);
   }
 }
 
@@ -98,23 +143,71 @@ export function analyzeContractsServers(ns) {
  * @returns {string[]} - the array of possible autocomplete options
  */
 export function autocomplete(data, args) {
-  const defaultOptions = ["-h", "--help", "--tail"];
+  const helpOptions = ["-h", "--help"];
+  const defaultOptions = helpOptions.concat("--tail");
 
-  return [...defaultOptions];
+  let loggingOptions = ["--silent", "-s"];
+  let statisticsOptions = ["--factions", "--contract_types"];
+
+  if (args.some(a => helpOptions.includes(a))) {
+    return [];
+  }
+
+  if (args.some(a => loggingOptions.includes(a))) {
+    loggingOptions = [];
+  }
+
+  return [...defaultOptions, ...loggingOptions, ...statisticsOptions];
 }
 
 /** @param {NS} ns */
 export async function main(ns) {
-  const args = ns.flags([["help", false], ["h", false]]);
+  const args = ns.flags([
+    ["help", false], ["h", false],
+    ["silent", false], ["s", false],
+    ["factions", false],
+    ["contract_types", false],
+  ]);
   if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} `);
+    ns.tprint(`Usage: run ${ns.getScriptName()} [FACTION]]`);
     ns.tprint("");
     ns.tprint("Analyzes coding contracts on all servers");
-
+    ns.tprint("");
+    ns.tprint("Arguments");
+    ns.tprint("==========");
+    ns.tprint("\t--help : show this help message");
+    ns.tprint("\t--silent, -s : disable logging to console. Only log to file.");
+    ns.tprint("\tFACTION : List contracts for faction. Partial match is supported.");
+    ns.tprint("\t--factions : list all factions with associated contracts.");
+    ns.tprint("\t--contract_types : list all unsolved contract types.");
+    ns.tprint("");
+    ns.tprint("Example:");
+    ns.tprint(`> run ${ns.getScriptName()} --factions`);
     return;
   }
 
-  const solvableContracts = analyzeContractsServers(ns);
-  ns.tprint(`=> Found ${solvableContracts.length} solvable contracts.`);
-  // TODO: add statistics
+  let isSilent = false;
+  if (args.silent || args.s) {
+    isSilent = true;
+  }
+
+  const searchedFaction = args._[0];
+
+  const availableContracts = analyzeContractsServers(ns, !isSilent);
+  const solvableContracts = availableContracts.filter(c => c.scriptCallback != null);
+
+  ns.tprint(`=> Found ${solvableContracts.length}/${availableContracts.length} solvable contracts.`);
+
+  // Statistics
+
+  if (args.factions) {
+    listFactions(ns, availableContracts);
+  }
+  if (searchedFaction) {
+    showFactionContracts(ns, searchedFaction, availableContracts);
+  }
+
+  if (args.contract_types) {
+    listUnsolvedContractTypes(ns, availableContracts);
+  }
 }
