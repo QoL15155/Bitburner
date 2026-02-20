@@ -92,14 +92,25 @@ export function analyzeContractsServers(ns) {
   }
 }
 
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+
+  return [...defaultOptions];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([["help", false], ["h", false]]);
   if (args.help || args.h) {
-    ns.tprint("This script helps you find an unsolved coding contract.");
     ns.tprint(`Usage: run ${ns.getScriptName()} `);
-    ns.tprint("Example:");
-    ns.tprint(`> run ${ns.getScriptName()} `);
+    ns.tprint("");
+    ns.tprint("Analyzes coding contracts on all servers");
+
     return;
   }
 

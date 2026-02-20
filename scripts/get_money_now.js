@@ -1,3 +1,19 @@
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+  let servers = data.servers;
+
+  if (args.some(a => servers.includes(a))) {
+    servers = [];
+  }
+
+  return [...defaultOptions, ...servers];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([['help', false], ['h', false]]);
@@ -6,8 +22,15 @@ export async function main(ns) {
     ns.tprint(`USAGE: run ${ns.getScriptName()} SERVER_NAME`);
     ns.tprint("");
     ns.tprint("This script will attack server for money.");
+    ns.tprint("");
+    ns.tprint("This script is not recommended for use.");
     ns.tprint("This script uses 'getServer...' API functions which costs unnecessary RAM");
     ns.tprint("Use 'get_money_simple.js' instead which is more efficient and has more features.");
+    ns.tprint("");
+    ns.tprint("Arguments:");
+    ns.tprint("==========");
+    ns.tprint("\tSERVER_NAME : the name of the server to attack");
+    ns.tprint("");
     ns.tprint("Example:");
     ns.tprint(`> run ${ns.getScriptName()} n00dles`);
     return;
