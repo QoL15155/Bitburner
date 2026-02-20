@@ -91,7 +91,7 @@ export async function main(ns) {
   serverList.forEach(distributeToServer);
 
   // Hacked hosts: 44
-  print(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts targeting '${targetServerName}'.`);
+  print(`[${fname}] Distributed ${scriptName} to ${distributedHosts}/${serverList.length} hosts targeting '${targetServerName}'.`);
 
   ns.tprint(`[${fname}] Running script at 'home'.`);
   distributeScript("home");
@@ -159,7 +159,7 @@ export async function main(ns) {
   function distributeToServer(serverName) {
     const fname = "distributeToServer";
 
-    ns.printf(`${fname}] Server: ${serverName}`);
+    ns.printf(`[${fname}] Server: ${serverName}`);
     if (!isMyServer(serverName) && !getRootAccess(ns, serverName)) {
       ns.tprint(`[${fname}] Failed to get root access to ${serverName}. Skipping...`);
       return;

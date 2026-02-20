@@ -115,18 +115,18 @@ function showFactionContracts(ns, factionName, contracts) {
  * @param {Contract[]} contracts - array of Contract objects to analyze
  */
 function listUnsolvedContractTypes(ns, contracts) {
-  const typeMap = {};
+  const contractTypes = {};
   contracts.forEach(c => {
     if (!c.scriptCallback) {
-      if (!typeMap[c.contractType]) {
-        typeMap[c.contractType] = [];
+      if (!contractTypes[c.contractType]) {
+        contractTypes[c.contractType] = [];
       }
-      typeMap[c.contractType].push(c);
+      contractTypes[c.contractType].push(c);
     }
   });
 
   // Sort contract types by number of contracts
-  const sortedTypes = Object.entries(typeMap).sort((a, b) => b[1].length - a[1].length);
+  const sortedTypes = Object.entries(contractTypes).sort((a, b) => b[1].length - a[1].length);
   const sortedTypeMap = {};
   sortedTypes.forEach(([type, contracts]) => {
     sortedTypeMap[type] = contracts;

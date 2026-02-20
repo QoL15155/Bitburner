@@ -1,25 +1,26 @@
 import { can_hack_server, list_servers } from "./utils.js"
+import { printInfo } from "./utils_print.js"
 
 /* returns the server with most money */
-export function get_money_server_2(ns, server_list) {
-  var g_max_money = 0;
-  var g_best_server = "";
+export function get_money_server_2(ns, server_list, isVerbose = true) {
+  let maxMoneyOnServer = 0;
+  let bestServer = "";
 
-  let g_hacking_level = ns.getHackingLevel();
-  if (g_hacking_level > 1)
-    g_hacking_level = g_hacking_level / 2;
-  ns.printf("Looking for the most profitable server with hacking level <= %s", g_hacking_level);
+  let playerHackingLevel = ns.getHackingLevel();
+  if (playerHackingLevel > 1)
+    playerHackingLevel = playerHackingLevel / 2;
+  ns.printf("Looking for the most profitable server with hacking level <= %s", playerHackingLevel);
 
   function check_server_money(server_name) {
-    let max_money = ns.getServerMaxMoney(server_name);
-    let required_level = ns.getServerRequiredHackingLevel(server_name);
+    let money = ns.getServerMaxMoney(server_name);
+    let requiredLevel = ns.getServerRequiredHackingLevel(server_name);
 
-    ns.printf("[%s] Level: %d, Max Money: %d", server_name, required_level, max_money);
+    ns.printf("[%s] Level: %d, Max Money: %d", server_name, requiredLevel, money);
 
-    if (max_money > g_max_money && (required_level <= g_hacking_level)
+    if (money > maxMoneyOnServer && (requiredLevel <= playerHackingLevel)
       && can_hack_server(ns, server_name)) {
-      g_max_money = max_money;
-      g_best_server = server_name;
+      maxMoneyOnServer = money;
+      bestServer = server_name;
     }
   }
 
@@ -29,9 +30,10 @@ export function get_money_server_2(ns, server_list) {
   ns.enableLog("getServerMaxMoney");
   ns.enableLog("getServerRequiredHackingLevel");
 
-  ns.printf("==> Best Server: %s. $%d", g_best_server, g_max_money);
-  ns.tprint(`Best Server: ${g_best_server}. $${g_max_money}`);
-  return g_best_server;
+  if (isVerbose) {
+    printInfo(ns, `Best Server: ${bestServer}. Max money: $${maxMoneyOnServer}`);
+  }
+  return bestServer;
 }
 
 export function get_money_server(ns) {
