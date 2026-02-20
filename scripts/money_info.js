@@ -11,7 +11,7 @@ export function get_money_server_2(ns, server_list, isVerbose = true) {
     playerHackingLevel = playerHackingLevel / 2;
   ns.printf("Looking for the most profitable server with hacking level <= %s", playerHackingLevel);
 
-  function check_server_money(server_name) {
+  function checkServerMoney(server_name) {
     let money = ns.getServerMaxMoney(server_name);
     let requiredLevel = ns.getServerRequiredHackingLevel(server_name);
 
@@ -26,7 +26,7 @@ export function get_money_server_2(ns, server_list, isVerbose = true) {
 
   ns.disableLog("getServerMaxMoney");
   ns.disableLog("getServerRequiredHackingLevel");
-  server_list.forEach(check_server_money);
+  server_list.forEach(checkServerMoney);
   ns.enableLog("getServerMaxMoney");
   ns.enableLog("getServerRequiredHackingLevel");
 
@@ -41,9 +41,25 @@ export function get_money_server(ns) {
   return get_money_server_2(ns, host_list);
 }
 
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const helpOptions = ["-h", "--help"];
+  const defaultOptions = helpOptions.concat("--tail");
+
+  if (args.some(a => helpOptions.includes(a))) {
+    return [];
+  }
+
+  return [...defaultOptions];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
-  const args = ns.flags([["help", false]]);
+  const args = ns.flags([['help', false], ['h', false]]);
   if (args.help) {
     ns.tprint("Find the best server to hack money from");
     ns.tprint(`Usage:`);
