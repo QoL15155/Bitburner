@@ -14,6 +14,7 @@ If no profit can be made, then the answer should be 0.
 
 
 export function algorithmicStockTrader2(stockPricesByDay) {
+    let profitMatrix = Array(stockPricesByDay.length).fill(-1);
     return getMaxProfitRecursive(stockPricesByDay, 0, false, 0);
 
     function getMaxProfitRecursive(stockPricesByDay, currentDay, hasStock, stockPrice) {
@@ -29,7 +30,11 @@ export function algorithmicStockTrader2(stockPricesByDay) {
             // Profit if we sell today
             const sellProfit = todayPrice - stockPrice
             if (sellProfit > 0) {
-                actionProfit = sellProfit + getMaxProfitRecursive(stockPricesByDay, nextDay, false, 0);
+                if (profitMatrix[currentDay] == -1) {
+                    actionProfit = getMaxProfitRecursive(stockPricesByDay, nextDay, false, 0);
+                    profitMatrix[currentDay] = actionProfit;
+                }
+                actionProfit = sellProfit + profitMatrix[currentDay];
             }
         } else {
             // Profit if we buy today

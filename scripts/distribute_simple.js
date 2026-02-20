@@ -1,6 +1,23 @@
 import { getRootAccess, list_servers } from "./utils.js"
 import { get_money_server_2 } from "./money_info.js"
 
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+  let servers = data.servers;
+  let killOptions = ["--kill_script", "-k", "--kill_all"];
+
+  if (args.some(a => servers.includes(a))) {
+    servers = [];
+  }
+
+  return [...defaultOptions, ...killOptions, ...servers];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
   const scriptName = "get_money_simple.js";
@@ -8,7 +25,6 @@ export async function main(ns) {
 
   const args = ns.flags([['help', false], ['h', false],
   ['kill_script', false], ['k', false], ['kill_all', false],
-  ['target', '']
   ]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()} [TARGET_SERVER] [[--kill_script, -k] | [--kill_all]]`);
@@ -75,7 +91,7 @@ export async function main(ns) {
   serverList.forEach(distributeToServer);
 
   // Hacked hosts: 44
-  print(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts`);
+  print(`[${fname}] Distributed ${scriptName} to ${distributedHosts} hosts targeting '${targetServerName}'.`);
 
   ns.tprint(`[${fname}] Running script at 'home'.`);
   distributeScript("home");

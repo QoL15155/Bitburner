@@ -29,11 +29,6 @@ function algorithmicStockTrader4([limit, stockPricesByDay]) {
             return 0;
         }
 
-        // FIXME: This caching is not working as expected. Need to debug and fix it.
-        // if (profitMatrix[currentDay][limit - 1] != -1) {
-        // return profitMatrix[currentDay][limit - 1];
-        // }
-
         const nextDay = currentDay + 1;
         const todayPrice = stockPricesByDay[currentDay];
 

@@ -1,10 +1,28 @@
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+  let servers = data.servers;
+
+  if (args.some(a => servers.includes(a))) {
+    servers = [];
+  }
+
+  return [...defaultOptions, ...servers];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
 
+  // Parse arguments and flags
   const args = ns.flags([['help', false], ['h', false]]);
   const targetServer = args._[0];
   const maxMoney = args._[1];
   const minSecurity = args._[2];
+
   if (args.help || args.h || !targetServer || !maxMoney || !minSecurity) {
     ns.tprint(`USAGE: run ${ns.getScriptName()} SERVER_NAME SERVER_MAX_MONEY SERVER_MIN_SECURITY_LEVEL`);
     ns.tprint("");

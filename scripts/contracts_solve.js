@@ -13,8 +13,7 @@ export function solveContract(ns, contract) {
     if (typeof (contractData) !== "bigint") {
         ns.printf(`[${fname}] Contract Data : ${JSON.stringify(contractData)}`);
     } else {
-        ns.alert(`[${fname}] Contract Data is a BigInt. Can't print it as JSON.`);
-        return;
+        ns.printf(`[${fname}] Contract Data : ${contractData}`);
     }
 
     const contractAnswer = contract.scriptCallback(contractData);
@@ -26,14 +25,14 @@ export function solveContract(ns, contract) {
 
     if (debug) {
         ns.tprint(`Debug mode is ON. Not submitting the answer for contract ${contract}.`);
-        // For debugging purposes, we can test the answer before submitting it
         return;
     }
 
     const result = ns.codingcontract.attempt(contractAnswer.toString(), contract.contractName, contract.serverName);
-    if (result) {
+    if (result != null) {
         ns.tprint(result);
     } else {
+        ns.tprint(`[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`);
         ns.alert(`[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`);
     }
 
@@ -42,6 +41,17 @@ export function solveContract(ns, contract) {
         ns.printf(msg);
         ns.tprint(msg);
     }
+}
+
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+    const defaultOptions = ["-h", "--help", "--tail"];
+
+    return [...defaultOptions];
 }
 
 /** @param {NS} ns */

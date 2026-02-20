@@ -7,7 +7,8 @@ import { algorithmicStockTrader4 } from "./contracts/algorithmic_stock_trader_4.
 import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
 import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
 import { findSquareRoot } from "./contracts/square_root.js";
-import { uniquePathsInGrid } from "./contracts/unqiue_paths_grid_1.js";
+import { uniquePathsInGrid1 } from "./contracts/unique_paths_grid_1.js";
+import { uniquePathsInGrid2 } from "./contracts/unique_paths_grid_2.js";
 
 class Contract {
   constructor(serverName, contractName, contractType, scriptPath, scriptCallback) {
@@ -60,9 +61,7 @@ export function analyzeContractsServers(ns) {
   function GetContractScript(contractType) {
     switch (contractType) {
       case ns.enums.CodingContractName.ArrayJumpingGame:
-        // TODO: make sure this works when result is 1 !
-        return { scriptName: "array_jumping_game.js", scriptCallback: nll };
-      // return { scriptName: "array_jumping_game.js", scriptCallback: arrayJumpingGame };
+        return { scriptName: "array_jumping_game.js", scriptCallback: arrayJumpingGame };
       // Stock Trader
       case ns.enums.CodingContractName.AlgorithmicStockTraderI:
         return { scriptName: "algorithmic_stock_trader_1.js", scriptCallback: algorithmicStockTrader1 };
@@ -81,7 +80,9 @@ export function analyzeContractsServers(ns) {
         return { scriptName: "square_root.js", scriptCallback: findSquareRoot };
       // Unique Paths in a Grid
       case ns.enums.CodingContractName.UniquePathsInAGridI:
-        return { scriptName: "unqiue_paths_grid_1.js", scriptCallback: uniquePathsInGrid };
+        return { scriptName: "unique_paths_grid_1.js", scriptCallback: uniquePathsInGrid1 };
+      case ns.enums.CodingContractName.UniquePathsInAGridII:
+        return { scriptName: "unique_paths_grid_2.js", scriptCallback: uniquePathsInGrid2 };
 
       // case ns.enums.CodingContractName.TotalWaysToSum:
       // return { scriptName: "total_ways_to_sum.js", scriptCallback: totalWaysToSum };
@@ -91,14 +92,25 @@ export function analyzeContractsServers(ns) {
   }
 }
 
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+
+  return [...defaultOptions];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([["help", false], ["h", false]]);
   if (args.help || args.h) {
-    ns.tprint("This script helps you find an unsolved coding contract.");
     ns.tprint(`Usage: run ${ns.getScriptName()} `);
-    ns.tprint("Example:");
-    ns.tprint(`> run ${ns.getScriptName()} `);
+    ns.tprint("");
+    ns.tprint("Analyzes coding contracts on all servers");
+
     return;
   }
 
