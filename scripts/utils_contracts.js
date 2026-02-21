@@ -5,6 +5,7 @@ import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.
 import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
 import { algorithmicStockTrader3 } from "./contracts/algorithmic_stock_trader_3.js";
 import { algorithmicStockTrader4 } from "./contracts/algorithmic_stock_trader_4.js";
+import { caesarCipher } from "./contracts/encryption_I_caesarCipher.js";
 import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
 import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
 import { findSquareRoot } from "./contracts/square_root.js";
@@ -48,6 +49,9 @@ export function getContractScript(ns, contractType) {
             return { scriptName: "algorithmic_stock_trader_3.js", scriptCallback: algorithmicStockTrader3 };
         case ns.enums.CodingContractName.AlgorithmicStockTraderIV:
             return { scriptName: "algorithmic_stock_trader_4.js", scriptCallback: algorithmicStockTrader4 };
+
+        case ns.enums.CodingContractName.EncryptionICaesarCipher:
+            return { scriptName: "encryption_I_caesarCipher.js", scriptCallback: caesarCipher };
 
         case ns.enums.CodingContractName.FindLargestPrimeFactor:
             return { scriptName: "largest_prime_factor.js", scriptCallback: findLargestPrimeFactor };
