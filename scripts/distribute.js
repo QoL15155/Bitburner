@@ -20,11 +20,12 @@ function printUsage(ns) {
   ns.tprint("");
   ns.tprint("Arguments");
   ns.tprint("==========");
-  ns.tprint("\t--help : show this help message");
   ns.tprint("\tTARGET_SERVER : specify target server for the script. If not specified, the script will try to find the best target server for money farming.");
+  ns.tprint("\t--free_memory : amount of free memory (GB) to leave on home server.");
+  ns.tprint("\t--help : show this help message");
   ns.tprint("");
   ns.tprint("Example:");
-  ns.tprint(`> run ${ns.getScriptName()} n00dles --kill_all`);
+  ns.tprint(`> run ${ns.getScriptName()} n00dles --limit 25`);
 }
 
 function disableLogs(ns) {
@@ -53,13 +54,14 @@ export function autocomplete(data, args) {
   if (args.some(a => helpOptions.includes(a))) {
     return [];
   }
+  const memoryLimitOptions = ["--free_memory"];
   let servers = data.servers;
 
   if (args.length > 1 && args.some(a => servers.includes(a))) {
     servers = [];
   }
 
-  return [...defaultOptions, ...servers];
+  return [...defaultOptions, ...memoryLimitOptions, ...servers];
 }
 
 /** @param {NS} ns */
@@ -68,12 +70,12 @@ export async function main(ns) {
 
   const args = ns.flags(
     [['help', false], ['h', false],
+    ['free_memory', 0],
     ]);
   if (args.help || args.h) {
     printUsage(ns);
     return;
   }
-  // TODO: argument for limiting amount of ram on home
 
   disableLogs(ns);
 
@@ -84,6 +86,9 @@ export async function main(ns) {
   if (!targetServerName) {
     targetServerName = get_money_server_2(ns, serverList, false);
   }
+
+  // Amount of free memory to leave at home server.
+  const memoryFree = args.free_memory;
 
   const targetServer = {
     name: targetServerName,
@@ -121,11 +126,16 @@ export async function main(ns) {
       return 0;
     }
     const ramUsed = ns.getServerUsedRam(serverName);
-    const ramDiff = serverMaxRam - ramUsed;
+    let ramDiff = serverMaxRam - ramUsed;
+    if (serverName == "home" && memoryFree > 0) {
+      ramDiff -= (memoryFree - ns.getScriptRam(ns.getScriptName()));
+    }
     if (ramDiff < maxRamForScript) {
       ns.printf(`[${fname}] Memory is full. Max Ram: ${serverMaxRam}, Used RAM: ${ramUsed}`);
       return 0;
     }
+
+
     const threads = Math.floor(ramDiff / maxRamForScript);
     ns.printf(`[${fname}] Max Ram: ${serverMaxRam}, Used RAM: ${ramUsed}, Available threads: ${threads}`);
     return threads;
@@ -176,7 +186,7 @@ export async function main(ns) {
         let scriptName = scriptsToDistribute["hack"].scriptName;
         serverInfo[1] = calculateScriptThreads(serverInfo[0], ns.getScriptRam(scriptName));
         if (serverInfo[1] != scriptThreads.hackThreads) {
-          ns.tprint(`[${fname}] Available threads on ${serverInfo[0]} for hack script is different than expected! Available: ${serverInfo[1]}, Expected: ${scriptThreads.hackThreads}.`);
+          ns.tprint(`[${fname}] Available threads on ${serverInfo[0]} for hack script is different than expected. Available: ${serverInfo[1]}, Expected: ${scriptThreads.hackThreads}.`);
         }
         let threadsRun = runScriptOnServer(serverInfo, scriptName, serverInfo[1]);
         scriptThreads.hackThreads -= threadsRun;

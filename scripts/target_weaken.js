@@ -1,4 +1,4 @@
 
 export async function main(ns) {
-    await ns.weaken(targetServer);
+    await ns.weaken(ns.args[0]);
 }
