@@ -26,6 +26,8 @@ export async function main(ns) {
         return;
     }
 
+    ns.disableLog("sleep");
+
     while (true) {
         await ns.hack(targetServer);
         await ns.sleep(Math.random() * 100);

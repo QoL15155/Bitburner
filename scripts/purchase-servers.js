@@ -1,3 +1,5 @@
+import { printError, formatMoney } from "./utils_print.js"
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -20,7 +22,6 @@ export function autocomplete(data, args) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  // How much RAM each purchased server will have. 
   // Sleep time - 1 Minute
   const waitTime = 60000;
   const scriptName = "get_money_now.js";
@@ -42,7 +43,10 @@ export async function main(ns) {
     targetServer = "n00dles";
   }
 
-  const maxRam = ns.getPurchasedServerMaxRam();
+  // How much RAM each purchased server will have. 
+  const maxRam = 8;
+  // const maxRam = ns.getPurchasedServerMaxRam();
+
   ns.tprint(`Maximum RAM for purchased servers: ${maxRam} GB`);
   ns.tprint(`Target server: ${targetServer}`);
 
@@ -50,26 +54,29 @@ export async function main(ns) {
 
   const scriptRam = ns.getScriptRam(scriptName);
   if (scriptRam >= maxRam) {
-    ns.tprint(`Not enough RAM to run ${scriptName} on purchased servers. Required: ${scriptRam}, Purchased Server RAM: ${maxRam}`);
+    printError(ns, `Not enough RAM to run ${scriptName} on purchased servers. Required: ${scriptRam}, Purchased Server RAM: ${maxRam}`);
     return;
   }
   const threads = Math.floor(maxRam / scriptRam);
   if (threads == 0) {
-    ns.tprint(`Not enough RAM to run ${scriptName} on purchased servers. Required: ${scriptRam}, Purchased Server RAM: ${maxRam}, Threads: 0`);
+    printError(ns, `Not enough RAM to run ${scriptName} on purchased servers. Required: ${scriptRam}, Purchased Server RAM: ${maxRam}, Threads: 0`);
     return;
   }
 
   const maxServers = ns.getPurchasedServerLimit();
-  ns.printf("Purchased Server Limit: %d", maxServers);
   const purchasedServers = ns.getPurchasedServers();
-  ns.printf("Purchased servers: %s (%d)", purchasedServers, purchasedServers.length);
+  ns.printf(`Purchased Servers: (${purchasedServers.length}/${maxServers}) : ${purchasedServers}`);
 
   let i = purchasedServers.length;
 
   // Continuously try to purchase servers until we've reached the maximum amount of servers
   while (i < ns.getPurchasedServerLimit()) {
     // Check if we have enough money to purchase a server
-    if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(maxRam)) {
+    const serverCost = ns.getPurchasedServerCost(maxRam);
+    const playerMoney = ns.getServerMoneyAvailable("home");
+    ns.printf(`Server cost: ${formatMoney(serverCost)}, Player money: ${formatMoney(playerMoney)}`);
+
+    if (playerMoney >= serverCost) {
       purchaseServer(i);
       ++i;
     } else {

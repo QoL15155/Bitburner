@@ -1,5 +1,6 @@
-import { getRootAccess, list_servers } from "./utils.js"
-import { get_money_server_2 } from "./money_info.js"
+import { getRootAccess, listServers } from "./utils.js"
+import { getMoneyServer2 } from "./money_info.js"
+import { formatMoney } from "./utils_print.js"
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -70,12 +71,12 @@ export async function main(ns) {
   }
   ns.printf(`[${fname}] Memory script requires: ${progData.scriptMemory}`);
 
-  const serverList = list_servers(ns);
+  const serverList = listServers(ns);
   const myServers = ns.getPurchasedServers();
 
   let targetServerName = args._[0];
   if (!targetServerName) {
-    targetServerName = get_money_server_2(ns, serverList);
+    targetServerName = getMoneyServer2(ns, serverList);
   }
 
   const targetServer = {
@@ -84,7 +85,7 @@ export async function main(ns) {
     minSecurity: ns.getServerMinSecurityLevel(targetServerName)
   }
 
-  print(`[${fname}] Target: ${targetServerName}(Max Money: $${targetServer.maxMoney}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`);
+  print(`[${fname}] Target: ${targetServerName}(Max Money: ${formatMoney(targetServer.maxMoney)}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`);
 
   // Count the number of hacked hosts
   let distributedHosts = 0;
@@ -161,7 +162,7 @@ export async function main(ns) {
 
     ns.printf(`[${fname}] Server: ${serverName}`);
     if (!isMyServer(serverName) && !getRootAccess(ns, serverName)) {
-      ns.tprint(`[${fname}] Failed to get root access to ${serverName}. Skipping...`);
+      ns.printf(`[${fname}] Failed to get root access to ${serverName}`);
       return;
     }
 

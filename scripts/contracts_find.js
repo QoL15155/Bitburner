@@ -1,20 +1,22 @@
-import { list_servers } from "./utils.js"
+import { searchForServerContracts } from "./utils_contracts.js";
+import { print } from "./utils_print.js";
 
 
-export function findContractsInServers(ns) {
-  const servers = list_servers(ns);
-  const interesting_servers = servers.filter(s => ns.ls(s).find(f => f.endsWith("cct")));
+function findContractsInServers(ns) {
+  const serversWithContracts = searchForServerContracts(ns);
 
-  ns.tprint("Interesting servers:");
-  ns.printf("Interesting servers:");
-  interesting_servers.forEach(
-    function (serverName) {
-      const contracts = ns.ls(serverName).filter(f => f.endsWith("cct"))
-      ns.printf(`\t- ${serverName} : ${contracts}`)
-      ns.tprint(`\t- ${serverName} : ${contracts}`)
+  print(ns, "Interesting servers:");
+  serversWithContracts.forEach(
+    function (serverData) {
+      let serverName = serverData.serverName;
+      print(ns, `\t - ${serverName} `)
 
-    }
-  )
+      serverData.contracts.forEach(
+        function (contractName) {
+          print(ns, `\t\t${contractName}`);
+        }
+      )
+    });
 }
 
 /** @param {NS} ns */

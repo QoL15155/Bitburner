@@ -43,3 +43,39 @@ export function print(ns, msg) {
     ns.printf(msg);
     ns.tprint(msg);
 }
+
+
+/** 
+ * Formats money 
+ * 
+ * @param {number} money
+ * @return {string} formatted money
+ */
+export function formatMoney(money) {
+    const quad = 1000000000000;
+    const trillion = 1000000000;
+    const billion = 1000000000;
+    const million = 1000000;
+    const thousand = 1000;
+
+    if (money >= quad) {
+        return `$${(money / quad).toFixed(3)}q`
+    }
+
+    if (money >= trillion) {
+        return `$${(money / trillion).toFixed(3)}t`
+    }
+
+    if (money >= billion) {
+        return `$${(money / billion).toFixed(3)}b`
+    }
+
+    if (money >= million) {
+        return `$${(money / million).toFixed(3)}m`
+    }
+    if (money >= thousand) {
+        return `$${(money / thousand).toFixed(3)}k`
+    }
+
+    return "$" + money;
+}

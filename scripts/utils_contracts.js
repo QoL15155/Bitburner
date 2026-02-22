@@ -1,5 +1,4 @@
-import { list_servers } from "./utils.js"
-
+import { listServers } from "./utils.js"
 import { arrayJumpingGame } from "./contracts/array_jumping_game.js";
 import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.js";
 import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
@@ -14,7 +13,7 @@ import { uniquePathsInGrid2 } from "./contracts/unique_paths_grid_2.js";
 
 
 export function searchForServerContracts(ns) {
-    const listedServers = list_servers(ns);
+    const listedServers = listServers(ns);
 
     let contracts = [];
     listedServers.forEach(server => {
