@@ -3,26 +3,26 @@
 /** Returns a list of child hosts for a given server, 
  * excluding the parent server
  * @param {NS} ns
- * @param {string} server_name
- * @param {string} parent_name
+ * @param {string} serverName
+ * @param {string} parentName Parent of the current server
  * @return {array} list of child hosts
  */
-export function scan_host(ns, server_name, parent_name) {
+export function scan_host(ns, serverName, parentName = "") {
   const fname = "scan_host";
-  let children = ns.scan(server_name);
+  let children = ns.scan(serverName);
 
   // remove parent from list
-  if (parent_name != "") {
-    let idx = children.indexOf(parent_name);
+  if (parentName != "") {
+    let idx = children.indexOf(parentName);
     if (idx != -1) {
       children.splice(idx, 1);
     } else {
-      ns.alert(`[${fname}] ${server_name}: Didn't find parent ${parent_name}`);
+      ns.alert(`[${fname}] ${serverName}: Didn't find parent ${parentName}`);
     }
   }
 
   if (children.length > 0) {
-    ns.printf(`[${fname}] Server: ${server_name}. Hosts: ${children}`);
+    ns.printf(`[${fname}] Server: ${serverName}. Hosts: ${children}`);
   }
 
   return children;
@@ -36,27 +36,26 @@ export function scan_host(ns, server_name, parent_name) {
 export function list_servers(ns) {
 
   /* Scans for children of the current host */
-  function scan_hosts_rec(server_name, parent) {
-    var known_hosts = []
-    if (server_name != "home")
-      known_hosts = known_hosts.concat(server_name);
+  function scanHostsRec(serverName, parent) {
+    let knownHosts = []
+    if (serverName != "home")
+      knownHosts = knownHosts.concat(serverName);
 
-    var children = scan_host(ns, server_name, parent);
-    let len_children = children.length;
-    if (len_children > 0) {
-      for (let i = 0; i < len_children; i++) {
-        let child = children[i];
-        let sub_hosts = scan_hosts_rec(child, server_name);
-        known_hosts = known_hosts.concat(sub_hosts);
+    const children = scan_host(ns, serverName, parent);
+    if (children.length > 0) {
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        const subHosts = scanHostsRec(child, serverName);
+        knownHosts = knownHosts.concat(subHosts);
       }
     }
 
-    ns.printf("<= Finished Scanning %s. Hosts: %d", server_name, known_hosts.length);
-    return known_hosts;
+    ns.printf("<= Finished Scanning %s. Hosts: %d", serverName, knownHosts.length);
+    return knownHosts;
   }
 
   ns.disableLog("scan");
-  const serverList = scan_hosts_rec("home", "");
+  const serverList = scanHostsRec("home", "");
   ns.enableLog("scan");
   return serverList;
 }
@@ -73,11 +72,11 @@ export function list_servers(ns) {
  * @param {string} serverName
  * @return {number} number of threads that can be run on the server
  */
-function canGetRootAccess(ns, server_name) {
+function canGetRootAccess(ns, serverName) {
 
-  const hacked_ports = getAvailablePorts(ns);
-  const requiredPorts = ns.getServerNumPortsRequired(server_name);
-  return hacked_ports >= requiredPorts;
+  const availablePorts = getAvailablePorts(ns);
+  const requiredPorts = ns.getServerNumPortsRequired(serverName);
+  return availablePorts >= requiredPorts;
 
   // Calculates number of ports that can be hacked based on programs installed on the machine
   function getAvailablePorts(ns) {
@@ -100,42 +99,43 @@ function canGetRootAccess(ns, server_name) {
   }
 }
 
-export function getRootAccess(ns, server_name) {
-  if (!canGetRootAccess(ns, server_name)) {
-    ns.printf("[getRootAccess] Can't get root access to %s. Not enough ports can be hacked.", server_name);
+export function getRootAccess(ns, serverName) {
+  if (!canGetRootAccess(ns, serverName)) {
+    ns.printf("[getRootAccess] Can't get root access to %s. Not enough ports can be hacked.", serverName);
     return false;
   }
 
   if (ns.fileExists("BruteSSH.exe", "home"))
-    ns.brutessh(server_name);
+    ns.brutessh(serverName);
   if (ns.fileExists("FTPCrack.exe", "home"))
-    ns.ftpcrack(server_name);
+    ns.ftpcrack(serverName);
   if (ns.fileExists("relaySMTP.exe", "home"))
-    ns.relaysmtp(server_name);
+    ns.relaysmtp(serverName);
   if (ns.fileExists("HTTPWorm.exe", "home"))
-    ns.httpworm(server_name);
+    ns.httpworm(serverName);
   if (ns.fileExists("SQLInject.exe", "home"))
-    ns.sqlinject(server_name);
+    ns.sqlinject(serverName);
 
-  return ns.nuke(server_name);
+  return ns.nuke(serverName);
 }
 
 /** 
  * Checks if server can be hacked based on current hacking level and programs available
+ * 
  * @param {NS} ns 
- * @param {string} server_name
+ * @param {string} serverName
  * @return {boolean} true if server can be hacked, false otherwise
  **/
-export function can_hack_server(ns, server_name) {
+export function canHackServer(ns, serverName) {
 
-  if (!canGetRootAccess(ns, server_name)) {
+  if (!canGetRootAccess(ns, serverName)) {
     return false;
   }
 
   // Required Hacking skill
-  const required_level = ns.getServerRequiredHackingLevel(server_name);
-  if (ns.getHackingLevel() < required_level) {
-    ns.printf("[can_hack_server] Server doesn't meet hacking level requirements: %s - %d", server_name, required_level);
+  const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
+  if (ns.getHackingLevel() < requiredLevel) {
+    ns.printf("[can_hack_server] Server doesn't meet hacking level requirements: %s - %d", serverName, requiredLevel);
     return false;
   }
 
@@ -146,26 +146,26 @@ export function can_hack_server(ns, server_name) {
  * Hacks a server if possible
  * 
  * @param {NS} ns
- * @param {string} server_name
+ * @param {string} serverName
  * @param {boolean} validate
  * @return {boolean} true if server was compromised, false otherwise
  */
-export function hack_server(ns, server_name, validate = true) {
-  if (validate && !can_hack_server(ns, server_name)) {
+export function hackServer(ns, serverName, validate = true) {
+  if (validate && !canHackServer(ns, serverName)) {
     return false;
   }
 
-  return getRootAccess(ns, server_name);
+  return getRootAccess(ns, serverName);
 }
 
 //#endregion Hack Server
 
 /** 
- * Run a command on terminal
+ * Runs a command in terminal
  * 
- * @param {string} command
+ * @param {string} command : command to run in terminal
  */
-export async function run_terminal_command(ns, command) {
+export async function runTerminalCommand(ns, command) {
   // Work around the RAM cost of document
   const doc = eval('document');
   // Acquire a reference to the terminal text field

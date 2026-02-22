@@ -7,17 +7,37 @@ function formatTime(milliseconds) {
 }
 
 export async function collectServerInfo(ns, serverName, showServerObject, showPlayerInformation) {
+    if (!ns.serverExists(serverName)) {
+        ns.tprint(`Server was not found: '${serverName}'`);
+        return;
+    }
     const serverHome = ns.getServer("home");
     const player = ns.getPlayer();
     const serverObject = ns.getServer(serverName);
 
     const maxMoney = ns.getServerMaxMoney(serverName);
     const moneyAvailable = ns.getServerMoneyAvailable(serverName);
-    const moneyPercent = maxMoney > 0 ? (moneyAvailable / maxMoney) * 100 : 0;
-    const moneyMultiplier = maxMoney / Math.max(moneyAvailable, 1);
 
-    const growThreads = ns.growthAnalyze(serverName, moneyMultiplier, serverHome.cpuCores);
-    const growThreads2 = ns.formulas.hacking.growThreads(serverObject, player, maxMoney, serverHome.cpuCores);
+    let moneyObject = {
+        maximum: maxMoney,
+        available: moneyAvailable,
+    };
+    let growthObject = {
+        growth: ns.getServerGrowth(serverName),
+    }
+
+    if (maxMoney > 0) {
+        const moneyPercent = (moneyAvailable / maxMoney) * 100;
+        const moneyMultiplier = maxMoney / Math.max(moneyAvailable, 1);
+        // moneyPercent: moneyPercent.toFixed(2) + "%",
+        moneyObject["moneyPercent"] = moneyPercent + "%";
+        moneyObject["moneyMultiplier"] = moneyMultiplier.toFixed(2);
+
+        const growThreads = ns.growthAnalyze(serverName, moneyMultiplier, serverHome.cpuCores);
+        const growThreads2 = ns.formulas.hacking.growThreads(serverObject, player, maxMoney, serverHome.cpuCores);
+        growthObject["growThreads"] = growThreads;
+        growthObject["growThreadFormula"] = growThreads2;
+    }
 
     const security = {
         base: ns.getServerBaseSecurityLevel(serverName),
@@ -35,20 +55,8 @@ export async function collectServerInfo(ns, serverName, showServerObject, showPl
         hostname: serverName,
         homeCores: serverObject.cpuCores,
 
-        money: {
-            maximum: maxMoney,
-            available: moneyAvailable,
-            // moneyPercent: moneyPercent.toFixed(2) + "%",
-            moneyPercent: moneyPercent + "%",
-            moneyMultiplier: moneyMultiplier.toFixed(2),
-        },
-
-        grow: {
-            growth: ns.getServerGrowth(serverName),
-            growThreads: growThreads,
-            growThreadFormula: growThreads2,
-        },
-
+        money: moneyObject,
+        grow: growthObject,
         securityLevel: security,
 
         executionTimes: {
@@ -126,5 +134,6 @@ export async function main(ns) {
         args.server = true;
         args.player = true;
     }
+
     await collectServerInfo(ns, targetServer, args.server, args.player);
 }

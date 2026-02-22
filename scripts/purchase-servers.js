@@ -69,7 +69,11 @@ export async function main(ns) {
   // Continuously try to purchase servers until we've reached the maximum amount of servers
   while (i < ns.getPurchasedServerLimit()) {
     // Check if we have enough money to purchase a server
-    if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(maxRam)) {
+    const serverCost = ns.getPurchasedServerCost(maxRam);
+    const playerMoney = ns.getServerMoneyAvailable("home");
+    ns.printf(`Server cost: ${serverCost}$, Player money: ${playerMoney}$`);
+
+    if (playerMoney >= serverCost) {
       purchaseServer(i);
       ++i;
     } else {

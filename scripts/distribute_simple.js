@@ -1,5 +1,5 @@
 import { getRootAccess, list_servers } from "./utils.js"
-import { get_money_server_2 } from "./money_info.js"
+import { getMoneyServer2 } from "./money_info.js"
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -75,7 +75,7 @@ export async function main(ns) {
 
   let targetServerName = args._[0];
   if (!targetServerName) {
-    targetServerName = get_money_server_2(ns, serverList);
+    targetServerName = getMoneyServer2(ns, serverList);
   }
 
   const targetServer = {

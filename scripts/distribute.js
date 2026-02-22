@@ -1,5 +1,5 @@
 import { getRootAccess, list_servers } from "./utils.js"
-import { get_money_server_2 } from "./money_info.js"
+import { getMoneyServer2 } from "./money_info.js"
 import { printError, printInfo } from "./utils_print.js"
 
 // Script names to  distribute to servers.
@@ -84,7 +84,7 @@ export async function main(ns) {
 
   let targetServerName = args._[0];
   if (!targetServerName) {
-    targetServerName = get_money_server_2(ns, serverList, false);
+    targetServerName = getMoneyServer2(ns, serverList, false);
   }
 
   // Amount of free memory to leave at home server.
