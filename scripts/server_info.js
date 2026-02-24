@@ -34,9 +34,11 @@ export async function collectServerInfo(ns, serverName, showServerObject, showPl
         moneyObject["moneyMultiplier"] = moneyMultiplier.toFixed(2);
 
         const growThreads = ns.growthAnalyze(serverName, moneyMultiplier, serverHome.cpuCores);
-        const growThreads2 = ns.formulas.hacking.growThreads(serverObject, player, maxMoney, serverHome.cpuCores);
         growthObject["growThreads"] = growThreads;
-        growthObject["growThreadFormula"] = growThreads2;
+        if (ns.fileExists("Formulas.exe", "home")) {
+            const growThreads2 = ns.formulas.hacking.growThreads(serverObject, player, maxMoney, serverHome.cpuCores);
+            growthObject["growThreadFormula"] = growThreads2;
+        }
     }
 
     const security = {

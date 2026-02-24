@@ -37,7 +37,6 @@ export function algorithmicStockTrader1(stockPricesByDay) {
 }
 
 
-
 /** @param {NS} ns */
 export async function main(ns) {
     test();

@@ -135,7 +135,7 @@ export function canHackServer(ns, serverName) {
   // Required Hacking skill
   const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
   if (ns.getHackingLevel() < requiredLevel) {
-    ns.printf("[can_hack_server] Server doesn't meet hacking level requirements: %s - %d", serverName, requiredLevel);
+    ns.printf("[canHackServer] Server doesn't meet hacking level requirements: %s - %d", serverName, requiredLevel);
     return false;
   }
 

@@ -9,37 +9,44 @@ export function getMoneyServer(ns) {
 
 /** @returns the server with most money */
 export function getMoneyServer2(ns, serverList, isVerbose = true) {
+  const fname = "getMoneyServer";
   let maxMoneyOnServer = 0;
   let bestServer = "";
+
+  ns.disableLog("disableLog");
+  ns.disableLog("enableLog");
+  ns.disableLog("getServerMaxMoney");
+  ns.disableLog("getServerRequiredHackingLevel");
 
   let playerHackingLevel = ns.getHackingLevel();
   if (playerHackingLevel > 1)
     playerHackingLevel = playerHackingLevel / 2;
-  ns.printf("Looking for the most profitable server with hacking level <= %s", playerHackingLevel);
+  ns.printf(`[${fname}] Looking for the most profitable server with hacking level <= ${playerHackingLevel}`);
+
+  serverList.forEach(checkServerMoney);
+
+  if (isVerbose) {
+    printInfo(ns, `Best Server: ${bestServer}. Max money: $${maxMoneyOnServer}`);
+  }
+
+  ns.enableLog("getServerMaxMoney");
+  ns.enableLog("getServerRequiredHackingLevel");
+  return bestServer;
 
   function checkServerMoney(serverName) {
-    let money = ns.getServerMaxMoney(serverName);
-    let requiredLevel = ns.getServerRequiredHackingLevel(serverName);
+    const fname = "checkServerMoney";
+    const money = ns.getServerMaxMoney(serverName);
+    const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
 
-    ns.printf("[%s] Level: %d, Max Money: %d", serverName, requiredLevel, money);
+    ns.printf(`[${fname}] Server(${serverName}, Level: ${requiredLevel}, Max Money: ${money})`);
 
-    if (money > maxMoneyOnServer && (requiredLevel <= playerHackingLevel)
+    if (money > maxMoneyOnServer
+      && (requiredLevel <= playerHackingLevel)
       && canHackServer(ns, serverName)) {
       maxMoneyOnServer = money;
       bestServer = serverName;
     }
   }
-
-  ns.disableLog("getServerMaxMoney");
-  ns.disableLog("getServerRequiredHackingLevel");
-  serverList.forEach(checkServerMoney);
-  ns.enableLog("getServerMaxMoney");
-  ns.enableLog("getServerRequiredHackingLevel");
-
-  if (isVerbose) {
-    printInfo(ns, `Best Server: ${bestServer}. Max money: $${maxMoneyOnServer}`);
-  }
-  return bestServer;
 }
 
 

@@ -34,6 +34,7 @@ function disableLogs(ns) {
   ns.disableLog("getServerNumPortsRequired");
   ns.disableLog("getServerMaxRam");
   ns.disableLog("getServerUsedRam");
+  ns.disableLog("scp");
   ns.disableLog("nuke");
   ns.disableLog("brutessh");
   ns.disableLog("ftpcrack");
@@ -315,6 +316,7 @@ export async function main(ns) {
    * (either not enough RAM or server cannot be hacked).
    */
   function distributeScriptsToServer(serverName) {
+    const fname = "distributeScriptsToServer";
 
     if (!canRunScriptOnServer(serverName)) {
       return 0;
@@ -342,7 +344,9 @@ export async function main(ns) {
 
     // Copy scripts to server
     Object.values(scriptsToDistribute).forEach(script => {
-      ns.scp(script.scriptName, serverName);
+      if (!ns.scp(script.scriptName, serverName)) {
+        ns.printf(`[${fname}] Failed to distribute scripts to server ${script.scriptName} -> ${serverName}`);
+      }
     });
 
     return threads;
