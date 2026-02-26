@@ -1,9 +1,9 @@
-import { canHackServer, list_servers } from "./utils.js"
+import { canHackServer, listServers } from "./utils.js"
 import { printInfo, formatMoney } from "./utils_print.js"
 
 /** @returns the server with most money */
 export function getMoneyServer(ns) {
-  const serverList = list_servers(ns);
+  const serverList = listServers(ns);
   return getMoneyServer2(ns, serverList);
 }
 

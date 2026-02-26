@@ -1,4 +1,4 @@
-import { getRootAccess, list_servers } from "./utils.js"
+import { getRootAccess, listServers } from "./utils.js"
 import { getMoneyServer2 } from "./money_info.js"
 import { printError, printInfo, formatMoney } from "./utils_print.js"
 
@@ -80,7 +80,7 @@ export async function main(ns) {
 
   disableLogs(ns);
 
-  const serverList = list_servers(ns);
+  const serverList = listServers(ns);
   const myServers = ns.getPurchasedServers();
 
   let targetServerName = args._[0];

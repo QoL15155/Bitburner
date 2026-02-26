@@ -1,4 +1,4 @@
-import { scan_host, runTerminalCommand } from "./utils.js"
+import { scanHost, runTerminalCommand } from "./utils.js"
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -59,7 +59,7 @@ function findPath(ns, targetServer) {
       return;
     }
 
-    let children = scan_host(ns, serverName, parent);
+    let children = scanHost(ns, serverName, parent);
     for (let i = 0; i < children.length; i++) {
       let child = children[i];
       findPathRec(child, serverName);

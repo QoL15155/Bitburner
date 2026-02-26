@@ -1,4 +1,4 @@
-import { getRootAccess, list_servers } from "./utils.js"
+import { getRootAccess, listServers } from "./utils.js"
 import { getMoneyServer2 } from "./money_info.js"
 import { formatMoney } from "./utils_print.js"
 
@@ -71,7 +71,7 @@ export async function main(ns) {
   }
   ns.printf(`[${fname}] Memory script requires: ${progData.scriptMemory}`);
 
-  const serverList = list_servers(ns);
+  const serverList = listServers(ns);
   const myServers = ns.getPurchasedServers();
 
   let targetServerName = args._[0];

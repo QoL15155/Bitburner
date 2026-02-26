@@ -1,14 +1,14 @@
 //#region Host Scanning
 
-/** Returns a list of child hosts for a given server, 
- * excluding the parent server
+/** 
+ * Returns a list of child hosts for a given server, excluding the parent server
  * @param {NS} ns
  * @param {string} serverName
  * @param {string} parentName Parent of the current server
  * @return {array} list of child hosts
  */
-export function scan_host(ns, serverName, parentName = "") {
-  const fname = "scan_host";
+export function scanHost(ns, serverName, parentName = "") {
+  const fname = "scanHost";
   let children = ns.scan(serverName);
 
   // remove parent from list
@@ -28,12 +28,13 @@ export function scan_host(ns, serverName, parentName = "") {
   return children;
 }
 
-/** Recursively scans all hosts in the network 
+/** 
+ * Recursively scans all hosts in the network 
  * 
  * @param {NS} ns 
  * @return list of servers in the network
  */
-export function list_servers(ns) {
+export function listServers(ns) {
 
   /* Scans for children of the current host */
   function scanHostsRec(serverName, parent) {
@@ -41,7 +42,7 @@ export function list_servers(ns) {
     if (serverName != "home")
       knownHosts = knownHosts.concat(serverName);
 
-    const children = scan_host(ns, serverName, parent);
+    const children = scanHost(ns, serverName, parent);
     if (children.length > 0) {
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
