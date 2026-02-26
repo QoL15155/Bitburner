@@ -1,3 +1,4 @@
+import { formatMoney } from "./utils_print"
 
 function formatTime(milliseconds) {
     const minutes = Math.floor(milliseconds / 1000 / 60);
@@ -19,8 +20,8 @@ export async function collectServerInfo(ns, serverName, showServerObject, showPl
     const moneyAvailable = ns.getServerMoneyAvailable(serverName);
 
     let moneyObject = {
-        maximum: maxMoney,
-        available: moneyAvailable,
+        maximum: formatMoney(maxMoney),
+        available: formatMoney(moneyAvailable),
     };
     let growthObject = {
         growth: ns.getServerGrowth(serverName),
@@ -83,10 +84,9 @@ export async function collectServerInfo(ns, serverName, showServerObject, showPl
     }
 
 
-    const serverInfoJson = JSON.stringify(serverInfo, null, 2);
     ns.tprint(JSON.stringify(serverInfo, null, 2));
+    return;
 
-    return serverInfoJson;
 }
 
 /**

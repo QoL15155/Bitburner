@@ -1,5 +1,5 @@
 import { canHackServer, list_servers } from "./utils.js"
-import { printInfo } from "./utils_print.js"
+import { printInfo, formatMoney } from "./utils_print.js"
 
 /** @returns the server with most money */
 export function getMoneyServer(ns) {
@@ -26,7 +26,7 @@ export function getMoneyServer2(ns, serverList, isVerbose = true) {
   serverList.forEach(checkServerMoney);
 
   if (isVerbose) {
-    printInfo(ns, `Best Server: ${bestServer}. Max money: $${maxMoneyOnServer}`);
+    printInfo(ns, `Best Server: ${bestServer}. Max money: ${formatMoney(maxMoneyOnServer)}`);
   }
 
   ns.enableLog("getServerMaxMoney");
@@ -38,7 +38,7 @@ export function getMoneyServer2(ns, serverList, isVerbose = true) {
     const money = ns.getServerMaxMoney(serverName);
     const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
 
-    ns.printf(`[${fname}] Server(${serverName}, Level: ${requiredLevel}, Max Money: ${money})`);
+    ns.printf(`[${fname}] Server(${serverName}, Level: ${requiredLevel}, Max Money: ${formatMoney(money)})`);
 
     if (money > maxMoneyOnServer
       && (requiredLevel <= playerHackingLevel)

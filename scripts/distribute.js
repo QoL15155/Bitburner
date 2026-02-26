@@ -1,6 +1,6 @@
 import { getRootAccess, list_servers } from "./utils.js"
 import { getMoneyServer2 } from "./money_info.js"
-import { printError, printInfo } from "./utils_print.js"
+import { printError, printInfo, formatMoney } from "./utils_print.js"
 
 // Script names to  distribute to servers.
 // TODO: validate scripts' RAM
@@ -96,7 +96,7 @@ export async function main(ns) {
     maxMoney: ns.getServerMaxMoney(targetServerName),
     minSecurity: ns.getServerMinSecurityLevel(targetServerName)
   }
-  printInfo(ns, `[${fname}] Target: ${targetServerName}(Max Money: $${targetServer.maxMoney}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`);
+  printInfo(ns, `[${fname}] Target: ${targetServerName}(Max Money: ${formatMoney(targetServer.maxMoney)}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`);
 
   // Maps of server and number of threads
   const distributedServers = findServersToDistribute(serverList);
@@ -356,7 +356,7 @@ export async function main(ns) {
     const fname = "canRunScriptOnServer";
 
     if (!isMyServer(serverName) && !getRootAccess(ns, serverName)) {
-      print(`[${fname}] Failed to get root access to ${serverName}`);
+      ns.printf(`[${fname}] Failed to get root access to ${serverName}`);
       return false;
     }
 
