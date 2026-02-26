@@ -16,10 +16,13 @@ export function solveContract(ns, contract) {
         ns.printf(`[${fname}] Contract Data : ${contractData}`);
     }
 
-    const contractAnswer = contract.scriptCallback(contractData);
+    let contractAnswer = contract.scriptCallback(contractData);
     if (contractAnswer == null) {
         ns.tprint(`Failed to solve contract ${contract}. No answer found.`);
         return;
+    }
+    if (Array.isArray(contractAnswer)) {
+        contractAnswer = JSON.stringify(contractAnswer);
     }
     ns.printf(`[${fname}] Contract Answer: ${contractAnswer} (${typeof (contractAnswer)})`);
 
