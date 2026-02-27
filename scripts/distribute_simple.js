@@ -1,5 +1,5 @@
 import { getRootAccess, listServers } from "./utils.js"
-import { getMoneyServer2 } from "./money_info.js"
+import { getMoneyServer } from "./money_info.js"
 import { formatMoney } from "./utils_print.js"
 
 /**
@@ -76,7 +76,7 @@ export async function main(ns) {
 
   let targetServerName = args._[0];
   if (!targetServerName) {
-    targetServerName = getMoneyServer2(ns, serverList);
+    targetServerName = getMoneyServer(ns, serverList);
   }
 
   const targetServer = {

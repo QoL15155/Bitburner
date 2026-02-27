@@ -1,8 +1,8 @@
 import { getRootAccess, listServers } from "./utils.js"
-import { getMoneyServer2 } from "./money_info.js"
+import { getMoneyServer } from "./money_info.js"
 import { printError, printInfo, formatMoney } from "./utils_print.js"
 
-// Script names to  distribute to servers.
+// Script names to distribute to servers.
 // TODO: validate scripts' RAM
 // printError(ns, `[${fname}] Memory required for the script has changed! ${progData.maxMemoryForScript} GB`);
 const scriptsToDistribute = {
@@ -85,7 +85,7 @@ export async function main(ns) {
 
   let targetServerName = args._[0];
   if (!targetServerName) {
-    targetServerName = getMoneyServer2(ns, serverList, false);
+    targetServerName = getMoneyServer(ns, serverList, false);
   }
 
   // Amount of free memory to leave at home server.
