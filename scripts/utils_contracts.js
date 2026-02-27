@@ -11,6 +11,7 @@ import { mergeOverlappingIntervals } from "./contracts/merge_overlapping_interva
 import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
 import { uniquePathsInGrid1 } from "./contracts/unique_paths_grid_1.js";
 import { uniquePathsInGrid2 } from "./contracts/unique_paths_grid_2.js";
+import { hammingCodeBinaryToInteger } from "./contracts/hamming_codes_binary_to_integer.js";
 
 
 export function searchForServerContracts(ns) {
@@ -53,6 +54,9 @@ export function getContractScript(ns, contractType) {
 
         case ns.enums.CodingContractName.EncryptionICaesarCipher:
             return { scriptName: "encryption_I_caesarCipher.js", scriptCallback: caesarCipher };
+
+        case ns.enums.CodingContractName.HammingCodesEncodedBinaryToInteger:
+            return { scriptName: "hamming_codes_binary_to_integer.js", scriptCallback: hammingCodeBinaryToInteger };
 
         case ns.enums.CodingContractName.FindLargestPrimeFactor:
             return { scriptName: "largest_prime_factor.js", scriptCallback: findLargestPrimeFactor };
