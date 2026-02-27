@@ -1,14 +1,16 @@
 import { canHackServer, listServers } from "./utils.js"
 import { printInfo, formatMoney } from "./utils_print.js"
 
-/** @returns the server with most money */
-export function getMoneyServer(ns) {
-  const serverList = listServers(ns);
-  return getMoneyServer2(ns, serverList);
-}
 
-/** @returns the server with most money */
-export function getMoneyServer2(ns, serverList, isVerbose = true) {
+/** 
+ * Finds the server with the most money that can be hacked by the player
+ * 
+ * @param {NS} ns
+ * @param {string[]} serverList - list of server names
+ * @param {boolean} isVerbose - whether to print the server information to the terminal
+ * @returns the server with most money 
+ */
+export function getMoneyServer(ns, serverList, isVerbose = true) {
   const fname = "getMoneyServer";
   let maxMoneyOnServer = 0;
   let bestServer = "";
@@ -49,7 +51,6 @@ export function getMoneyServer2(ns, serverList, isVerbose = true) {
   }
 }
 
-
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -75,5 +76,7 @@ export async function main(ns) {
     ns.tprint(`> run ${ns.getScriptName()}`);
     return;
   }
-  getMoneyServer(ns);
+
+  const serverList = listServers(ns);
+  getMoneyServer(ns, serverList);
 }
