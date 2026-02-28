@@ -1,4 +1,6 @@
 
+//#region Print Colors
+
 const Color = {
     Reset: "\x1b[0m",
     Bright: "\x1b[1m",
@@ -33,9 +35,22 @@ export function printError(ns, msg) {
     // ns.tail();
 }
 
+export function printWarn(ns, msg) {
+    ns.print(`${Color.FgYellow}${msg}${Color.Reset}`);
+    ns.tprint(`${Color.FgYellow}${msg}${Color.Reset}`);
+}
+
+export function printLogWarn(ns, msg) {
+    ns.print(`${Color.FgYellow}${msg}${Color.Reset}`);
+}
+
 export function printInfo(ns, msg) {
     ns.print(`${Color.FgGreen}${msg}${Color.Reset}`);
     ns.tprint(`${Color.FgGreen}${msg}${Color.Reset}`);
+}
+
+export function printLogInfo(ns, msg) {
+    ns.print(`${Color.FgGreen}${msg}${Color.Reset}`);
 }
 
 /** Prints message both to stdout and log file */
@@ -44,6 +59,36 @@ export function print(ns, msg) {
     ns.tprint(msg);
 }
 
+//#endregion Print Colors
+
+export function doConversion(value) {
+    const quad = 1000000000000;
+    const trillion = 1000000000;
+    const billion = 1000000000;
+    const million = 1000000;
+    const thousand = 1000;
+
+    if (value >= quad) {
+        return `${(value / quad).toFixed(3)}q`
+    }
+
+    if (value >= trillion) {
+        return `${(value / trillion).toFixed(3)}t`
+    }
+
+    if (value >= billion) {
+        return `${(value / billion).toFixed(3)}b`
+    }
+
+    if (value >= million) {
+        return `${(value / million).toFixed(3)}m`
+    }
+    if (value >= thousand) {
+        return `${(value / thousand).toFixed(3)}k`
+    }
+
+    return value.toString();
+}
 
 /** 
  * Formats money 
@@ -52,30 +97,23 @@ export function print(ns, msg) {
  * @return {string} formatted money
  */
 export function formatMoney(money) {
-    const quad = 1000000000000;
-    const trillion = 1000000000;
-    const billion = 1000000000;
-    const million = 1000000;
-    const thousand = 1000;
 
-    if (money >= quad) {
-        return `$${(money / quad).toFixed(3)}q`
+    return "$" + doConversion(money);
+}
+
+
+export function formatTime(seconds) {
+    if (seconds < 60) {
+        return `${seconds.toFixed(2)}s`;
     }
 
-    if (money >= trillion) {
-        return `$${(money / trillion).toFixed(3)}t`
+    if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}m ${remainingSeconds.toFixed(2)}s`;
     }
-
-    if (money >= billion) {
-        return `$${(money / billion).toFixed(3)}b`
-    }
-
-    if (money >= million) {
-        return `$${(money / million).toFixed(3)}m`
-    }
-    if (money >= thousand) {
-        return `$${(money / thousand).toFixed(3)}k`
-    }
-
-    return "$" + money;
+    const hours = Math.floor(seconds / 3600);
+    const remainingMinutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours}h ${remainingMinutes}m ${remainingSeconds.toFixed(2)}s`;
 }
