@@ -1,4 +1,4 @@
-import { printError } from "../utils_print.js";
+import { printError, printLogInfo } from "../utils_print.js";
 
 export const memberNamePrefix = "Keves #";
 export const scriptHackingGang = "./hacking_gang.js";
@@ -9,7 +9,7 @@ export const scriptCombatGang = "./combat_gang.js";
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
 
-//#region Tasks Writing
+//#region Tasks Files
 
 /**
  * Writes gang tasks to a json file for other scripts to use.
@@ -52,9 +52,9 @@ export function readGangTasks(ns, isHackingGang = true) {
     return tasks;
 }
 
-//#endregion Tasks Writing
+//#endregion Tasks Files
 
-//#region Gang Member Finder
+//#region Member Finder
 
 // Hacking Level
 export function findMemberLowestHackingLevel(ns, memberNames) {
@@ -73,6 +73,7 @@ export function findMemberHighestHackingLevel(ns, memberNames) {
     return bestMember;
 }
 
+// Wanted level
 export function findMemberHighestWantedLevel(ns, memberNames) {
     const members = memberNames.map(memberName => ns.gang.getMemberInformation(memberName));
     const bestMember = members.reduce((prev, current) => {
@@ -82,4 +83,5 @@ export function findMemberHighestWantedLevel(ns, memberNames) {
     return bestMember;
 }
 
-//#endregion Gang Member Finder
+//#endregion Member Finder
+
