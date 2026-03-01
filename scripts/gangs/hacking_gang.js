@@ -18,7 +18,6 @@ import { memberNamePrefix, readGangTasks,
  */
 
 
-
 /* Constants */
 
 const recuitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
@@ -279,7 +278,7 @@ function raiseMoneyGain(ns) {
         return;
     }
 
-    // No member can be assigned to a better money task. 
+    // No member can be assigned to a better money task - swap ethical with lowest hacking-level member
     const worstWorkingMember = findMemberLowestHackingLevel(ns, membersWorking);
     const bestEthicalMember = findMemberHighestHackingLevel(ns, membersEthical);
     if (worstWorkingMember.hack < bestEthicalMember.hack) {
@@ -337,28 +336,30 @@ function tryUpgradeWorkingMemberMoney(ns) {
     const members = membersWorking.map(memberName => ns.gang.getMemberInformation(memberName));
 
     let lowestGainingMember = null;
-    let memberTaskIdx = ascendingTasksByMoneyGain.length - 1;
+    let maxTaskIdx = ascendingTasksByMoneyGain.length - 1;
+
+    // ns.printf(ascendingTasksByMoneyGain.map(task => `${task.name} (base money: ${task.baseMoney}, base wanted: ${task.baseWanted})`).join("\n"));
 
     for (let member of members) {
-        let taskIndex = ascendingTasksByMoneyGain.findIndex(task => task.name === member.task);
+        const taskIndex = ascendingTasksByMoneyGain.findIndex(task => task.name === member.task);
 
         if (taskIndex === -1) {
             throw (`[${fname}] Member ${member.name} is doing an unknown task ${member.task}`);
         }
 
-        if (taskIndex < memberTaskIdx) {
-            memberTaskIdx = taskIndex;
+        if (taskIndex < maxTaskIdx) {
+            maxTaskIdx = taskIndex;
             lowestGainingMember = member;
         }
     }
 
-    if (!lowestGainingMember) {
+    if (lowestGainingMember == null) {
         return false;
     }
 
     // Update the member with the best money gain task
-    const currentTask = ascendingTasksByMoneyGain[memberTaskIdx];
-    const nextTask = ascendingTasksByMoneyGain[memberTaskIdx + 1];
+    const currentTask = ascendingTasksByMoneyGain[maxTaskIdx];
+    const nextTask = ascendingTasksByMoneyGain[maxTaskIdx + 1];
     ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
     ns.printf(`[${fname}] Previous Task: '${currentTask.name}' base money: ${currentTask.baseMoney}. New task base money: ${nextTask.baseMoney}`);
     return true;
@@ -475,6 +476,12 @@ export async function main(ns) {
         sortMemberByTask(ns, memberName);
     }
 
+   let message = `Initial Members: - `;
+   message += `\nTraining (${membersTraining.length}): ${membersTraining.join(", ")}\n`;
+   message += `Ethical (${membersEthical.length}): ${membersEthical.join(", ")}\n`;
+   message += `Working (${membersWorking.length}): ${membersWorking.join(", ")}`;
+   ns.printf(message);
+
     // False when maximum number of member has been recruited. True otherwise.
     let canRecruit = true;
 
@@ -485,7 +492,7 @@ export async function main(ns) {
         if (canRecruit) {
             recruitNewMembers(ns);
 
-            // Check if can ascend members 
+            // Check if should wait to ascend members 
             const gangInformation = ns.gang.getGangInformation();
             if (gangInformation.respectForNextRecruit !== Infinity) {
                 shouldWaitAscend = shouldWaitForRespect(ns, gangInformation);
