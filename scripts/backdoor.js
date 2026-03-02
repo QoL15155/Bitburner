@@ -57,7 +57,8 @@ export async function main(ns) {
   }
 }
 
-/** Backdoors a server if possible
+/** 
+ * Backdoors a server if possible
  * 
  * @param {NS} ns
  * @param {string} serverName : Server to backdoor
