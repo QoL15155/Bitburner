@@ -1,8 +1,8 @@
 import { printError, printInfo, print, doConversion, formatTime, printLogInfo, printLogWarn, printWarn } from "../utils_print";
-import { memberNamePrefix, readGangTasks, 
+import { memberNamePrefix,  
     findMemberHighestHackingLevel, findMemberLowestHackingLevel, 
     findMemberHighestWantedLevel } from "./utils";
-import { recuitmentMaxWaitTimeSeconds } from "./constants";
+import { recuitmentMaxWaitTimeSeconds, wantedPenaltyMax } from "./constants";
 
 /** 
  * Utility funciton for *General* gang management.
@@ -138,3 +138,53 @@ function shouldAscendMember(ns, memberName) {
 }
 
 //#endregion Ascend
+
+//#region Wanted Level
+
+export const WantedLevelStatus = {
+    ShouldLower: "Should Lower",
+    Safe : "Safe",
+    CanBeRaise: "Can Be Raise",
+}
+
+function shouldLowerWantedLevel(ns, gangInformation) {
+    const fname = "shouldLowerWantedLevel";
+
+    const wantedGainRatePerSecond = gangInformation.wantedLevelGainRate * 5;
+
+    if (wantedGainRatePerSecond <= 0) {
+        return false;
+    }
+
+    if (gangInformation.wantedPenalty >= wantedPenaltyMax) {
+        printLogWarn(ns, `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum penalty ${wantedPenaltyMax}. Wanted level: ${gangInformation.wantedLevel}, gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec.$`);
+        return true;
+    }
+
+    // // if (gangInformation.wantedLevel > wantedLevelMax) {
+    // //     printLogWarn(ns, `[${fname}] Wanted level ${gangInformation.wantedLevel} has reached the maximum level ${wantedLevelMax}. Penalty: ${gangInformation.wantedPenalty}.`);
+    // //     return true;
+    // // }
+
+    // // if (wantedGainRatePerSecond > wantedGainThreshold) {
+    // //     printLogWarn(ns, `[${fname}] Wanted level gain rate ${wantedGainRatePerSecond.toFixed(3)}/sec has reached the threshold ${wantedGainThreshold}. Penalty: ${gangInformation.wantedPenalty}.`);
+    // //     return true;
+    // }
+    return false;
+}
+
+export function getWantedLevelStatus(ns, gangInformation) {
+    const fname = "getWantedLevelStatus";
+    if (shouldLowerWantedLevel(ns, gangInformation)) {
+        return WantedLevelStatus.ShouldLower;
+    }
+
+    if (gangInformation.wantedLevelGainRate > 0) {
+        return WantedLevelStatus.Safe;
+    }
+
+    // Wanted level gain rate it low
+    return WantedLevelStatus.CanBeRaise;
+}
+
+//#endregion Wanted Level
