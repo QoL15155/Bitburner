@@ -1,4 +1,4 @@
-import { printError, printInfo, print, doConversion, formatTime, printLogInfo, printLogWarn, printWarn } from "../utils_print";
+import { printError, printInfo, print, doConversion, formatTime, printLogInfo, printLogWarn, printWarn } from "/utils/print";
 import {
     readGangTasks,
     findMemberHighestHackingLevel, findMemberLowestHackingLevel,

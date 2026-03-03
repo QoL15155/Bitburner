@@ -30,32 +30,32 @@ const Color = {
 };
 
 export function printError(ns, msg) {
-    const formattedTime = getFormattedTime();
+    const formattedTime = getFormattedCurrentTime();
     ns.print(`${Color.FgRed}[${formattedTime}] ${msg}${Color.Reset}`);
     ns.tprint(`${Color.FgRed}${msg}${Color.Reset}`);
     // ns.tail();
 }
 
 export function printWarn(ns, msg) {
-    const formattedTime = getFormattedTime();
+    const formattedTime = getFormattedCurrentTime();
     ns.print(`${Color.FgYellow}[${formattedTime}] ${msg}${Color.Reset}`);
     ns.tprint(`${Color.FgYellow}${msg}${Color.Reset}`);
 }
 
 export function printLogWarn(ns, msg) {
-    const formattedTime = getFormattedTime();
+    const formattedTime = getFormattedCurrentTime();
     ns.print(`${Color.FgYellow}[${formattedTime}] ${msg}${Color.Reset}`);
 }
 
 export function printInfo(ns, msg) {
-    const formattedTime = getFormattedTime();
+    const formattedTime = getFormattedCurrentTime();
     ns.print(`${Color.FgGreen}[${formattedTime}] ${msg}${Color.Reset}`);
 
     ns.tprint(`${Color.FgGreen}${msg}${Color.Reset}`);
 }
 
 export function printLogInfo(ns, msg) {
-    const formattedTime = getFormattedTime();
+    const formattedTime = getFormattedCurrentTime();
     ns.print(`${Color.FgGreen}[${formattedTime}] ${msg}${Color.Reset}`);
 }
 
@@ -65,7 +65,7 @@ export function print(ns, msg) {
     ns.tprint(msg);
 }
 
-function getFormattedTime() {
+function getFormattedCurrentTime() {
     const dateObj = new Date();
 
     // To make sure the hour always has 2-character-format
@@ -86,14 +86,20 @@ function getFormattedTime() {
 //#endregion Print Colors
 
 export function doConversion(value) {
-    const quad = 1000000000000;
-    const trillion = 1000000000;
-    const billion = 1000000000;
-    const million = 1000000;
     const thousand = 1000;
+    const million = thousand * thousand;
+    const billion = million * thousand;
+    const trillion = billion * thousand;
+    const quadrillion = trillion * thousand;
+    const quintillion = quadrillion * thousand;
+    // const sextillion = quintillion * thousand;
 
-    if (value >= quad) {
-        return `${(value / quad).toFixed(3)}q`
+    if (value >= quintillion) {
+        return `${(value / quintillion).toFixed(3)}Q`
+    }
+
+    if (value >= quadrillion) {
+        return `${(value / quadrillion).toFixed(3)}q`
     }
 
     if (value >= trillion) {

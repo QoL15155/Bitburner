@@ -1,4 +1,4 @@
-import { printError, print } from "../utils_print";
+import { printError, print } from "../utils/print";
 /** 
  * Square Root
  * 

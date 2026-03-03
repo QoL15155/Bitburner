@@ -1,6 +1,6 @@
-import { getRootAccess, listServers } from "./utils.js"
+import { getRootAccess, listServers } from "./utils/servers.js"
 import { getMoneyServer } from "./money_info.js"
-import { printError, printInfo, formatMoney } from "./utils_print.js"
+import { printError, printInfo, formatMoney } from "./utils/print.js"
 
 // Script names to distribute to servers.
 // TODO: validate scripts' RAM

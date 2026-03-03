@@ -1,4 +1,4 @@
-import { hackServer, runTerminalCommand } from "./utils.js"
+import { hackServer, runTerminalCommand } from "./utils/servers"
 import { connectToServer } from "./connect.js"
 
 /**

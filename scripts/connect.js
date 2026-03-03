@@ -1,4 +1,4 @@
-import { scanHost, runTerminalCommand } from "./utils.js"
+import { scanHost, runTerminalCommand } from "./utils/servers.js"
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting

@@ -25,7 +25,7 @@ Examples:
 For more information on the 'rule' of encoding, refer to Wikipedia (https://wikipedia.org/wiki/Hamming_code) or the 3Blue1Brown videos on Hamming Codes. (https://youtube.com/watch?v=X8jsijhllIA)
  */
 
-import { printError } from "../utils_print.js";
+import { printError } from "../utils/print.js";
 
 const Position = {
     Unknown: -1,

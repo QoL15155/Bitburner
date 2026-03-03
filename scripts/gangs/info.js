@@ -1,4 +1,4 @@
-import { doConversion, print, printInfo } from "../utils_print";
+import { doConversion, print, printInfo } from "/utils/print";
 
 function printTasks(ns) {
     for (let taskName of ns.gang.getTaskNames()) {

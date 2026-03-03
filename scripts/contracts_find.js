@@ -1,5 +1,5 @@
-import { searchForServerContracts } from "./utils_contracts.js";
-import { print } from "./utils_print.js";
+import { searchForServerContracts } from "./utils/contracts.js";
+import { print } from "./utils/print.js";
 
 
 function findContractsInServers(ns) {

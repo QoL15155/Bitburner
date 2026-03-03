@@ -1,5 +1,5 @@
-import { canHackServer, listServers } from "./utils.js"
-import { printInfo, formatMoney } from "./utils_print.js"
+import { canHackServer, listServers } from "./utils/servers.js"
+import { printInfo, formatMoney } from "./utils/print.js"
 
 
 /** 
