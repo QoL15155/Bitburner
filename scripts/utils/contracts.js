@@ -1,17 +1,18 @@
-import { listServers } from "./utils.js"
-import { algorithmicStockTrader1 } from "./contracts/algorithmic_stock_trader_1.js";
-import { algorithmicStockTrader2 } from "./contracts/algorithmic_stock_trader_2.js";
-import { algorithmicStockTrader3 } from "./contracts/algorithmic_stock_trader_3.js";
-import { algorithmicStockTrader4 } from "./contracts/algorithmic_stock_trader_4.js";
-import { arrayJumpingGame } from "./contracts/array_jumping_game.js";
-import { caesarCipher } from "./contracts/encryption_I_caesarCipher.js";
-import { findLargestPrimeFactor } from "./contracts/largest_prime_factor.js";
-import { findSquareRoot } from "./contracts/square_root.js";
-import { mergeOverlappingIntervals } from "./contracts/merge_overlapping_intervals.js";
-import { triangleMinimumPathSum } from "./contracts/minimum_path_sum_triangle.js"
-import { uniquePathsInGrid1 } from "./contracts/unique_paths_grid_1.js";
-import { uniquePathsInGrid2 } from "./contracts/unique_paths_grid_2.js";
-import { hammingCodeBinaryToInteger } from "./contracts/hamming_codes_binary_to_integer.js";
+import { listServers } from "./servers.js"
+
+import { algorithmicStockTrader1 } from "../contracts/algorithmic_stock_trader_1.js";
+import { algorithmicStockTrader2 } from "../contracts/algorithmic_stock_trader_2.js";
+import { algorithmicStockTrader3 } from "../contracts/algorithmic_stock_trader_3.js";
+import { algorithmicStockTrader4 } from "../contracts/algorithmic_stock_trader_4.js";
+import { arrayJumpingGame } from "../contracts/array_jumping_game.js";
+import { caesarCipher } from "../contracts/encryption_I_caesarCipher.js";
+import { findLargestPrimeFactor } from "../contracts/largest_prime_factor.js";
+import { findSquareRoot } from "../contracts/square_root.js";
+import { mergeOverlappingIntervals } from "../contracts/merge_overlapping_intervals.js";
+import { triangleMinimumPathSum } from "../contracts/minimum_path_sum_triangle.js"
+import { uniquePathsInGrid1 } from "../contracts/unique_paths_grid_1.js";
+import { uniquePathsInGrid2 } from "../contracts/unique_paths_grid_2.js";
+import { hammingCodeBinaryToInteger } from "../contracts/hamming_codes_binary_to_integer.js";
 
 
 export function searchForServerContracts(ns) {

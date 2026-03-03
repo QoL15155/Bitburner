@@ -1,4 +1,4 @@
-import { printError, printInfo, print } from "../utils_print";
+import { printError, printInfo, print } from "/utils/print";
 import { memberNamePrefix } from "./utils";
 
 /** @param {NS} ns */

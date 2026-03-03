@@ -1,5 +1,5 @@
 import { writeGangTasks, scriptHackingGang } from "./utils.js";
-import { printInfo} from "utils_print.js";
+import { printInfo} from "utils/print.js";
 
 /** 
  * Script should be called when first joining a gang. 

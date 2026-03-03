@@ -1,6 +1,6 @@
-import { hackServer, runTerminalCommand, listServers } from "./utils.js"
-import { connectToServer } from "./connect.js"
-import { printInfo } from "./utils_print.js";
+import { hackServer, runTerminalCommand, listServers } from "/utils/servers.js";
+import { connectToServer } from "/connect.js"
+import { printInfo } from "/utils/print.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting

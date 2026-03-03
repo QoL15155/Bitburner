@@ -1,4 +1,4 @@
-import { printError, formatMoney } from "./utils_print.js"
+import { printError, formatMoney } from "utils/print.js"
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting

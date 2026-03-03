@@ -1,4 +1,4 @@
-import { printError } from "../utils_print.js";
+import { printError } from "../utils/print.js";
 /**
  * Encryption I: Caesar Cipher
  * 

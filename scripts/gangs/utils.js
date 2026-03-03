@@ -1,4 +1,4 @@
-import { printError, printLogInfo } from "../utils_print.js";
+import { printError, printLogInfo } from "/utils/print.js";
 
 export const memberNamePrefix = "Keves #";
 export const scriptHackingGang = "./hacking_gang.js";

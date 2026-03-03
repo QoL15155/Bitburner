@@ -1,4 +1,4 @@
-import { getContractScript, searchForServerContracts } from "./utils_contracts.js";
+import { getContractScript, searchForServerContracts } from "./utils/contracts.js";
 
 const contractFactionRegex = new RegExp("contract\-[0-9]*\-(.*)\.cct$");
 
