@@ -248,7 +248,6 @@ function performAttack(ns, attackingServers, attackBatch) {
 
   ns.print(`[${fname}] Attacking ${targetName}`);
 
-  // TODO: we still need to put limitation on *home* server RAM usage
   for (const serverName of attackingServers) {
     const serverObject = ns.getServer(serverName);
 
@@ -260,7 +259,7 @@ function performAttack(ns, attackingServers, attackBatch) {
     let ramString = `RAM(required ${formatRam(requiredRam)}, available ${formatRam(availableRam)})`;
     if (requiredRam > availableRam) {
       ns.print(
-        `[${fname}] Cannot attack from ${serverName}. Not enough RAM. ${ramString}`,
+        `[${fname}] Cannot attack from ${serverName} - not enough RAM. ${ramString}`,
       );
       continue;
     }

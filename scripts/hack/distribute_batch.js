@@ -26,18 +26,21 @@ const controllerScript = "/hack/controller_batch.js";
  *
  * @param {NS} ns
  * @param {Array} allServers - list of all servers in the game
- * @returns {Array} servers that can run scripts, sorted by max RAM, descending.
+ * @returns {Array} servers that can run scripts, sorted by CPU cores (secondary max RAM), descending.
  */
 function handleAttackingServers(ns, allServers) {
-  const distributionServers = allServers.filter((s) =>
-    canRunScriptsOnServer(s),
-  );
+  const attackingServers = allServers.filter((s) => canRunScriptsOnServer(s));
 
-  distributionServers.forEach((server) =>
+  attackingServers.forEach((server) =>
     distributeScriptsToServer(ns, server.name),
   );
 
-  return distributionServers.sort((a, b) => getMaxRam(b) - getMaxRam(a));
+  return attackingServers.sort((a, b) => {
+    if (getMaxRam(b) == getMaxRam(a)) {
+      return b.cpuCores - a.cpuCores;
+    }
+    return getMaxRam(b) - getMaxRam(a);
+  });
 
   function canRunScriptsOnServer(server) {
     return (
@@ -52,8 +55,6 @@ function handleAttackingServers(ns, allServers) {
   }
   function getMaxRam(server) {
     return server.name == "home" ? Infinity : server.maxRam;
-    // return server.name == "home"? 0 : server.maxRam;  // FIXME: just for testing
-    // server.maxRam - ns.getServerUsedRam("home") : server.maxRam;
   }
 }
 

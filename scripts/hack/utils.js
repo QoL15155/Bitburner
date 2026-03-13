@@ -108,20 +108,35 @@ export function processGrow(ns, player, cpuCores, targetObject) {
   return threads;
 }
 
-function calculateWeakenThreads(ns, cpuCores, targetObject) {
-  const fname = "calculateWeakenThreads";
-  // FIXME: probably not needed
-  const bogusIncrease = 5;
-
+function getWeakenThreads(cpuCores, targetObject) {
+  const fname = "getWeakenThreads";
   // Amount by which server's security decreases when weakened
   const serverWeakenAmount = 0.05;
+
   let coreBonus = (cpuCores - 1) / 16;
   coreBonus = 1 + coreBonus;
 
-  let threads =
-    (targetObject.hackDifficulty - targetObject.minDifficulty) /
-    (serverWeakenAmount * coreBonus);
-  threads = Math.ceil(threads) + bogusIncrease;
+  const difficultyIncrease =
+    targetObject.hackDifficulty - targetObject.minDifficulty;
+
+  let threads = difficultyIncrease / (serverWeakenAmount * coreBonus);
+  threads = Math.ceil(threads);
+
+  return threads;
+}
+
+/**
+ * Calculates number of threads needed to weaken the server back to minimum difficulty.
+ * Updates the target object accordingly.
+ * Does sanity checks on the received thread count.
+ *
+ * @param {NS} ns - NS object
+ * @param {number} cpuCores - number of CPU cores of the attacking machine
+ * @param {Server} targetObject - the server object to weaken
+ * @returns {number} - number of threads required for the action
+ */
+export function processWeakenSanity(ns, cpuCores, targetObject) {
+  const threads = getWeakenThreads(cpuCores, targetObject);
 
   // Sanity check
   const securityDecrease = ns.weakenAnalyze(threads, cpuCores);
@@ -135,6 +150,7 @@ function calculateWeakenThreads(ns, cpuCores, targetObject) {
     printError(ns, msg);
   }
 
+  targetObject.hackDifficulty = targetObject.minDifficulty;
   return threads;
 }
 
@@ -148,9 +164,9 @@ function calculateWeakenThreads(ns, cpuCores, targetObject) {
  * @returns {number} - number of threads required for the action
  */
 export function processWeaken(ns, cpuCores, targetObject) {
-  const weakenThreads = calculateWeakenThreads(ns, cpuCores, targetObject);
+  const threads = getWeakenThreads(cpuCores, targetObject);
   targetObject.hackDifficulty = targetObject.minDifficulty;
-  return weakenThreads;
+  return threads;
 }
 
 //#endregion HGW
