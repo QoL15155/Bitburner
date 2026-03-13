@@ -15,13 +15,13 @@ import { AttackAction, EnumAttackActionResult } from "./attack_action";
  **/
 export function calculateServerExecutionTimes(ns, targetName) {
   const growTimeMultiplier = 3.2;
-  const weakenTimeMultipier = 4;
+  const weakenTimeMultiplier = 4;
 
   const hackTime = ns.getHackTime(targetName);
-  const growTime = hackTime * growTimeMultiplier;
-  const weakenTime = hackTime * weakenTimeMultipier;
-  // const growTime = ns.getGrowTime(targetName);
-  // const weakenTime = ns.getWeakenTime(targetName);
+  // const growTime = hackTime * growTimeMultiplier;
+  // const weakenTime = hackTime * weakenTimeMultiplier;
+  const growTime = ns.getGrowTime(targetName);
+  const weakenTime = ns.getWeakenTime(targetName);
 
   return {
     hack: hackTime,
@@ -54,27 +54,23 @@ export const distributionScripts = {
 
 export function processHack(ns, targetObject) {
   const fname = "processHack";
-  const hostname = targetObject.hostname;
+  const targetName = targetObject.hostname;
 
   if (targetObject.hackDifficulty != targetObject.minDifficulty) {
     printWarn(
       ns,
-      `[${fname}] Server ${hostname} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`,
+      `[${fname}] Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`,
     );
+    throw `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
   }
 
-  const threads = ns.hackAnalyzeThreads(
-    targetObject.hostname,
-    targetObject.moneyMax,
-  );
-  const securityIncrease = ns.hackAnalyzeSecurity(
-    threads,
-    targetObject.hostname,
-  );
+  let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
+  threads = Math.ceil(threads);
+  const securityIncrease = ns.hackAnalyzeSecurity(threads, targetName);
 
   targetObject.moneyAvailable = 0;
   targetObject.hackDifficulty += securityIncrease;
-  return Math.ceil(threads);
+  return threads;
 }
 
 /**
@@ -89,49 +85,56 @@ export function processHack(ns, targetObject) {
  */
 export function processGrow(ns, player, cpuCores, targetObject) {
   targetObject.moneyAvailable = 0;
-  const growThreads = ns.formulas.hacking.growThreads(
+
+  let threads = ns.formulas.hacking.growThreads(
     targetObject,
     player,
     targetObject.moneyMax,
     cpuCores,
   );
+  threads = Math.ceil(threads);
+
+  if (threads == 0) {
+    return threads;
+  }
 
   const securityIncrease = ns.growthAnalyzeSecurity(
-    growThreads,
+    threads,
     targetObject.name,
     cpuCores,
   );
   targetObject.hackDifficulty += securityIncrease;
   targetObject.moneyAvailable = targetObject.moneyMax;
-  return growThreads;
+  return threads;
 }
 
-// FIXME: works for one core. Bad results for several.
 function calculateWeakenThreads(ns, cpuCores, targetObject) {
   const fname = "calculateWeakenThreads";
+  // FIXME: probably not needed
+  const bogusIncrease = 5;
+
+  // Amount by which server's security decreases when weakened
+  const serverWeakenAmount = 0.05;
+  let coreBonus = (cpuCores - 1) / 16;
+  coreBonus = 1 + coreBonus;
 
   let threads =
-    (targetObject.hackDifficulty - targetObject.minDifficulty) / 0.05;
-  // let initialWeakenThreads = (targetObject.hackDifficulty - targetObject.minDifficulty) / (0.05 * cpuCores);
-  // initialWeakenThreads /= cpuCores;
-  threads = Math.ceil(threads);
+    (targetObject.hackDifficulty - targetObject.minDifficulty) /
+    (serverWeakenAmount * coreBonus);
+  threads = Math.ceil(threads) + bogusIncrease;
 
+  // Sanity check
   const securityDecrease = ns.weakenAnalyze(threads, cpuCores);
-  ns.print(
-    `[${fname}] Difficulty: current ${targetObject.hackDifficulty}, min: ${targetObject.minDifficulty}`,
-  );
-
   const newDifficulty = targetObject.hackDifficulty - securityDecrease;
-  let msg = `\tweaken threads: ${threads}, expected security decrease: ${securityDecrease}. New difficulty: ${newDifficulty}`;
   if (
     Math.round(newDifficulty) != targetObject.minDifficulty ||
     newDifficulty > targetObject.minDifficulty
   ) {
-    // if (newDifficulty != targetObject.minDifficulty) {
-    printWarn(ns, msg);
-  } else {
-    ns.print(msg);
+    let msg = `[${fname}] Hack difficulty: ${targetObject.hackDifficulty}, minimum: ${targetObject.minDifficulty}`;
+    msg += `\tweaken threads: ${threads}, expected security decrease: ${securityDecrease}. New difficulty: ${newDifficulty}`;
+    printError(ns, msg);
   }
+
   return threads;
 }
 
@@ -182,23 +185,20 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
 
   if (attackAction.threads <= 0) {
-    ns.print(
-      `[${fname}] Skipping ${attackAction.scriptName}. (${attackAction.threads} threads)`,
-    );
+    const message = `[${fname}] Skipping ${attackAction.scriptName} for '${targetName}' - no threads`;
+    printWarn(ns, message);
     return EnumAttackActionResult.NO_THREADS_NEEDED;
   }
 
-  if (
-    !checkServerAvailableRam(
-      ns,
-      hostname,
-      attackAction.threads,
-      attackAction.scriptRam,
-    )
-  ) {
-    ns.alert(
-      `[${fname}] Not enough RAM. Cannot run script on server ${hostname}. Action: ${attackAction.type}`,
-    );
+  const availableRam = checkServerAvailableRam(
+    ns,
+    hostname,
+    attackAction.threads,
+    attackAction.scriptRam,
+  );
+
+  if (!availableRam) {
+    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}}`);
     return EnumAttackActionResult.NOT_ENOUGH_RAM;
   }
 

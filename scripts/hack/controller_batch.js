@@ -27,32 +27,35 @@ import {
  * [---- grow ----]
  *
  * @param {NS} ns
+ * @param {number} cpuCores
  * @param {AttackBatch} attackBatch
  * @returns {bool} false when target server is already prepped
  */
-export function getPrepParameters(ns, attackBatch) {
+export function getPrepParameters(ns, cpuCores, attackBatch) {
   const fname = "getPrepParameters";
   const targetName = attackBatch.targetName;
   const targetObject = ns.getServer(targetName);
 
   const player = ns.getPlayer();
+  // FIXME: do we need ALL execution times here? we only need weaken
   const executionTimes = calculateServerExecutionTimes(ns, targetName);
 
   // Must run BEFORE process Weaken. Updates targetObject security level
-  const growThreads = processGrow(
-    ns,
-    player,
-    attackBatch.cpuCores,
-    targetObject,
-  );
-  const weakenThreads = processWeaken(ns, attackBatch.cpuCores, targetObject);
+  const growThreads = processGrow(ns, player, cpuCores, targetObject);
+  const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   if (weakenThreads == 0 && growThreads == 0) {
     ns.print(`[${fname}] Server is already prepped.`);
     return false;
   }
 
-  attackBatch.setPrepActions(growThreads, weakenThreads, executionTimes);
+  attackBatch.setPrepActions(
+    cpuCores,
+    growThreads,
+    weakenThreads,
+    executionTimes,
+  );
+
   return true;
 }
 
@@ -65,12 +68,12 @@ export function getPrepParameters(ns, attackBatch) {
  * [- hack -]
  *
  * @param {NS} ns
+ * @param {number} cpuCores
  * @param {AttackBatch} attackBatch
  */
-function getAttackParameters(ns, attackBatch) {
+function getAttackParameters(ns, cpuCores, attackBatch) {
   const player = ns.getPlayer();
   const targetObject = ns.getServer(attackBatch.targetName);
-  const cpuCores = attackBatch.cpuCores;
   const executionTimes = calculateServerExecutionTimes(
     ns,
     targetObject.hostname,
@@ -81,6 +84,7 @@ function getAttackParameters(ns, attackBatch) {
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   attackBatch.setAttackActions(
+    cpuCores,
     hackingThreads,
     growThreads,
     weakenThreads,
@@ -92,20 +96,31 @@ function getAttackParameters(ns, attackBatch) {
  * Retrieves attack parameters. (either prep or actual hack)
  *
  * @param {NS} ns
+ * @param {number} cpuCores
  * @param {AttackBatch} attackBatch
  * @returns
  */
-function handleAttackParameters(ns, attackBatch) {
+function handleAttackParameters(ns, cpuCores, attackBatch) {
   const fname = "handleAttackParameters";
 
-  ns.print(`[${fname}] Attacking server ${attackBatch.targetName}`);
-  if (attackBatch.getState() == BatchState.INIT) {
-    const prepResult = getPrepParameters(ns, attackBatch);
-    if (prepResult) return;
+  if (attackBatch.cpuCores == cpuCores) {
+    // Parameters are already set
+    return;
+  }
+
+  if (attackBatch.getState() === BatchState.INIT) {
+    const prepResult = getPrepParameters(ns, cpuCores, attackBatch);
+    if (prepResult) {
+      return;
+    }
+
+    ns.print(
+      `[${fname}] Server is already prepped. Gathering attack parameters`,
+    );
   }
 
   // Server is already prepped
-  getAttackParameters(ns, attackBatch);
+  getAttackParameters(ns, cpuCores, attackBatch);
 }
 
 //#endregion Parameters
@@ -113,7 +128,7 @@ function handleAttackParameters(ns, attackBatch) {
 //#region Sanity Checks
 
 function doSanityTests(ns, attackBatch) {
-  if (attackBatch.getState() !== BatchState.ATTACK_PARAMS) return true;
+  if (attackBatch.getState() === BatchState.INIT) return true;
 
   const result = testScriptsNotRunning(ns, attackBatch);
   if (!result) return false;
@@ -159,6 +174,15 @@ function testTargetServerValues(ns, targetName) {
   return success;
 }
 
+/**
+ * Tests that the attack scripts are not running.
+ *
+ * Resets the attack action pid for the scripts that are not running..
+ *
+ * @param {NS} ns
+ * @param {AttackBatch} attackBatch
+ * @returns {boolean} true if all attack scripts are not running, false otherwise
+ */
 function testScriptsNotRunning(ns, attackBatch) {
   const fname = "testScriptsNotRunning";
   const targetName = attackBatch.targetName;
@@ -175,11 +199,14 @@ function testScriptsNotRunning(ns, attackBatch) {
     }
   });
 
-  if (badScripts.length == 0) return true;
+  if (badScripts.length == 0) {
+    // Success
+    return true;
+  }
 
   printError(
     ns,
-    `[${fname}] ${targetName} scripts are running after expected time: ${badScripts.join(", ")}. Current ${Date.now()}`,
+    `[${fname}] server:${targetName}, state:${attackBatch.getState()}, running scripts: ${badScripts.join(", ")}. Current time: ${Date.now()}`,
   );
   return false;
 }
@@ -188,29 +215,40 @@ function testScriptsNotRunning(ns, attackBatch) {
 
 //#region Attack
 
-/** @type {AttackBatch} */
+/**
+ * Performs an attack on the target server from the attack batch
+ * @param {NS} ns : NS object
+ * @param {Array<string>} attackingServers : list of servers to attack from
+ * @param {AttackBatch} attackBatch : attack parameters
+ */
 function performAttack(ns, attackingServers, attackBatch) {
   const fname = "performAttack";
   const targetName = attackBatch.targetName;
-  // TODO: adjust according to distributing server cpuCores
 
   const timeToWait = attackBatch.getDelayForNextAttack();
-  if (timeToWait != 0) {
+  if (timeToWait < 0)
+    throw `[${fname}] Got invalid attack delay: ${timeToWait} < 0`;
+  if (timeToWait > 0) {
     return timeToWait;
   }
 
-  if (!doSanityTests(ns, attackBatch)) return 0;
-  // throw "Unexpected state before attack";
+  if (!doSanityTests(ns, attackBatch)) {
+    return 0;
+    // throw "Unexpected state before attack";
+  }
 
-  handleAttackParameters(ns, attackBatch);
-  ns.print(`[${fname}] ${attackBatch.toString()}`);
+  attackBatch.reset();
 
-  const requiredRam = attackBatch.getRequiredRam();
+  ns.print(`[${fname}] Attacking ${targetName}`);
 
   // TODO: we still need to put limitation on *home* server RAM usage
   for (const serverName of attackingServers) {
-    // Check available RAM
     const serverObject = ns.getServer(serverName);
+
+    handleAttackParameters(ns, serverObject.cpuCores, attackBatch);
+
+    // Check available RAM
+    const requiredRam = attackBatch.getRequiredRam();
     const availableRam = serverObject.maxRam - serverObject.ramUsed;
     let ramString = `RAM(required ${formatRam(requiredRam)}, available ${formatRam(availableRam)})`;
     if (requiredRam > availableRam) {
@@ -224,6 +262,7 @@ function performAttack(ns, attackingServers, attackBatch) {
       ns,
       `[${fname}] Attacking ${targetName} from ${serverName}. ${ramString}. Time: ${Date.now()}`,
     );
+    ns.print(`[${fname}] ${attackBatch.toString()}`);
 
     attackBatch
       .getActions()
@@ -260,9 +299,10 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   // Pick whichever server scores highest.
   // (For a fully functional batcher, you don't need to do that division)
 
+  // Initialize attack batch for each target server
   let attackList = [];
   targetServers.forEach((targetName) => {
-    const attackBatch = new AttackBatch(ns, 1, targetName, distributionScripts);
+    const attackBatch = new AttackBatch(ns, targetName, distributionScripts);
     attackList.push(attackBatch);
   });
 
@@ -270,34 +310,36 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   while (true) {
     let minTime = Infinity;
     let attackedServers = 0;
+
+    // Perform attack on each target server.
     attackList.forEach((attackBatch) => {
       const duration = performAttack(ns, attackingServers, attackBatch);
-      if (duration < 0) throw `Got an invalid duration ${duration}`;
+      if (duration < 0) {
+        throw `Got an invalid duration ${duration}`;
+      }
       if (duration > 0 && duration < minTime) {
         minTime = duration;
         attackedServers += 1;
       }
     });
 
+    // Log results and wait for the next attack round
+    const message = `Finished Attack-Round ${round} -`;
     if (attackedServers > 0) {
-      printLogInfo(
-        ns,
-        `Finished Attack-Round #${round}. Attacked servers: ${attackedServers}`,
-      );
+      printLogInfo(ns, `${message} Attacked servers: ${attackedServers}`);
       if (minTime == 0) {
         throw "Min Time is 0";
       }
     } else {
       // Bad flow. we shouldn't get here
+      minTime = 0;
       printWarn(
         ns,
-        `Finished Attack-Round #${round}. with no attacked servers.`,
+        `${message} No attacked servers. Sleeping for ${minTime}ms.`,
       );
-      minTime = 600;
     }
 
-    minTime = Math.ceil(minTime) + delayIncrease;
-    // minTime = Math.max(minTime, 600);
+    minTime += delayIncrease;
     await ns.sleep(minTime);
     round++;
   }

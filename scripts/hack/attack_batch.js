@@ -1,6 +1,5 @@
 import { AttackAction } from "/hack/attack_action";
 import { formatTime } from "/utils/formatters";
-import { printLogInfo } from "/utils/print";
 
 export const BatchState = {
   INIT: 0,
@@ -26,30 +25,33 @@ export class AttackBatch {
    * Time to perform the attack / sleep between batched
    * @type {number}
    */
-  #attackDuration;
+  #attackDuration = 0;
   /**
    * End time for the attack
    * @type {number} */
-  #endTime;
+  #endTime = 0;
 
   /** @type {BatchState} */
   #state = BatchState.INIT;
 
   /**
+   * CPU cores available on the attacking server
+   * @type {number}
+   */
+  cpuCores = 0;
+
+  /**
    * Required RAM to run the batch scripts
-   *      0 if not calculated yet (required RAM must be > 0)
    * @type {number}
    */
   #requiredRam = 0;
 
   /**
    * @param {NS} ns
-   * @param {number} cpuCores : on the attacking server
    * @param {string} targetName : server to attack
    */
-  constructor(ns, cpuCores, targetName, distributionScripts) {
+  constructor(ns, targetName, distributionScripts) {
     this.ns = ns;
-    this.cpuCores = cpuCores;
     this.targetName = targetName;
 
     this.#hackAction = new AttackAction(
@@ -64,17 +66,25 @@ export class AttackBatch {
       distributionScripts.weaken.targetScript,
       distributionScripts.weaken.ram,
     );
-
-    // TODO: probably don't need to re-initialize here.
-    this.#state = BatchState.INIT;
-
-    this.#endTime = 0;
   }
 
-  setPrepActions(growThreads, weakenThreads, executionTimes) {
+  reset() {
+    this.#endTime = 0;
+    this.#attackDuration = 0;
+    this.#requiredRam = 0;
+    this.cpuCores = 0;
+
+    this.#hackAction.reset();
+    this.#growAction.reset();
+    this.#weakenAction.reset();
+  }
+
+  setPrepActions(cpuCores, growThreads, weakenThreads, executionTimes) {
     if (this.#state != BatchState.INIT) {
       throw "Already initialized";
     }
+
+    this.cpuCores = cpuCores;
 
     this.#hackAction.threads = 0;
     this.#growAction.threads = growThreads;
@@ -84,22 +94,20 @@ export class AttackBatch {
     this.#growAction.time = executionTimes.grow;
     this.#weakenAction.time = executionTimes.weaken;
 
-    // We assume here that at least one of those params are not 0
-    if (weakenThreads == 0) this.#attackDuration = growThreads;
-    else this.#attackDuration = weakenThreads;
+    this.#attackDuration = weakenThreads;
 
-    // TODO: set required ram
-    this.#requiredRam = 0;
-    this.#state = BatchState.PREP_PARAMS;
-
+    this.#setRequiredRam();
     this.#endTime = 0;
   }
 
-  setAttackActions(hackThreads, growThreads, weakenThreads, executionTimes) {
-    // if (this.#state != BatchState.INIT &&  // Server can come prepped.
-    //     this.#state != BatchState.PREP_PARAMS) {
-    //     throw "Already in got attack parameters";
-    // }
+  setAttackActions(
+    cpuCores,
+    hackThreads,
+    growThreads,
+    weakenThreads,
+    executionTimes,
+  ) {
+    this.cpuCores = cpuCores;
 
     this.#hackAction.threads = hackThreads;
     this.#growAction.threads = growThreads;
@@ -110,46 +118,37 @@ export class AttackBatch {
     this.#weakenAction.time = executionTimes.weaken;
 
     this.#attackDuration = executionTimes.weaken;
-    // TODO: set required ram
-    this.#requiredRam = 0;
-    this.#state = BatchState.ATTACK_PARAMS;
+
+    this.#setRequiredRam();
     this.#endTime = 0;
   }
 
   toString() {
     let description = `Attack Batch. Target Server: ${this.targetName}, cores:${this.cpuCores}, duration: ${formatTime(this.#attackDuration)}\n\t`;
-    if (this.#hackAction && this.#hackAction.threads != 0)
-      description += `Hacking: ${this.#hackAction.threads} threads. `;
 
-    if (this.#growAction && this.#growAction.threads != 0)
+    if (this.#hackAction.threads != 0)
+      description += `Hacking: ${this.#hackAction.threads} threads. `;
+    if (this.#growAction.threads != 0)
       description += `Grow: ${this.#growAction.threads} threads. `;
-    if (this.#weakenAction && this.#weakenAction.threads != 0)
+    if (this.#weakenAction.threads != 0)
       description += `Weaken: ${this.#weakenAction.threads} threads.`;
 
     return description;
   }
 
+  #setRequiredRam() {
+    this.#requiredRam = 0;
+
+    this.#requiredRam += this.#hackAction.getRequiredRam();
+    this.#requiredRam += this.#growAction.getRequiredRam();
+    this.#requiredRam += this.#weakenAction.getRequiredRam();
+  }
+
   getRequiredRam() {
     const fname = "getRequiredRam";
-    if (this.#requiredRam > 0) {
-      // Already calculated
-      return this.#requiredRam;
+    if (this.#requiredRam <= 0) {
+      throw `[${fname}] No action has been specified`;
     }
-
-    this.#requiredRam = 0;
-    if (this.#hackAction) {
-      this.#requiredRam += this.#hackAction.getRequiredRam();
-    }
-
-    if (this.#growAction) {
-      this.#requiredRam += this.#growAction.getRequiredRam();
-    }
-
-    if (this.#weakenAction)
-      this.#requiredRam += this.#weakenAction.getRequiredRam();
-
-    if (this.#requiredRam <= 0) throw `[${fname}] No action has been specified`;
-
     return this.#requiredRam;
   }
 
@@ -168,6 +167,13 @@ export class AttackBatch {
 
   setEndTime() {
     this.#endTime = Date.now() + this.#attackDuration;
+
+    // Advance state
+    if (this.#state == BatchState.INIT) {
+      this.#state = BatchState.PREP_PARAMS;
+    } else if (this.#state == BatchState.PREP_PARAMS) {
+      this.#state = BatchState.ATTACK_PARAMS;
+    }
   }
 
   getAttackDuration() {
@@ -177,9 +183,10 @@ export class AttackBatch {
   getDelayForNextAttack() {
     if (this.#endTime == 0) return 0;
 
-    const now = Date.now() - delayIncrease;
-    if (this.#endTime > now) {
-      return this.#endTime - now;
+    const now = Date.now();
+    const endTime = this.#endTime + delayIncrease;
+    if (endTime > now) {
+      return endTime - now;
     }
 
     return 0;
