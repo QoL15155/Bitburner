@@ -18,10 +18,10 @@ export function calculateServerExecutionTimes(ns, targetName) {
   const weakenTimeMultiplier = 4;
 
   const hackTime = ns.getHackTime(targetName);
-  // const growTime = hackTime * growTimeMultiplier;
-  // const weakenTime = hackTime * weakenTimeMultiplier;
-  const growTime = ns.getGrowTime(targetName);
-  const weakenTime = ns.getWeakenTime(targetName);
+  const growTime = hackTime * growTimeMultiplier;
+  const weakenTime = hackTime * weakenTimeMultiplier;
+  // const growTime = ns.getGrowTime(targetName);
+  // const weakenTime = ns.getWeakenTime(targetName);
 
   return {
     hack: hackTime,

@@ -94,7 +94,7 @@ export class AttackBatch {
     this.#growAction.time = executionTimes.grow;
     this.#weakenAction.time = executionTimes.weaken;
 
-    this.#attackDuration = weakenThreads;
+    this.#attackDuration = executionTimes.weaken;
 
     this.#setRequiredRam();
     this.#endTime = 0;
@@ -177,7 +177,7 @@ export class AttackBatch {
   }
 
   getAttackDuration() {
-    return this.#attackDuration;
+    return this.#attackDuration + delayIncrease;
   }
 
   getDelayForNextAttack() {

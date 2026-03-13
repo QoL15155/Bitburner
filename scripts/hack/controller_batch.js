@@ -5,6 +5,7 @@ import {
   printLogInfo,
   print,
   formatMoney,
+  printLogWarn,
 } from "/utils/print";
 import { formatRam } from "/utils/formatters";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch";
@@ -204,16 +205,22 @@ function testScriptsNotRunning(ns, attackBatch) {
     return true;
   }
 
-  printError(
-    ns,
-    `[${fname}] server:${targetName}, state:${attackBatch.getState()}, running scripts: ${badScripts.join(", ")}. Current time: ${Date.now()}`,
-  );
+  const message = `[${fname}] server:${targetName}, running scripts: ${badScripts.join(", ")}. Current time: ${Date.now()}`;
+  printError(ns, message);
+
   return false;
 }
 
 //#endregion Sanity Checks
 
 //#region Attack
+
+class AttackResult {
+  constructor(success, delayTime) {
+    this.success = success;
+    this.duration = delayTime;
+  }
+}
 
 /**
  * Performs an attack on the target server from the attack batch
@@ -229,11 +236,11 @@ function performAttack(ns, attackingServers, attackBatch) {
   if (timeToWait < 0)
     throw `[${fname}] Got invalid attack delay: ${timeToWait} < 0`;
   if (timeToWait > 0) {
-    return timeToWait;
+    return new AttackResult(false, timeToWait);
   }
 
   if (!doSanityTests(ns, attackBatch)) {
-    return 0;
+    return new AttackResult(false, 0);
     // throw "Unexpected state before attack";
   }
 
@@ -269,7 +276,7 @@ function performAttack(ns, attackingServers, attackBatch) {
       .forEach((action) => runAttackAction(ns, serverName, targetName, action));
 
     attackBatch.setEndTime();
-    return attackBatch.getAttackDuration();
+    return new AttackResult(true, attackBatch.getAttackDuration());
   }
 
   printError(
@@ -277,7 +284,7 @@ function performAttack(ns, attackingServers, attackBatch) {
     `[${fname}] Failed to find server to run attack on ${targetName}`,
   );
 
-  return 0;
+  return new AttackBatchResult(false, 0);
 }
 
 //#endregion Attack
@@ -285,7 +292,6 @@ function performAttack(ns, attackingServers, attackBatch) {
 /**
  * Do batch attack in a loop.
  * For each attack, loop through the list of attacking servers and try to run the attack scripts.
- * If no server has enough RAM, wait for some time and try again.
  *
  * @param {NS} ns
  * @param {Array<string>} attackingServers
@@ -308,17 +314,20 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
 
   let round = 1;
   while (true) {
-    let minTime = Infinity;
+    let sleepTime = Infinity;
     let attackedServers = 0;
 
     // Perform attack on each target server.
     attackList.forEach((attackBatch) => {
-      const duration = performAttack(ns, attackingServers, attackBatch);
-      if (duration < 0) {
+      /** @type {AttackResult} */
+      const result = performAttack(ns, attackingServers, attackBatch);
+      if (result.duration < 0) {
         throw `Got an invalid duration ${duration}`;
       }
-      if (duration > 0 && duration < minTime) {
-        minTime = duration;
+      if (result.duration > 0 && result.duration < sleepTime) {
+        sleepTime = result.duration;
+      }
+      if (result.success) {
         attackedServers += 1;
       }
     });
@@ -327,20 +336,20 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const message = `Finished Attack-Round ${round} -`;
     if (attackedServers > 0) {
       printLogInfo(ns, `${message} Attacked servers: ${attackedServers}`);
-      if (minTime == 0) {
-        throw "Min Time is 0";
+      if (sleepTime == 0) {
+        throw "Sleep Time is 0";
       }
     } else {
       // Bad flow. we shouldn't get here
-      minTime = 0;
+      sleepTime = delayIncrease;
       printWarn(
         ns,
-        `${message} No attacked servers. Sleeping for ${minTime}ms.`,
+        `${message} No attacked servers sleeping for ${sleepTime}ms`,
       );
     }
 
-    minTime += delayIncrease;
-    await ns.sleep(minTime);
+    sleepTime = Math.max(sleepTime, delayIncrease);
+    await ns.sleep(sleepTime);
     round++;
   }
 }
