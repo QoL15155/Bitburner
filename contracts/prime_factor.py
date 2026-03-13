@@ -11,6 +11,7 @@ import argparse
 
 
 def find_largest_prime_factor(n):
+    """Returns the largest prime factor of n."""
     largest_factor = None
     # Check for number of 2s that divide n
     while n % 2 == 0:
@@ -31,6 +32,7 @@ def find_largest_prime_factor(n):
 
 
 def test():
+    """Test cases for find_largest_prime_factor function."""
     assert find_largest_prime_factor(971392119) == 17041967
     assert find_largest_prime_factor(56086774) == 1649611
 

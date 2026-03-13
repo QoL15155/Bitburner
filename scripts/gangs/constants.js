@@ -1,6 +1,6 @@
 /**
  * Constants for Gang management.
- * 
+ *
  * These constants are suitable for both Hacking and Combat gangs.
  */
 

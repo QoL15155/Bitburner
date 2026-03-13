@@ -1,5 +1,5 @@
 import { hackServer, runTerminalCommand, listServers } from "/utils/servers.js";
-import { connectToServer } from "/connect.js"
+import { connectToServer } from "/connect.js";
 import { printInfo } from "/utils/print.js";
 
 /**
@@ -15,8 +15,7 @@ export function autocomplete(data, args) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-
-  const args = ns.flags([['help', false]]);
+  const args = ns.flags([["help", false]]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
     ns.tprint("");
@@ -55,19 +54,23 @@ export async function main(ns) {
     }
   }
 
-  const report = { totalServers:serverList.length, owned: ownedMachinesCount, backdooredNow:backdooredServers, alreadyBackdoored: alreadyBackdoored};
+  const report = {
+    totalServers: serverList.length,
+    owned: ownedMachinesCount,
+    backdooredNow: backdooredServers,
+    alreadyBackdoored: alreadyBackdoored,
+  };
   printInfo(ns, JSON.stringify(report, null, 2));
 }
 
-/** 
+/**
  * Backdoors a server if possible
- * 
+ *
  * @param {NS} ns
  * @param {string} serverName : Server to backdoor
  * @return {boolean} true if backdoored successfully, false otherwise
  */
 async function getBackdoor(ns, serverName) {
-
   let result = hackServer(ns, serverName);
   if (!result) {
     ns.tprint(`Failed to hack ${serverName}`);
