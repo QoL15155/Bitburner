@@ -13,92 +13,95 @@ Assuming you are initially positioned at the start of the array, determine wheth
 Your answer should be submitted as 1 or 0, representing true and false respectively.
  */
 
-
 function jumpingRecursive(jumpingArray, position) {
+  const maxJump = jumpingArray[position];
+  if (position + maxJump >= jumpingArray.length - 1) {
+    return [position];
+  }
 
-    const maxJump = jumpingArray[position];
-    if (position + maxJump >= jumpingArray.length - 1) {
-        return [position];
+  for (let i = 0; i < maxJump; i++) {
+    const result = jumpingRecursive(jumpingArray, position + i + 1);
+    if (result != null) {
+      // add to the beginning of the array
+      result.unshift(position);
+      return result;
     }
-
-    for (let i = 0; i < maxJump; i++) {
-        const result = jumpingRecursive(jumpingArray, position + i + 1);
-        if (result != null) {
-            // add to the beginning of the array
-            result.unshift(position);
-            return result;
-        }
-    }
-    return null;
+  }
+  return null;
 }
 
-/** 
+/**
  * Jumping Array Game
- * 
- * @param {string} jumpingArray - a comma-separated string of integers representing the maximum 
+ *
+ * @param {string} jumpingArray - a comma-separated string of integers representing the maximum
  *          jump lengths at each position.
  * @return {number} 1 if you can jump to the end of the array, 0 otherwise.
  */
 export function arrayJumpingGame(jumpingArray) {
-    // convert to array
-    // jumpingArray = jumpingArray.map(Number);
-    // jumpingArray = jumpingArray.split(",").map(Number);
+  // convert to array
+  // jumpingArray = jumpingArray.map(Number);
+  // jumpingArray = jumpingArray.split(",").map(Number);
 
-    const jumpingPath = jumpingRecursive(jumpingArray, 0);
-    if (jumpingPath != null) {
-        return 1;
-    }
+  const jumpingPath = jumpingRecursive(jumpingArray, 0);
+  if (jumpingPath != null) {
+    return 1;
+  }
 
-    // No jumping path found
-    return 0;
+  // No jumping path found
+  return 0;
 }
-
 
 /** @param {NS} ns */
 export async function main(ns) {
-    const args = ns.flags([["help", false], ["h", false]]);
-    const jumpingArray = args._[0];
-    if (args.help || args.h) {
-        ns.tprint(`> Usage: run ${ns.getScriptName()} [ JUMPING_ARRAY ]`);
-        ns.tprint("");
-        ns.tprint("Array Jumping Game.");
-        ns.tprint(" Determine if you can jump to the end of the array given the maximum jump lengths at each position.");
-        ns.tprint("");
-        ns.tprint("Arguments");
-        ns.tprint("==========");
-        ns.tprint("\tJUMPING_ARRAY : the number to find the largest prime factor of. ");
-        ns.tprint("\tIf not specified, the script will run tests.");
-        return;
+  const args = ns.flags([
+    ["help", false],
+    ["h", false],
+  ]);
+  const jumpingArray = args._[0];
+  if (args.help || args.h) {
+    ns.tprint(`> Usage: run ${ns.getScriptName()} [ JUMPING_ARRAY ]`);
+    ns.tprint("");
+    ns.tprint("Array Jumping Game.");
+    ns.tprint(
+      " Determine if you can jump to the end of the array given the maximum jump lengths at each position.",
+    );
+    ns.tprint("");
+    ns.tprint("Arguments");
+    ns.tprint("==========");
+    ns.tprint(
+      "\tJUMPING_ARRAY : the number to find the largest prime factor of. ",
+    );
+    ns.tprint("\tIf not specified, the script will run tests.");
+    return;
+  }
+
+  if (jumpingArray) {
+    ns.tprint(`Jump Lengths: ${jumpingArray}, type: ${typeof jumpingArray}`);
+    jumpingWrapper(jumpingArray);
+
+    // Run the official solution for the contract
+    const officialResult = arrayJumpingGame(jumpingArray);
+    ns.tprint(`Official Result: ${officialResult}`);
+  } else {
+    test();
+  }
+
+  function test() {
+    const testCase1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10";
+    if (arrayJumpingGame(testCase1) !== 1) {
+      ns.tprint(`Test case 1 failed. Input: ${testCase1}`);
     }
 
-    if (jumpingArray) {
-        ns.tprint(`Jump Lengths: ${jumpingArray}, type: ${typeof (jumpingArray)}`);
-        jumpingWrapper(jumpingArray);
-
-        // Run the official solution for the contract
-        const officialResult = arrayJumpingGame(jumpingArray);
-        ns.tprint(`Official Result: ${officialResult}`);
-    } else {
-        test();
+    const testCase2 = "0,0,9,6";
+    if (arrayJumpingGame(testCase2) !== 0) {
+      ns.tprint(`Test case 2 failed. Input: ${testCase2}`);
     }
+    ns.print("Array Jumping Game tests completed.");
+  }
 
-    function test() {
-        const testCase1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10";
-        if (arrayJumpingGame(testCase1) !== 1) {
-            ns.tprint(`Test case 1 failed. Input: ${testCase1}`);
-        }
-
-        const testCase2 = "0,0,9,6";
-        if (arrayJumpingGame(testCase2) !== 0) {
-            ns.tprint(`Test case 2 failed. Input: ${testCase2}`);
-        }
-        ns.print("Array Jumping Game tests completed.");
-
-    }
-
-    function jumpingWrapper(jumpingArray) {
-        jumpingArray = jumpingArray.split(",").map(Number);
-        const jumpingPath = jumpingRecursive(jumpingArray, 0);
-        ns.tprint(`Jumping Path: ${jumpingPath}`);
-    }
+  function jumpingWrapper(jumpingArray) {
+    jumpingArray = jumpingArray.split(",").map(Number);
+    const jumpingPath = jumpingRecursive(jumpingArray, 0);
+    ns.tprint(`Jumping Path: ${jumpingPath}`);
+  }
 }

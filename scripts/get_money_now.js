@@ -7,7 +7,7 @@ export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   let servers = data.servers;
 
-  if (args.some(a => servers.includes(a))) {
+  if (args.some((a) => servers.includes(a))) {
     servers = [];
   }
 
@@ -16,7 +16,10 @@ export function autocomplete(data, args) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  const args = ns.flags([['help', false], ['h', false]]);
+  const args = ns.flags([
+    ["help", false],
+    ["h", false],
+  ]);
   const targetServer = args._[0];
   if (args.help || args.h || !targetServer) {
     ns.tprint(`USAGE: run ${ns.getScriptName()} SERVER_NAME`);
@@ -24,8 +27,12 @@ export async function main(ns) {
     ns.tprint("This script will attack server for money.");
     ns.tprint("");
     ns.tprint("This script is not recommended for use.");
-    ns.tprint("This script uses 'getServer...' API functions which costs unnecessary RAM");
-    ns.tprint("Use 'get_money_simple.js' instead which is more efficient and has more features.");
+    ns.tprint(
+      "This script uses 'getServer...' API functions which costs unnecessary RAM",
+    );
+    ns.tprint(
+      "Use 'get_money_simple.js' instead which is more efficient and has more features.",
+    );
     ns.tprint("");
     ns.tprint("Arguments:");
     ns.tprint("==========");

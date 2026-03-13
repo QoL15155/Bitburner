@@ -1,5 +1,5 @@
-import { hackServer, runTerminalCommand } from "./utils/servers"
-import { connectToServer } from "./connect.js"
+import { hackServer, runTerminalCommand } from "./utils/servers";
+import { connectToServer } from "./connect.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -9,12 +9,12 @@ import { connectToServer } from "./connect.js"
 export function autocomplete(data, args) {
   const helpOptions = ["-h", "--help"];
   const defaultOptions = helpOptions.concat("--tail");
-  if (args.some(a => helpOptions.includes(a))) {
+  if (args.some((a) => helpOptions.includes(a))) {
     return [];
   }
   let servers = data.servers;
 
-  if (args.length > 1 && args.some(a => servers.includes(a))) {
+  if (args.length > 1 && args.some((a) => servers.includes(a))) {
     servers = [];
   }
 
@@ -23,9 +23,15 @@ export function autocomplete(data, args) {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  const serversToBackdoor = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "powerhouse-fitness"];
+  const serversToBackdoor = [
+    "CSEC",
+    "avmnite-02h",
+    "I.I.I.I",
+    "run4theh111z",
+    "powerhouse-fitness",
+  ];
 
-  const args = ns.flags([['help', false]]);
+  const args = ns.flags([["help", false]]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()} [TARGET_SERVER]`);
     ns.tprint("");
@@ -33,7 +39,9 @@ export async function main(ns) {
     ns.tprint("===============");
     ns.tprint("");
     ns.tprint("The script will backdoor TARGET_SERVER if specified.");
-    ns.tprint("If TARGET_SERVER is not specified, it will backdoor the following servers:");
+    ns.tprint(
+      "If TARGET_SERVER is not specified, it will backdoor the following servers:",
+    );
     for (const server of serversToBackdoor) {
       ns.tprint(`- ${server}`);
     }
@@ -57,15 +65,14 @@ export async function main(ns) {
   }
 }
 
-/** 
+/**
  * Backdoors a server if possible
- * 
+ *
  * @param {NS} ns
  * @param {string} serverName : Server to backdoor
  * @return {boolean} true if backdoored successfully, false otherwise
  */
 async function getBackdoor(ns, serverName) {
-
   let result = hackServer(ns, serverName);
   if (!result) {
     ns.tprint(`Failed to hack ${serverName}`);
