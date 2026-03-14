@@ -72,7 +72,7 @@ export async function main(ns) {
     ns.tprint("==============================");
     ns.tprint("");
     ns.tprint(
-      "Installs a Backdoor on all servers that were not already backdoored.",
+      "Installs a Backdoor on all servers that do not already have a backdoor installed",
     );
     return;
   }
@@ -91,10 +91,10 @@ export async function main(ns) {
     (s) => !s.purchasedByPlayer && !s.backdoorInstalled,
   );
 
-  let backdooredServers = 0;
+  let attackedServers = 0;
   for (let server of targetServers) {
     if (await processBackdoor(ns, server, serverList)) {
-      backdooredServers++;
+      attackedServers++;
     }
   }
 
@@ -102,11 +102,11 @@ export async function main(ns) {
     totalServers: serverList.length,
     owned: serversOwned,
     alreadyBackdoored: serversWithBackdoor,
-    backdooredNow: backdooredServers,
+    backdooredNow: attackedServers,
   };
   printInfo(ns, JSON.stringify(report, null, 2));
 
-  if (backdooredServers > 0) {
+  if (attackedServers > 0) {
     writeServersData(ns, serverList);
     ns.print("Updated servers data file with backdoor information.");
   }

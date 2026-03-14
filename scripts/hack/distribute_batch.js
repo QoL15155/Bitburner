@@ -56,19 +56,20 @@ function handleAttackingServers(ns, allServers) {
   }
 }
 
+/**
+ * Distribute scripts to a server.
+ * Kills all scripts on the server before distributing.
+ */
 function distributeScriptsToServer(ns, serverName) {
-  if (serverName != "home") {
-    ns.killall(serverName);
-    scriptsToDistribute.forEach((script) => {
-      ns.scp(script, serverName);
-    });
-  } else {
-    // Home server - scripts may run in the background
-    // only kill the relevant scripts
-    scriptsToDistribute.forEach((script) => {
-      ns.scriptKill(script, serverName);
-    });
-  }
+  // NOTE: In home server we don't want to kill all the scripts, nor can we kill specific scripts
+  // as we do not know their PIDs. So we just skip killing any scripts on home.
+  if (serverName == "home") return;
+
+  // FIXME: Do we really want to kill ALL scripts?
+  ns.killall(serverName);
+  scriptsToDistribute.forEach((script) => {
+    ns.scp(script, serverName);
+  });
 }
 
 //#endregion Distribution
@@ -83,16 +84,28 @@ function distributeScriptsToServer(ns, serverName) {
  * @returns {boolean} true if any of the scripts to distribute is running on 'home'
  */
 function isHomeRunningScripts(ns) {
-  for (const process of ns.ps()) {
-    if (controllerScriptFormulas.endsWith(process.filename)) {
-      return true;
-    }
+  const processes = ns.ps();
 
-    for (const script in scriptsToDistribute) {
-      if (process.filename.endsWith(script)) return true;
-    }
+  // Check if controller script is running on home
+  const isControllerRunning = processes.some((process) => {
+    return controllerScriptFormulas.endsWith(process.filename);
+  });
+  if (isControllerRunning) {
+    ns.tprint("Controller script is already running on home.");
+    return true;
   }
-  return false;
+
+  const isAttackingScriptRunning = processes.some((process) => {
+    ns.tprint(`Process: ${process.filename} `);
+    return scriptsToDistribute.includes(process.filename);
+  });
+
+  if (isAttackingScriptRunning) {
+    ns.tprint(
+      `Attacking script is already running on home. Wait for it to finish...`,
+    );
+  }
+  return isAttackingScriptRunning;
 }
 
 async function smartDistribution(ns) {
@@ -171,7 +184,6 @@ export async function main(ns) {
 
   if (isHomeRunningScripts(ns)) {
     // TODO: Kill the current script if it is already running?
-    print(ns, `Controller script is already running. Quit`);
     return;
   }
 

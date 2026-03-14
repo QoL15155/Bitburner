@@ -287,7 +287,7 @@ function performAttack(ns, attackingServers, attackBatch) {
     `[${fname}] Failed to find server to run attack on ${targetName}`,
   );
 
-  return new AttackBatchResult(false, 0);
+  return new AttackResult(false, 0);
 }
 
 //#endregion Attack
@@ -325,7 +325,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       /** @type {AttackResult} */
       const result = performAttack(ns, attackingServers, attackBatch);
       if (result.duration < 0) {
-        throw `Got an invalid duration ${duration}`;
+        throw `performAttack returned an invalid duration: ${result.duration}`;
       }
       if (result.duration > 0 && result.duration < sleepTime) {
         sleepTime = result.duration;

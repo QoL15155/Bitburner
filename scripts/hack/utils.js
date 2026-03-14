@@ -131,6 +131,7 @@ function getWeakenThreads(cpuCores, targetObject) {
  * @returns {number} - number of threads required for the action
  */
 export function processWeakenSanity(ns, cpuCores, targetObject) {
+  const fname = "processWeakenSanity";
   const threads = getWeakenThreads(cpuCores, targetObject);
 
   // Sanity check

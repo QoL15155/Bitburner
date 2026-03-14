@@ -42,7 +42,7 @@ import { normalEthicalMembers } from "./constants";
 const trainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 // const trainingTasks = ["Train Hacking", "Train Charisma"];
 // All charisma tasks are also 'hacking tasks'
-// const charismaTasks = ["Phishing", "Identity Theft", "Fraude & Counterfeiting", "Money Laundering", "Cyberterrorism"];
+// const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
 // const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
 const lowerWantedLevelTasks = ["Ethical Hacking", "Vigilante Justice"];
 const territoryTask = "Territory Warfare";
@@ -69,10 +69,21 @@ function wantedLevelGainRateString(gangInformation) {
   return `${gangInformation.wantedLevelGainRate.toFixed(3)}/sec`;
 }
 
-// Priortize respect gain if we can recruit more members
-// Otherwise, prioritize lowering wanted level if the gain is too high.
+/**
+ * Handles the wanted level of the gang.
+ * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
+ * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
+ *
+ * Prioritizes respect gain if we can recruit more members,
+ * otherwise prioritizes lowering wanted level if the gain is too high.
+ *
+ * @param {NS} ns
+ * @param {GangGenInfo} gangInformation
+ * @param {bool} isFocusRespect
+ */
 function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   const fname = "handleWantedLevel";
+  const focusString = isFocusRespect ? "Respect" : "Money";
 
   const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
   const stringWantedLevel = wantedLevelGainRateString(gangInformation);
@@ -84,10 +95,10 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   if (wantedLevelStatus === WantedLevelStatus.ShouldLower) {
     printLogInfo(
       ns,
-      `[${fname}] Lowering wanted level ${stringWantedLevel}. ${isFocusRespect ? "Repect" : "Money"} focus`,
+      `[${fname}] Lowering wanted level ${stringWantedLevel}. ${focusString} focus`,
     );
     if (isFocusRespect) {
-      throw `[${fname}] Wanted level gain rate is too high (${stringWantedLevel}), but we are focusing on respect gain to recruit more members. Cannot lower wanted level without sacrificing respect gain.`;
+      throw `[${fname}] lowerWantedLevelRespectFocus is not implemented yet.`;
     } else {
       lowerWantedLevelMoneyFocus(ns);
     }
@@ -96,11 +107,11 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
 
   printLogInfo(
     ns,
-    `[${fname}] Wanted level gain rate is low (${stringWantedLevel}). Rasing ${isFocusRespect ? "Repect" : "Money"} gain`,
+    `[${fname}] Wanted level gain rate is low (${stringWantedLevel}). Rasing ${focusString} gain`,
   );
   if (isFocusRespect) {
     // Prioritize respect gain if we can recruit more members
-    throw `[${fname}] Wanted level gain is low, but we are focusing on respect gain to recruit more members. Cannot assign better money gain task without sacrificing respect gain.`;
+    throw `[${fname}] raiseRespectGain is not implemented yet.`;
   } else {
     raiseMoneyGain(ns);
   }
@@ -346,7 +357,7 @@ function sortMemberByTask(ns, memberName) {
 }
 
 function arrangeMembersByTask(ns) {
-  // Initizalize lists
+  // Initialize lists
   membersEthical = [];
   membersWorking = [];
   membersTraining = [];
