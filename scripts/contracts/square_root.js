@@ -1,4 +1,4 @@
-import { printError, print } from "../utils/print";
+import { printError, print } from "/utils/print.js";
 /**
  * Square Root
  *

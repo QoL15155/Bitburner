@@ -1,4 +1,5 @@
-import { doConversion, print, printInfo } from "/utils/print";
+import { print, printInfo } from "/utils/print.js";
+import { doConversion } from "/utils/formatters.js";
 
 function printTasks(ns) {
   for (let taskName of ns.gang.getTaskNames()) {

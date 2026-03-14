@@ -2,17 +2,17 @@ import {
   printError,
   printInfo,
   print,
-  doConversion,
   printLogInfo,
   printLogWarn,
   printWarn,
-} from "/utils/print";
+} from "/utils/print.js";
+import { doConversion } from "/utils/formatters.js";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
-} from "./utils";
+} from "./utils.js";
 import {
   recruitGangMembers,
   getRecruitmentStatus,
@@ -20,8 +20,8 @@ import {
   ascendGangMembers,
   getWantedLevelStatus,
   WantedLevelStatus,
-} from "./gang_manage";
-import { normalEthicalMembers } from "./constants";
+} from "/gangs/manage.js";
+import { normalEthicalMembers } from "./constants.js";
 
 /**
  * Algorithm:
@@ -42,7 +42,7 @@ import { normalEthicalMembers } from "./constants";
 const trainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 // const trainingTasks = ["Train Hacking", "Train Charisma"];
 // All charisma tasks are also 'hacking tasks'
-// const charismaTasks = ["Phishing", "Identity Theft", "Fraude & Counterfeiting", "Money Laundering", "Cyberterrorism"];
+// const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
 // const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
 const lowerWantedLevelTasks = ["Ethical Hacking", "Vigilante Justice"];
 const territoryTask = "Territory Warfare";
@@ -69,13 +69,24 @@ function wantedLevelGainRateString(gangInformation) {
   return `${gangInformation.wantedLevelGainRate.toFixed(3)}/sec`;
 }
 
-// Priortize respect gain if we can recruit more members
-// Otherwise, prioritize lowering wanted level if the gain is too high.
+/**
+ * Handles the wanted level of the gang.
+ * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
+ * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
+ *
+ * Prioritizes respect gain if we can recruit more members,
+ * otherwise prioritizes lowering wanted level if the gain is too high.
+ *
+ * @param {NS} ns
+ * @param {GangGenInfo} gangInformation
+ * @param {bool} isFocusRespect
+ */
 function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   const fname = "handleWantedLevel";
+  const focusString = isFocusRespect ? "Respect" : "Money";
 
   const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
-  const stringWantedLevel = wantedLevelGainRateString(gangInformation);
+  const wantedLevelGainRate = wantedLevelGainRateString(gangInformation);
 
   if (wantedLevelStatus === WantedLevelStatus.Safe) {
     return;
@@ -84,10 +95,10 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   if (wantedLevelStatus === WantedLevelStatus.ShouldLower) {
     printLogInfo(
       ns,
-      `[${fname}] Lowering wanted level ${stringWantedLevel}. ${isFocusRespect ? "Repect" : "Money"} focus`,
+      `[${fname}] Lowering wanted level (Gain rate: ${wantedLevelGainRate}). ${focusString} focus`,
     );
     if (isFocusRespect) {
-      throw `[${fname}] Wanted level gain rate is too high (${stringWantedLevel}), but we are focusing on respect gain to recruit more members. Cannot lower wanted level without sacrificing respect gain.`;
+      throw `[${fname}] lowerWantedLevelRespectFocus is not implemented yet.`;
     } else {
       lowerWantedLevelMoneyFocus(ns);
     }
@@ -96,11 +107,11 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
 
   printLogInfo(
     ns,
-    `[${fname}] Wanted level gain rate is low (${stringWantedLevel}). Rasing ${isFocusRespect ? "Repect" : "Money"} gain`,
+    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Raising ${focusString} gain`,
   );
   if (isFocusRespect) {
     // Prioritize respect gain if we can recruit more members
-    throw `[${fname}] Wanted level gain is low, but we are focusing on respect gain to recruit more members. Cannot assign better money gain task without sacrificing respect gain.`;
+    throw `[${fname}] raiseRespectGain is not implemented yet.`;
   } else {
     raiseMoneyGain(ns);
   }
@@ -140,7 +151,7 @@ function lowerWantedLevelMoneyFocus(ns) {
   if (currentTaskIndex === -1) {
     throw `[${fname}] Member ${highestWantedWorker.name} is doing an unknown task ${highestWantedWorker.task}`;
   }
-  if (currentTaskIndex == 0) {
+  if (currentTaskIndex === 0) {
     // Worker's task is already the task with the lowest wanted level, we cannot reduce more the wanted level gain.
     workingMemberToEthical(highestWantedWorker);
     return;
@@ -283,7 +294,7 @@ function tryUpgradeWorkingMemberMoney(ns) {
     }
   }
 
-  if (lowestGainingMember == null) {
+  if (lowestGainingMember === null) {
     return false;
   }
 
@@ -329,14 +340,13 @@ function sortMemberByTask(ns, memberName) {
     membersEthical.push(memberName);
     return;
   }
+
   if (taskName === territoryTask) {
-    if (taskName === "Territory Warfare") {
-      printWarn(
-        ns,
-        `${memberName} - is in a **Hacking Gang** but is doing Territory Warfare. Changing to 'Hacking Training'.`,
-      );
-      ns.gang.setMemberTask(memberName, "Train Hacking");
-    }
+    printWarn(
+      ns,
+      `${memberName} - is in a **Hacking Gang** but is doing Territory Warfare. Changing to 'Hacking Training'.`,
+    );
+    ns.gang.setMemberTask(memberName, "Train Hacking");
     membersTraining.push(memberName);
     return;
   }
@@ -346,7 +356,7 @@ function sortMemberByTask(ns, memberName) {
 }
 
 function arrangeMembersByTask(ns) {
-  // Initizalize lists
+  // Initialize lists
   membersEthical = [];
   membersWorking = [];
   membersTraining = [];
@@ -434,8 +444,6 @@ export function autocomplete(data, args) {
   return [...defaultOptions];
 }
 
-// TODO: sanity - script is not running twice?
-
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([
@@ -448,10 +456,14 @@ export async function main(ns) {
     ns.tprint("Hacking Gang Running Script");
     ns.tprint("=============================");
     ns.tprint("");
-    ns.tprint("This script manages a hacking gang.");
+    ns.tprint("Manages a Hacking Gang members and their tasks.");
     ns.tprint(
-      "It should be run after running the initial gang recruitment script.",
+      "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
     );
+    ns.tprint(
+      "Ran by the initial gang join script when player joins/belongs to a hacking gang.",
+    );
+
     return;
   }
 

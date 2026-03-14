@@ -225,7 +225,7 @@ export async function main(ns) {
 
   const availableContracts = analyzeContractsServers(ns, !isSilent);
   const solvableContracts = availableContracts.filter(
-    (c) => c.scriptCallback != null,
+    (c) => c.scriptCallback !== null,
   );
 
   ns.tprint(

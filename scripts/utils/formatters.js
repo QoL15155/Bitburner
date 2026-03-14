@@ -1,4 +1,63 @@
 /**
+ * Formatting number in a human-readable way.
+ * @param {number} value
+ * @returns {string} Formatted value with suffixes (k, m, b, t, q, Q)
+ */
+export function doConversion(value) {
+  const thousand = 1000;
+  const million = thousand * thousand;
+  const billion = million * thousand;
+  const trillion = billion * thousand;
+  const quadrillion = trillion * thousand;
+  const quintillion = quadrillion * thousand;
+  // const sextillion = quintillion * thousand;
+
+  if (value >= quintillion) {
+    return `${(value / quintillion).toFixed(3)}Q`;
+  }
+
+  if (value >= quadrillion) {
+    return `${(value / quadrillion).toFixed(3)}q`;
+  }
+
+  if (value >= trillion) {
+    return `${(value / trillion).toFixed(3)}t`;
+  }
+
+  if (value >= billion) {
+    return `${(value / billion).toFixed(3)}b`;
+  }
+
+  if (value >= million) {
+    return `${(value / million).toFixed(3)}m`;
+  }
+  if (value >= thousand) {
+    return `${(value / thousand).toFixed(3)}k`;
+  }
+
+  return value.toString();
+}
+
+/**
+ * @param {number} seconds
+ * @returns {string} formatted time in seconds, minutes, hours
+ */
+export function formatTimeSeconds(seconds) {
+  if (seconds < 60) {
+    return `${seconds.toFixed(2)}s`;
+  }
+
+  if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds.toFixed(2)}s`;
+  }
+  const hours = Math.floor(seconds / 3600);
+  const remainingMinutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${hours}h ${remainingMinutes}m ${remainingSeconds.toFixed(2)}s`;
+}
+/**
  * Formats the given time in milliseconds
  *
  * @param {number} milliseconds : time
@@ -27,4 +86,12 @@ export function formatRam(ramGB) {
   if (ramGB < 1000) return `${ramGB.toFixed(3)} GB`;
   let ramTB = ramGB / 1000;
   return `${ramTB.toFixed(3)} TB`;
+}
+
+/**
+ * @param {number} money
+ * @return {string} formatted money
+ */
+export function formatMoney(money) {
+  return "$" + doConversion(money);
 }

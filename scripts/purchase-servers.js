@@ -1,4 +1,5 @@
-import { printError, formatMoney } from "utils/print.js";
+import { printError } from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -64,7 +65,7 @@ export async function main(ns) {
     return;
   }
   const threads = Math.floor(maxRam / scriptRam);
-  if (threads == 0) {
+  if (threads === 0) {
     printError(
       ns,
       `Not enough RAM to run ${scriptName} on purchased servers. Required: ${scriptRam}, Purchased Server RAM: ${maxRam}, Threads: 0`,

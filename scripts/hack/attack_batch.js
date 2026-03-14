@@ -1,5 +1,5 @@
-import { AttackAction } from "/hack/attack_action";
-import { formatTime } from "/utils/formatters";
+import { AttackAction } from "/hack/attack_action.js";
+import { formatTime } from "/utils/formatters.js";
 
 export const BatchState = {
   INIT: 0,
@@ -47,11 +47,10 @@ export class AttackBatch {
   #requiredRam = 0;
 
   /**
-   * @param {NS} ns
    * @param {string} targetName : server to attack
+   * @param {Object} distributionScripts : RAM and script name for the attack scripts
    */
-  constructor(ns, targetName, distributionScripts) {
-    this.ns = ns;
+  constructor(targetName, distributionScripts) {
     this.targetName = targetName;
 
     this.#hackAction = new AttackAction(
@@ -80,7 +79,7 @@ export class AttackBatch {
   }
 
   setPrepActions(cpuCores, growThreads, weakenThreads, executionTimes) {
-    if (this.#state != BatchState.INIT) {
+    if (this.#state !== BatchState.INIT) {
       throw "Already initialized";
     }
 
@@ -126,11 +125,11 @@ export class AttackBatch {
   toString() {
     let description = `Attack Batch. Target Server: ${this.targetName}, cores:${this.cpuCores}, duration: ${formatTime(this.#attackDuration)}\n\t`;
 
-    if (this.#hackAction.threads != 0)
+    if (this.#hackAction.threads !== 0)
       description += `Hacking: ${this.#hackAction.threads} threads. `;
-    if (this.#growAction.threads != 0)
+    if (this.#growAction.threads !== 0)
       description += `Grow: ${this.#growAction.threads} threads. `;
-    if (this.#weakenAction.threads != 0)
+    if (this.#weakenAction.threads !== 0)
       description += `Weaken: ${this.#weakenAction.threads} threads.`;
 
     return description;
@@ -169,9 +168,9 @@ export class AttackBatch {
     this.#endTime = Date.now() + this.#attackDuration;
 
     // Advance state
-    if (this.#state == BatchState.INIT) {
+    if (this.#state === BatchState.INIT) {
       this.#state = BatchState.PREP_PARAMS;
-    } else if (this.#state == BatchState.PREP_PARAMS) {
+    } else if (this.#state === BatchState.PREP_PARAMS) {
       this.#state = BatchState.ATTACK_PARAMS;
     }
   }
@@ -181,7 +180,7 @@ export class AttackBatch {
   }
 
   getDelayForNextAttack() {
-    if (this.#endTime == 0) return 0;
+    if (this.#endTime === 0) return 0;
 
     const now = Date.now();
     const endTime = this.#endTime + delayIncrease;

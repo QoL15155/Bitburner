@@ -1,5 +1,5 @@
-import { printError, printInfo, print } from "/utils/print";
-import { memberNamePrefix } from "./utils";
+import { printError, printInfo, print } from "/utils/print.js";
+import { memberNamePrefix } from "./utils.js";
 
 /** @param {NS} ns */
 export async function main(ns) {

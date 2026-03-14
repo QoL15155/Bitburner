@@ -1,3 +1,4 @@
+import { print } from "/utils/print.js";
 import { analyzeContractsServers } from "./contracts_analyze.js";
 
 // Debug mode flag.
@@ -7,7 +8,7 @@ const debug = false;
 
 export function solveContract(ns, contract) {
   const fname = "solveContract";
-  print(`[${fname}] Solving ${contract}`);
+  print(ns, `[${fname}] Solving ${contract}`);
 
   const contractData = ns.codingcontract.getData(
     contract.contractName,
@@ -38,26 +39,18 @@ export function solveContract(ns, contract) {
     return;
   }
 
-  const result = ns.codingcontract.attempt(
+  const reward = ns.codingcontract.attempt(
     contractAnswer.toString(),
     contract.contractName,
     contract.serverName,
   );
-  if (result != null) {
-    ns.tprint(result);
-  } else {
-    ns.tprint(
-      `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`,
-    );
-    ns.alert(
-      `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`,
-    );
-  }
 
-  /** Prints message both to stdout and log file */
-  function print(msg) {
-    ns.printf(msg);
-    ns.tprint(msg);
+  if (reward) {
+    ns.tprint(reward);
+  } else {
+    const message = `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${reward}`;
+    ns.tprint(message);
+    ns.alert(message);
   }
 }
 
@@ -86,7 +79,7 @@ export async function main(ns) {
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
     ns.tprint("");
-    ns.tpintf("Contract Solver.");
+    ns.tprint("Contract Solver.");
     ns.tprint(
       "Analyzes all coding contracts on all servers and finds the ones that can be solved with existing scripts, then solves them.",
     );
@@ -95,7 +88,7 @@ export async function main(ns) {
 
   const availableContracts = analyzeContractsServers(ns);
   const solvableContracts = availableContracts.filter(
-    (c) => c.scriptCallback != null,
+    (c) => c.scriptCallback !== null,
   );
 
   ns.tprint(

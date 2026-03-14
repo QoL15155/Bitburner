@@ -1,5 +1,5 @@
-import { doConversion, formatMoney, printError } from "/utils/print";
-import { formatTime } from "utils/formatters";
+import { printError } from "/utils/print.js";
+import { doConversion, formatTime, formatMoney } from "/utils/formatters.js";
 
 export async function collectServerInfo(
   ns,
@@ -122,8 +122,8 @@ export async function collectServerInfo(
   if (formulaGrow) {
     const growThreads = serverInfo.grow.growThreads;
     if (
-      Math.ceil(growThreads) != formulaGrow &&
-      Math.floor(growThreads) != formulaGrow
+      Math.ceil(growThreads) !== formulaGrow &&
+      Math.floor(growThreads) !== formulaGrow
     ) {
       printError(
         ns,

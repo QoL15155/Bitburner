@@ -4,11 +4,9 @@ import {
   printInfo,
   printLogInfo,
   print,
-  formatMoney,
-  printLogWarn,
-} from "/utils/print";
-import { formatRam } from "/utils/formatters";
-import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch";
+} from "/utils/print.js";
+import { formatRam, formatMoney } from "/utils/formatters.js";
+import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
   calculateServerExecutionTimes,
   distributionScripts,
@@ -16,7 +14,12 @@ import {
   processWeaken,
   processHack,
   runAttackAction,
-} from "/hack/utils";
+} from "/hack/utils.js";
+
+/**
+ * Controller script for batch attacking.
+ * Uses formulas !
+ */
 
 //#region Parameters
 
@@ -45,7 +48,7 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
   const growThreads = processGrow(ns, player, cpuCores, targetObject);
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
-  if (weakenThreads == 0 && growThreads == 0) {
+  if (weakenThreads === 0 && growThreads === 0) {
     ns.print(`[${fname}] Server is already prepped.`);
     return false;
   }
@@ -104,7 +107,7 @@ function getAttackParameters(ns, cpuCores, attackBatch) {
 function handleAttackParameters(ns, cpuCores, attackBatch) {
   const fname = "handleAttackParameters";
 
-  if (attackBatch.cpuCores == cpuCores) {
+  if (attackBatch.cpuCores === cpuCores) {
     // Parameters are already set
     return;
   }
@@ -146,7 +149,7 @@ function sanitizeServerMaxMoney(ns, serverObject) {
   const moneyMax = formatMoney(serverObject.moneyMax);
   const moneyAvailable = formatMoney(serverObject.moneyAvailable);
   // Due to floating point crap, sometime we get to 99% percent of the max money
-  if (moneyMax == moneyAvailable) return true;
+  if (moneyMax === moneyAvailable) return true;
 
   printError(
     ns,
@@ -161,7 +164,7 @@ function testTargetServerValues(ns, targetName) {
   let success = true;
 
   // Hack difficulty
-  if (hackedObject.hackDifficulty != hackedObject.minDifficulty) {
+  if (hackedObject.hackDifficulty !== hackedObject.minDifficulty) {
     printError(
       ns,
       `[${fname}] Target '${targetName}' with unexpected Hack difficulty: ${hackedObject.hackDifficulty}, expected ${hackedObject.minDifficulty}`,
@@ -191,7 +194,7 @@ function testScriptsNotRunning(ns, attackBatch) {
   let badScripts = [];
 
   attackBatch.getActions().forEach((action) => {
-    if (action.pid == 0) return;
+    if (action.pid === 0) return;
 
     if (ns.isRunning(action.pid, action.hostname, targetName)) {
       badScripts.push(action.scriptName);
@@ -200,7 +203,7 @@ function testScriptsNotRunning(ns, attackBatch) {
     }
   });
 
-  if (badScripts.length == 0) {
+  if (badScripts.length === 0) {
     // Success
     return true;
   }
@@ -283,7 +286,7 @@ function performAttack(ns, attackingServers, attackBatch) {
     `[${fname}] Failed to find server to run attack on ${targetName}`,
   );
 
-  return new AttackBatchResult(false, 0);
+  return new AttackResult(false, 0);
 }
 
 //#endregion Attack
@@ -307,7 +310,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   // Initialize attack batch for each target server
   let attackList = [];
   targetServers.forEach((targetName) => {
-    const attackBatch = new AttackBatch(ns, targetName, distributionScripts);
+    const attackBatch = new AttackBatch(targetName, distributionScripts);
     attackList.push(attackBatch);
   });
 
@@ -321,7 +324,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       /** @type {AttackResult} */
       const result = performAttack(ns, attackingServers, attackBatch);
       if (result.duration < 0) {
-        throw `Got an invalid duration ${duration}`;
+        throw `performAttack returned an invalid duration: ${result.duration}`;
       }
       if (result.duration > 0 && result.duration < sleepTime) {
         sleepTime = result.duration;
@@ -335,7 +338,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const message = `Finished Attack-Round ${round} -`;
     if (attackedServers > 0) {
       printLogInfo(ns, `${message} Attacked servers: ${attackedServers}`);
-      if (sleepTime == 0) {
+      if (sleepTime === 0) {
         throw "Sleep Time is 0";
       }
     } else {
@@ -359,7 +362,7 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
   ]);
-  if (args.help || args.h || args._.length != 2) {
+  if (args.help || args.h || args._.length !== 2) {
     ns.tprint(
       `Usage: run ${ns.getScriptName()} [ATTACKING_SERVERS] [TARGET_SERVERS]`,
     );

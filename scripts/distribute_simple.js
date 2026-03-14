@@ -1,6 +1,6 @@
-import { getRootAccess, listServers } from "./utils/servers.js";
+import { getRootAccess, listServers } from "/utils/servers.js";
 import { getMoneyServer } from "./money_info.js";
-import { formatMoney } from "./utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -36,7 +36,10 @@ export async function main(ns) {
       `Usage: run ${ns.getScriptName()} [TARGET_SERVER] [[--kill_script, -k] | [--kill_all]]`,
     );
     ns.tprint("");
-    ns.tprint("This script will attack server for money.");
+    ns.tprint("Attacks the target server for money.");
+    ns.tprint(
+      "When target server is not specified, finds the best target server for money farming.",
+    );
     ns.tprint("");
     ns.tprint("Arguments");
     ns.tprint("==========");
@@ -77,7 +80,7 @@ export async function main(ns) {
     scriptMemory: ns.getScriptRam(scriptName),
   };
 
-  if (progData.scriptMemory == 0) {
+  if (progData.scriptMemory === 0) {
     ns.tprint(`[${fname}] Failed to read script RAM. ${scriptName}`);
     return;
   }
@@ -120,7 +123,7 @@ export async function main(ns) {
   }
 
   function isMyServer(serverName) {
-    if (serverName == "home" || myServers.indexOf(serverName) != -1) {
+    if (serverName === "home" || myServers.indexOf(serverName) !== -1) {
       return true;
     }
     return false;
@@ -128,7 +131,7 @@ export async function main(ns) {
 
   function calculateScriptThreads(serverName) {
     const ramMax = ns.getServerMaxRam(serverName);
-    if (ramMax == 0) {
+    if (ramMax === 0) {
       // not enough memory
       ns.printf(`[${fname}] has 0 RAM`);
       return 0;
@@ -160,7 +163,7 @@ export async function main(ns) {
 
     // Calculate number of threads
     const threads = calculateScriptThreads(serverName);
-    if (threads == 0) {
+    if (threads === 0) {
       return false;
     }
 
@@ -180,7 +183,7 @@ export async function main(ns) {
       ns.tprint(`[${fname}] Failed to execute script on ${serverName}.`);
       return false;
     }
-    return ppid != 0;
+    return ppid !== 0;
   }
 
   function distributeToServer(serverName) {

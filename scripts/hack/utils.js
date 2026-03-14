@@ -1,11 +1,6 @@
-import {
-  printError,
-  printWarn,
-  printInfo,
-  print,
-  formatMoney,
-} from "/utils/print";
-import { AttackAction, EnumAttackActionResult } from "./attack_action";
+import { printError, printWarn, printInfo, print } from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
+import { AttackAction, EnumAttackActionResult } from "./attack_action.js";
 
 /**
  * Calculates the server execution times
@@ -56,12 +51,10 @@ export function processHack(ns, targetObject) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
-  if (targetObject.hackDifficulty != targetObject.minDifficulty) {
-    printWarn(
-      ns,
-      `[${fname}] Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`,
-    );
-    throw `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
+  if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
+    const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
+    printWarn(ns, `[${fname}] ${message}`);
+    throw message;
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
@@ -94,7 +87,7 @@ export function processGrow(ns, player, cpuCores, targetObject) {
   );
   threads = Math.ceil(threads);
 
-  if (threads == 0) {
+  if (threads === 0) {
     return threads;
   }
 
@@ -136,13 +129,14 @@ function getWeakenThreads(cpuCores, targetObject) {
  * @returns {number} - number of threads required for the action
  */
 export function processWeakenSanity(ns, cpuCores, targetObject) {
+  const fname = "processWeakenSanity";
   const threads = getWeakenThreads(cpuCores, targetObject);
 
   // Sanity check
   const securityDecrease = ns.weakenAnalyze(threads, cpuCores);
   const newDifficulty = targetObject.hackDifficulty - securityDecrease;
   if (
-    Math.round(newDifficulty) != targetObject.minDifficulty ||
+    Math.round(newDifficulty) !== targetObject.minDifficulty ||
     newDifficulty > targetObject.minDifficulty
   ) {
     let msg = `[${fname}] Hack difficulty: ${targetObject.hackDifficulty}, minimum: ${targetObject.minDifficulty}`;

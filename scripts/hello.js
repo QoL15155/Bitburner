@@ -1,9 +1,11 @@
-import { printInfo, printError } from "./utils/print";
-import { exportServersData, runTerminalCommand } from "./utils/servers";
-import { manageGang } from "/gangs/join_gang";
+import { printInfo, printError } from "/utils/print.js";
+import { exportServersData, runTerminalCommand } from "/utils/servers.js";
+import { manageGang } from "/gangs/join_gang.js";
+
+const backdoorScript = "backdoor_all.js";
 
 /**
- * This script is inteneded to be run right after machine reset.
+ * This script is intended to be run right after machine reset.
  *
  * Resets the environment
  * - Exports servers data to a file
@@ -47,4 +49,7 @@ export async function main(ns) {
       ns.ui.openTail();
     }
   }
+
+  ns.tprint("Running backdoor script");
+  ns.run(backdoorScript);
 }

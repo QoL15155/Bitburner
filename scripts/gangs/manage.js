@@ -2,22 +2,24 @@ import {
   printError,
   printInfo,
   print,
-  doConversion,
-  formatTimeSeconds,
   printLogInfo,
   printLogWarn,
   printWarn,
-} from "../utils/print";
+} from "/utils/print.js";
+import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
 import {
   memberNamePrefix,
   findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
-} from "./utils";
-import { recuitmentMaxWaitTimeSeconds, wantedPenaltyMax } from "./constants";
+} from "./utils.js";
+import {
+  recruitmentMaxWaitTimeSeconds,
+  wantedPenaltyMax,
+} from "./constants.js";
 
 /**
- * Utility funciton for *General* gang management.
+ * Utility functions for *General* gang management.
  *
  * Suitable for both Hacking and Combat gangs.
  */
@@ -101,7 +103,7 @@ export function getRecruitmentStatus(ns) {
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
 
-  const shouldWait = timeToNextRecruitSeconds <= recuitmentMaxWaitTimeSeconds;
+  const shouldWait = timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
   if (shouldWait) {
     return RecruitmentStatus.WaitingForRespect;
   }
@@ -158,6 +160,8 @@ function shouldAscendMember(ns, memberName) {
   if (Math.floor(ascensionResult.cha) >= 2) {
     return true;
   }
+
+  return false;
 }
 
 //#endregion Ascend
@@ -170,6 +174,11 @@ export const WantedLevelStatus = {
   CanBeRaise: "Can Be Raise",
 };
 
+/**
+ * @param {NS} ns
+ * @param {GangGenInfo} gangInformation
+ * @returns {bool} true if the gang should focus on lowering wanted level, false otherwise
+ */
 function shouldLowerWantedLevel(ns, gangInformation) {
   const fname = "shouldLowerWantedLevel";
 
@@ -179,10 +188,10 @@ function shouldLowerWantedLevel(ns, gangInformation) {
     return false;
   }
 
-  if (gangInformation.wantedPenalty >= wantedPenaltyMax) {
+  if (gangInformation.wantedPenalty < wantedPenaltyMax) {
     printLogWarn(
       ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum penalty ${wantedPenaltyMax}. Wanted level: ${gangInformation.wantedLevel}, gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec.$`,
+      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, wanted gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec`,
     );
     return true;
   }
@@ -199,6 +208,11 @@ function shouldLowerWantedLevel(ns, gangInformation) {
   return false;
 }
 
+/**
+ * @param {NS} ns
+ * @param {GangGenInfo} gangInformation
+ * @returns {WantedLevelStatus} the wanted level status of the gang: lower/safe/raise
+ */
 export function getWantedLevelStatus(ns, gangInformation) {
   const fname = "getWantedLevelStatus";
   if (shouldLowerWantedLevel(ns, gangInformation)) {

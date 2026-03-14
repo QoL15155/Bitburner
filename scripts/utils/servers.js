@@ -16,9 +16,9 @@ export function scanHost(ns, serverName, parentName = "") {
   let children = ns.scan(serverName);
 
   // remove parent from list
-  if (parentName != "") {
-    let idx = children.indexOf(parentName);
-    if (idx != -1) {
+  if (parentName !== "") {
+    const idx = children.indexOf(parentName);
+    if (idx !== -1) {
       children.splice(idx, 1);
     } else {
       ns.alert(`[${fname}] ${serverName}: Didn't find parent ${parentName}`);
@@ -42,7 +42,7 @@ export function listServers(ns) {
   /* Scans for children of the current host */
   function scanHostsRec(serverName, parent) {
     let knownHosts = [];
-    if (serverName != "home") knownHosts = knownHosts.concat(serverName);
+    if (serverName !== "home") knownHosts = knownHosts.concat(serverName);
 
     const children = scanHost(ns, serverName, parent);
     if (children.length > 0) {
@@ -65,6 +65,10 @@ export function listServers(ns) {
   const serverList = scanHostsRec("home", "");
   ns.enableLog("scan");
   return serverList;
+}
+
+export function writeServersData(ns, serversData) {
+  ns.write(serverDataFile, JSON.stringify(serversData), "w");
 }
 
 export function exportServersData(ns) {
@@ -94,22 +98,19 @@ export function exportServersData(ns) {
   const servers = listServers(ns);
   let serversData = servers.map((server) => getServerData(server));
   serversData.push(getServerData("home"));
-  ns.write(serverDataFile, JSON.stringify(serversData), "w");
+  writeServersData(ns, serversData);
 }
 
 /**
  * Imports server data from the JSON file
  *
  * @param {NS} ns
- * @return {array|null} list of server data or null if file doesn't exist
+ * @return {array} list of server data
+ * @throws if servers data file doesn't exist
  */
 export function importServersData(ns) {
   if (!ns.fileExists(serverDataFile, "home")) {
-    printError(
-      ns,
-      `Servers data file doesn't exist. Please run 'exportServersData' first.`,
-    );
-    return null;
+    throw "Servers data file doesn't exist. Please run startup script first.";
   }
 
   const serversDataRaw = ns.read(serverDataFile);
@@ -186,9 +187,7 @@ export function canHackServer(ns, serverName) {
   const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
   if (ns.getHackingLevel() < requiredLevel) {
     ns.printf(
-      "[canHackServer] Server doesn't meet hacking level requirements: %s - %d",
-      serverName,
-      requiredLevel,
+      `[canHackServer] '${serverName}' doesn't meet hacking level requirements: ${requiredLevel}`,
     );
     return false;
   }

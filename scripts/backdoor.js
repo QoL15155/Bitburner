@@ -1,4 +1,4 @@
-import { hackServer, runTerminalCommand } from "./utils/servers";
+import { hackServer, runTerminalCommand } from "/utils/servers.js";
 import { connectToServer } from "./connect.js";
 
 /**
@@ -66,11 +66,11 @@ export async function main(ns) {
 }
 
 /**
- * Backdoors a server if possible
+ * Runs a backdoor on the server if possible
  *
  * @param {NS} ns
  * @param {string} serverName : Server to backdoor
- * @return {boolean} true if backdoored successfully, false otherwise
+ * @return {boolean} true if backdoor achieved successfully, false otherwise
  */
 async function getBackdoor(ns, serverName) {
   let result = hackServer(ns, serverName);
