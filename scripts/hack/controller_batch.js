@@ -5,9 +5,9 @@ import {
   printLogInfo,
   print,
   printLogWarn,
-} from "/utils/print";
-import { formatRam, formatMoney } from "/utils/formatters";
-import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch";
+} from "/utils/print.js";
+import { formatRam, formatMoney } from "/utils/formatters.js";
+import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
   calculateServerExecutionTimes,
   distributionScripts,
@@ -15,7 +15,7 @@ import {
   processWeaken,
   processHack,
   runAttackAction,
-} from "/hack/utils";
+} from "/hack/utils.js";
 
 /**
  * Controller script for batch attacking.

@@ -1,5 +1,5 @@
-import { AttackAction } from "/hack/attack_action";
-import { formatTime } from "/utils/formatters";
+import { AttackAction } from "/hack/attack_action.js";
+import { formatTime } from "/utils/formatters.js";
 
 export const BatchState = {
   INIT: 0,

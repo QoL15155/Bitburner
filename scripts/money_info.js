@@ -1,6 +1,6 @@
 import { canHackServer, listServers } from "./utils/servers.js";
 import { printInfo } from "/utils/print.js";
-import { formatMoney } from "/utils/formatters";
+import { formatMoney } from "/utils/formatters.js";
 
 /**
  * Finds the server with the most money that can be hacked by the player

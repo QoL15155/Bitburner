@@ -5,14 +5,14 @@ import {
   printLogInfo,
   printLogWarn,
   printWarn,
-} from "/utils/print";
-import { doConversion } from "/utils/formatters";
+} from "/utils/print.js";
+import { doConversion } from "/utils/formatters.js";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
-} from "./utils";
+} from "./utils.js";
 import {
   recruitGangMembers,
   getRecruitmentStatus,
@@ -20,8 +20,8 @@ import {
   ascendGangMembers,
   getWantedLevelStatus,
   WantedLevelStatus,
-} from "/gangs/manage";
-import { normalEthicalMembers } from "./constants";
+} from "/gangs/manage.js";
+import { normalEthicalMembers } from "./constants.js";
 
 /**
  * Algorithm:

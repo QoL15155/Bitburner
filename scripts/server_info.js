@@ -1,5 +1,5 @@
-import { printError } from "/utils/print";
-import { doConversion, formatTime, formatMoney } from "utils/formatters";
+import { printError } from "/utils/print.js";
+import { doConversion, formatTime, formatMoney } from "/utils/formatters.js";
 
 export async function collectServerInfo(
   ns,

@@ -4,9 +4,9 @@ import {
   printInfo,
   printLogInfo,
   print,
-} from "/utils/print";
-import { formatMoney } from "/utils/formatters";
-import { importServersData, canHackServer3 } from "/utils/servers";
+} from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
+import { importServersData, canHackServer3 } from "/utils/servers.js";
 
 /* Scripts  */
 const scriptsToDistribute = [

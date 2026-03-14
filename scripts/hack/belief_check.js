@@ -2,8 +2,8 @@
  * Checks the beliefs of the various scripts
  */
 
-import { printError, printWarn, printInfo } from "/utils/print";
-import { calculateServerExecutionTimes, distributionScripts } from "./utils";
+import { printError, printWarn, printInfo } from "/utils/print.js";
+import { calculateServerExecutionTimes, distributionScripts } from "./utils.js";
 
 /**
  * Tests that the server execution times are calculated as expected.

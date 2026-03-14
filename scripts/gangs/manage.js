@@ -5,15 +5,18 @@ import {
   printLogInfo,
   printLogWarn,
   printWarn,
-} from "/utils/print";
-import { doConversion, formatTimeSeconds } from "/utils/formatters";
+} from "/utils/print.js";
+import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
 import {
   memberNamePrefix,
   findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
-} from "./utils";
-import { recruitmentMaxWaitTimeSeconds, wantedPenaltyMax } from "./constants";
+} from "./utils.js";
+import {
+  recruitmentMaxWaitTimeSeconds,
+  wantedPenaltyMax,
+} from "./constants.js";
 
 /**
  * Utility functions for *General* gang management.

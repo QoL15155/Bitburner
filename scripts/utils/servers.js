@@ -111,7 +111,7 @@ export function importServersData(ns) {
   if (!ns.fileExists(serverDataFile, "home")) {
     printError(
       ns,
-      `Servers data file doesn't exist. Please run 'exportServersData' first.`,
+      `Servers data file doesn't exist. Please run startup script first.`,
     );
     return null;
   }
@@ -190,9 +190,7 @@ export function canHackServer(ns, serverName) {
   const requiredLevel = ns.getServerRequiredHackingLevel(serverName);
   if (ns.getHackingLevel() < requiredLevel) {
     ns.printf(
-      "[canHackServer] Server doesn't meet hacking level requirements: %s - %d",
-      serverName,
-      requiredLevel,
+      `[canHackServer] '${serverName}' doesn't meet hacking level requirements: ${requiredLevel}`,
     );
     return false;
   }

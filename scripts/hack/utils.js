@@ -1,6 +1,6 @@
-import { printError, printWarn, printInfo, print } from "/utils/print";
-import { formatMoney } from "/utils/formatters";
-import { AttackAction, EnumAttackActionResult } from "./attack_action";
+import { printError, printWarn, printInfo, print } from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
+import { AttackAction, EnumAttackActionResult } from "./attack_action.js";
 
 /**
  * Calculates the server execution times
