@@ -109,11 +109,7 @@ export function exportServersData(ns) {
  */
 export function importServersData(ns) {
   if (!ns.fileExists(serverDataFile, "home")) {
-    printError(
-      ns,
-      `Servers data file doesn't exist. Please run startup script first.`,
-    );
-    return null;
+    throw "Servers data file doesn't exist. Please run startup script first.";
   }
 
   const serversDataRaw = ns.read(serverDataFile);

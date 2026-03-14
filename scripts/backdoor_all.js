@@ -80,7 +80,7 @@ export async function main(ns) {
   ns.disableLog("sleep");
   ns.disableLog("scan");
 
-  let serverList = importServersData(ns);
+  const serverList = importServersData(ns);
 
   const serversOwned = serverList.filter((s) => s.purchasedByPlayer).length;
   const serversWithBackdoor = serverList.filter(
