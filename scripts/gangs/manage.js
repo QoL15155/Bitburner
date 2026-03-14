@@ -185,10 +185,10 @@ function shouldLowerWantedLevel(ns, gangInformation) {
     return false;
   }
 
-  if (gangInformation.wantedPenalty >= wantedPenaltyMax) {
-    printWarnInfo(
+  if (gangInformation.wantedPenalty < wantedPenaltyMax) {
+    printLogWarn(
       ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum penalty ${wantedPenaltyMax}. Wanted level: ${gangInformation.wantedLevel}, wanted gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec.$`,
+      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, wanted gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec`,
     );
     return true;
   }

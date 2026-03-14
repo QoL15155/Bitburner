@@ -86,7 +86,7 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   const focusString = isFocusRespect ? "Respect" : "Money";
 
   const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
-  const stringWantedLevel = wantedLevelGainRateString(gangInformation);
+  const wantedLevelGainRate = wantedLevelGainRateString(gangInformation);
 
   if (wantedLevelStatus === WantedLevelStatus.Safe) {
     return;
@@ -95,7 +95,7 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   if (wantedLevelStatus === WantedLevelStatus.ShouldLower) {
     printLogInfo(
       ns,
-      `[${fname}] Lowering wanted level ${stringWantedLevel}. ${focusString} focus`,
+      `[${fname}] Lowering wanted level (Gain rate: ${wantedLevelGainRate}). ${focusString} focus`,
     );
     if (isFocusRespect) {
       throw `[${fname}] lowerWantedLevelRespectFocus is not implemented yet.`;
@@ -107,7 +107,7 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
 
   printLogInfo(
     ns,
-    `[${fname}] Wanted level gain rate is low (${stringWantedLevel}). Rasing ${focusString} gain`,
+    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Rasing ${focusString} gain`,
   );
   if (isFocusRespect) {
     // Prioritize respect gain if we can recruit more members
