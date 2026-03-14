@@ -1,3 +1,4 @@
+import { print } from "/utils/print.js";
 import { analyzeContractsServers } from "./contracts_analyze.js";
 
 // Debug mode flag.
@@ -7,7 +8,7 @@ const debug = false;
 
 export function solveContract(ns, contract) {
   const fname = "solveContract";
-  print(`[${fname}] Solving ${contract}`);
+  print(ns, `[${fname}] Solving ${contract}`);
 
   const contractData = ns.codingcontract.getData(
     contract.contractName,
@@ -20,7 +21,7 @@ export function solveContract(ns, contract) {
   }
 
   let contractAnswer = contract.scriptCallback(contractData);
-  if (contractAnswer === null) {
+  if (contractAnswer == null) {
     ns.tprint(`Failed to solve contract ${contract}. No answer found.`);
     return;
   }
@@ -38,26 +39,18 @@ export function solveContract(ns, contract) {
     return;
   }
 
-  const result = ns.codingcontract.attempt(
+  const reward = ns.codingcontract.attempt(
     contractAnswer.toString(),
     contract.contractName,
     contract.serverName,
   );
-  if (result !== null) {
-    ns.tprint(result);
-  } else {
-    ns.tprint(
-      `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`,
-    );
-    ns.alert(
-      `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${result}`,
-    );
-  }
 
-  /** Prints message both to stdout and log file */
-  function print(msg) {
-    ns.printf(msg);
-    ns.tprint(msg);
+  if (reward) {
+    ns.tprint(reward);
+  } else {
+    const message = `[${fname}] Failed to solve contract '${contract.contractName}' from ${contract.serverName}. Result : ${reward}`;
+    ns.tprint(message);
+    ns.alert(message);
   }
 }
 

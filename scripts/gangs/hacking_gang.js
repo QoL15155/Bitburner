@@ -107,7 +107,7 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
 
   printLogInfo(
     ns,
-    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Rasing ${focusString} gain`,
+    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Raising ${focusString} gain`,
   );
   if (isFocusRespect) {
     // Prioritize respect gain if we can recruit more members

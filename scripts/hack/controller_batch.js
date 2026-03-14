@@ -4,7 +4,6 @@ import {
   printInfo,
   printLogInfo,
   print,
-  printLogWarn,
 } from "/utils/print.js";
 import { formatRam, formatMoney } from "/utils/formatters.js";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";

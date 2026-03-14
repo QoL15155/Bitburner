@@ -51,5 +51,5 @@ export async function main(ns) {
   }
 
   ns.tprint("Running backdoor script");
-  await ns.run(backdoorScript);
+  ns.run(backdoorScript);
 }

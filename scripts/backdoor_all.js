@@ -1,7 +1,6 @@
 import {
   hackServer,
   runTerminalCommand,
-  listServers,
   importServersData,
   writeServersData,
 } from "/utils/servers.js";

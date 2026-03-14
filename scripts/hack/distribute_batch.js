@@ -6,7 +6,7 @@ import {
   print,
 } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
-import { importServersData, canHackServer3 } from "/utils/servers.js";
+import { importServersData } from "/utils/servers.js";
 
 /* Scripts  */
 const scriptsToDistribute = [
@@ -61,8 +61,8 @@ function handleAttackingServers(ns, allServers) {
  * Kills all scripts on the server before distributing.
  */
 function distributeScriptsToServer(ns, serverName) {
-  // NOTE: In home server we don't want to kill all the scripts, nor can we kill specific scripts
-  // as we do not know their PIDs. So we just skip killing any scripts on home.
+  // NOTE: In home server we don't want to kill all the scripts, nor can we kill specific scripts without
+  // knowing either their arguments of PID. So we just skip killing any scripts on home.
   if (serverName === "home") return;
 
   // FIXME: Do we really want to kill ALL scripts?
@@ -96,7 +96,6 @@ function isHomeRunningScripts(ns) {
   }
 
   const isAttackingScriptRunning = processes.some((process) => {
-    ns.tprint(`Process: ${process.filename} `);
     return scriptsToDistribute.includes(process.filename);
   });
 
