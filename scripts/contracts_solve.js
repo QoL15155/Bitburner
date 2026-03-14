@@ -86,7 +86,7 @@ export async function main(ns) {
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
     ns.tprint("");
-    ns.tpintf("Contract Solver.");
+    ns.tprint("Contract Solver.");
     ns.tprint(
       "Analyzes all coding contracts on all servers and finds the ones that can be solved with existing scripts, then solves them.",
     );

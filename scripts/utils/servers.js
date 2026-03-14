@@ -16,9 +16,9 @@ export function scanHost(ns, serverName, parentName = "") {
   let children = ns.scan(serverName);
 
   // remove parent from list
-  if (parentName != "") {
-    let idx = children.indexOf(parentName);
-    if (idx != -1) {
+  if (parentName !== "") {
+    const idx = children.indexOf(parentName);
+    if (idx !== -1) {
       children.splice(idx, 1);
     } else {
       ns.alert(`[${fname}] ${serverName}: Didn't find parent ${parentName}`);

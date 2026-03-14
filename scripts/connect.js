@@ -59,7 +59,7 @@ function findPath(ns, targetServer) {
   let found = false;
 
   function findPathRec(serverName, parent) {
-    if (serverName == targetServer) {
+    if (serverName === targetServer) {
       found = true;
       return;
     }
@@ -94,7 +94,7 @@ function findPath(ns, targetServer) {
  */
 export async function connectToServer(ns, serverName) {
   const path = findPath(ns, serverName);
-  if (path.length == 0) {
+  if (path.length === 0) {
     ns.tprint(`Failed to find path to ${serverName}`);
     return false;
   }

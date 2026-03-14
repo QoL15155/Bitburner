@@ -77,7 +77,7 @@ export async function main(ns) {
     scriptMemory: ns.getScriptRam(scriptName),
   };
 
-  if (progData.scriptMemory == 0) {
+  if (progData.scriptMemory === 0) {
     ns.tprint(`[${fname}] Failed to read script RAM. ${scriptName}`);
     return;
   }
@@ -120,7 +120,7 @@ export async function main(ns) {
   }
 
   function isMyServer(serverName) {
-    if (serverName == "home" || myServers.indexOf(serverName) != -1) {
+    if (serverName === "home" || myServers.indexOf(serverName) != -1) {
       return true;
     }
     return false;
@@ -128,7 +128,7 @@ export async function main(ns) {
 
   function calculateScriptThreads(serverName) {
     const ramMax = ns.getServerMaxRam(serverName);
-    if (ramMax == 0) {
+    if (ramMax === 0) {
       // not enough memory
       ns.printf(`[${fname}] has 0 RAM`);
       return 0;
@@ -160,7 +160,7 @@ export async function main(ns) {
 
     // Calculate number of threads
     const threads = calculateScriptThreads(serverName);
-    if (threads == 0) {
+    if (threads === 0) {
       return false;
     }
 

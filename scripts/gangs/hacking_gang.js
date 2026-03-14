@@ -340,14 +340,13 @@ function sortMemberByTask(ns, memberName) {
     membersEthical.push(memberName);
     return;
   }
+
   if (taskName === territoryTask) {
-    if (taskName === "Territory Warfare") {
-      printWarn(
-        ns,
-        `${memberName} - is in a **Hacking Gang** but is doing Territory Warfare. Changing to 'Hacking Training'.`,
-      );
-      ns.gang.setMemberTask(memberName, "Train Hacking");
-    }
+    printWarn(
+      ns,
+      `${memberName} - is in a **Hacking Gang** but is doing Territory Warfare. Changing to 'Hacking Training'.`,
+    );
+    ns.gang.setMemberTask(memberName, "Train Hacking");
     membersTraining.push(memberName);
     return;
   }
