@@ -311,7 +311,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   // Initialize attack batch for each target server
   let attackList = [];
   targetServers.forEach((targetName) => {
-    const attackBatch = new AttackBatch(ns, targetName, distributionScripts);
+    const attackBatch = new AttackBatch(targetName, distributionScripts);
     attackList.push(attackBatch);
   });
 

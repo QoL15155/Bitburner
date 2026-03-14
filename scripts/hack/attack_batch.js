@@ -47,11 +47,10 @@ export class AttackBatch {
   #requiredRam = 0;
 
   /**
-   * @param {NS} ns
    * @param {string} targetName : server to attack
+   * @param {Object} distributionScripts : RAM and script name for the attack scripts
    */
-  constructor(ns, targetName, distributionScripts) {
-    this.ns = ns;
+  constructor(targetName, distributionScripts) {
     this.targetName = targetName;
 
     this.#hackAction = new AttackAction(
