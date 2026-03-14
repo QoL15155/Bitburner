@@ -110,10 +110,6 @@ function isHomeRunningScripts(ns) {
 
 async function smartDistribution(ns) {
   const allServers = importServersData(ns);
-  if (allServers === null) {
-    printError(ns, "Failed to find any servers");
-    return;
-  }
 
   // Distribute scripts and return list of the servers.
   // Arrange by max RAM. Home should be first(?)

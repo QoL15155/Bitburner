@@ -105,7 +105,8 @@ export function exportServersData(ns) {
  * Imports server data from the JSON file
  *
  * @param {NS} ns
- * @return {array|null} list of server data or null if file doesn't exist
+ * @return {array} list of server data or null if file doesn't exist
+ * @throws if servers data file doesn't exist
  */
 export function importServersData(ns) {
   if (!ns.fileExists(serverDataFile, "home")) {
