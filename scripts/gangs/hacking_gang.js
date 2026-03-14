@@ -2,11 +2,11 @@ import {
   printError,
   printInfo,
   print,
-  doConversion,
   printLogInfo,
   printLogWarn,
   printWarn,
 } from "/utils/print";
+import { doConversion } from "/utils/formatters";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,

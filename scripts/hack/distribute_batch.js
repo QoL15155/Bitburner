@@ -4,8 +4,8 @@ import {
   printInfo,
   printLogInfo,
   print,
-  formatMoney,
 } from "/utils/print";
+import { formatMoney } from "/utils/formatters";
 import { importServersData, canHackServer3 } from "/utils/servers";
 
 /* Scripts  */

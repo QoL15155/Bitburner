@@ -4,10 +4,9 @@ import {
   printInfo,
   printLogInfo,
   print,
-  formatMoney,
   printLogWarn,
 } from "/utils/print";
-import { formatRam } from "/utils/formatters";
+import { formatRam, formatMoney } from "/utils/formatters";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch";
 import {
   calculateServerExecutionTimes,

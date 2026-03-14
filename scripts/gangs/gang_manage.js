@@ -2,22 +2,21 @@ import {
   printError,
   printInfo,
   print,
-  doConversion,
-  formatTimeSeconds,
   printLogInfo,
   printLogWarn,
   printWarn,
-} from "../utils/print";
+} from "/utils/print";
+import { doConversion, formatTimeSeconds } from "/utils/formatters";
 import {
   memberNamePrefix,
   findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
 } from "./utils";
-import { recuitmentMaxWaitTimeSeconds, wantedPenaltyMax } from "./constants";
+import { recruitmentMaxWaitTimeSeconds, wantedPenaltyMax } from "./constants";
 
 /**
- * Utility funciton for *General* gang management.
+ * Utility functions for *General* gang management.
  *
  * Suitable for both Hacking and Combat gangs.
  */
@@ -101,7 +100,7 @@ export function getRecruitmentStatus(ns) {
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
 
-  const shouldWait = timeToNextRecruitSeconds <= recuitmentMaxWaitTimeSeconds;
+  const shouldWait = timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
   if (shouldWait) {
     return RecruitmentStatus.WaitingForRespect;
   }

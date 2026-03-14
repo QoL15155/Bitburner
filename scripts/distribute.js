@@ -1,10 +1,9 @@
 import { getRootAccess, listServers } from "./utils/servers.js";
 import { getMoneyServer } from "./money_info.js";
-import { printError, printInfo, formatMoney } from "./utils/print.js";
+import { printError, printInfo } from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
 
 // Script names to distribute to servers.
-// TODO: validate scripts' RAM
-// printError(ns, `[${fname}] Memory required for the script has changed! ${progData.maxMemoryForScript} GB`);
 const scriptsToDistribute = {
   hack: { ram: 1.7, scriptName: "do_hack.js" },
   weaken: { ram: 1.75, scriptName: "do_weaken.js" },

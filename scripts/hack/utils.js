@@ -1,10 +1,5 @@
-import {
-  printError,
-  printWarn,
-  printInfo,
-  print,
-  formatMoney,
-} from "/utils/print";
+import { printError, printWarn, printInfo, print } from "/utils/print";
+import { formatMoney } from "/utils/formatters";
 import { AttackAction, EnumAttackActionResult } from "./attack_action";
 
 /**

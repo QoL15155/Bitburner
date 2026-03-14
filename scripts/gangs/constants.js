@@ -4,7 +4,7 @@
  * These constants are suitable for both Hacking and Combat gangs.
  */
 
-export const recuitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
+export const recruitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
 
 /**
  * Recommended number of ethical members in a hacking gang until it is formed.
@@ -19,5 +19,5 @@ const maxAscensionLevel = 25;
 // If the wanted level gain is higher than this threshold, we will prioritize lowering the wanted level.
 const wantedGainThreshold = 1.5;
 const wantedLevelMax = 1000;
-// Wanted level penalty - you want to keep wanted level penalry below 10%
+// Wanted level penalty - you want to keep wanted level penalty below 10%
 export const wantedPenaltyMax = 10;

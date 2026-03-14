@@ -71,7 +71,9 @@ export async function main(ns) {
     ns.tprint("Backdoor all possible servers");
     ns.tprint("==============================");
     ns.tprint("");
-    ns.tprint("Backdoors all servers that are not already backdoored.");
+    ns.tprint(
+      "Installs a Backdoor on all servers that were not already backdoored.",
+    );
     return;
   }
 

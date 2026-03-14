@@ -1,6 +1,6 @@
-import { getRootAccess, listServers } from "./utils/servers.js";
+import { getRootAccess, listServers } from "/utils/servers.js";
 import { getMoneyServer } from "./money_info.js";
-import { formatMoney } from "./utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
