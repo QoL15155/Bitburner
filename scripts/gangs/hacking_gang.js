@@ -20,7 +20,7 @@ import {
   ascendGangMembers,
   getWantedLevelStatus,
   WantedLevelStatus,
-} from "./gang_manage";
+} from "/gangs/manage";
 import { normalEthicalMembers } from "./constants";
 
 /**
@@ -434,8 +434,6 @@ export function autocomplete(data, args) {
   return [...defaultOptions];
 }
 
-// TODO: sanity - script is not running twice?
-
 /** @param {NS} ns */
 export async function main(ns) {
   const args = ns.flags([
@@ -448,10 +446,14 @@ export async function main(ns) {
     ns.tprint("Hacking Gang Running Script");
     ns.tprint("=============================");
     ns.tprint("");
-    ns.tprint("This script manages a hacking gang.");
+    ns.tprint("Manages a Hacking Gang members and their tasks.");
     ns.tprint(
-      "It should be run after running the initial gang recruitment script.",
+      "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
     );
+    ns.tprint(
+      "Ran by the initial gang join script when player joins/belongs to a hacking gang.",
+    );
+
     return;
   }
 
