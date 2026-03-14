@@ -122,8 +122,8 @@ export async function collectServerInfo(
   if (formulaGrow) {
     const growThreads = serverInfo.grow.growThreads;
     if (
-      Math.ceil(growThreads) != formulaGrow &&
-      Math.floor(growThreads) != formulaGrow
+      Math.ceil(growThreads) !== formulaGrow &&
+      Math.floor(growThreads) !== formulaGrow
     ) {
       printError(
         ns,

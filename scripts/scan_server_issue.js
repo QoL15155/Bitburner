@@ -26,8 +26,8 @@ function simulateGrow(ns, targetName) {
     serverHome.cpuCores,
   );
   if (
-    Math.ceil(growThreads) != growThreadsFormula &&
-    Math.floor(growThreads) != growThreadsFormula
+    Math.ceil(growThreads) !== growThreadsFormula &&
+    Math.floor(growThreads) !== growThreadsFormula
   ) {
     printError(
       ns,

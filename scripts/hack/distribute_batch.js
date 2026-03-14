@@ -45,14 +45,14 @@ function handleAttackingServers(ns, allServers) {
   );
 
   return attackingServers.sort((a, b) => {
-    if (getMaxRam(b) == getMaxRam(a)) {
+    if (getMaxRam(b) === getMaxRam(a)) {
       return b.cpuCores - a.cpuCores;
     }
     return getMaxRam(b) - getMaxRam(a);
   });
 
   function getMaxRam(server) {
-    return server.name == "home" ? Infinity : server.maxRam;
+    return server.name === "home" ? Infinity : server.maxRam;
   }
 }
 
@@ -63,7 +63,7 @@ function handleAttackingServers(ns, allServers) {
 function distributeScriptsToServer(ns, serverName) {
   // NOTE: In home server we don't want to kill all the scripts, nor can we kill specific scripts
   // as we do not know their PIDs. So we just skip killing any scripts on home.
-  if (serverName == "home") return;
+  if (serverName === "home") return;
 
   // FIXME: Do we really want to kill ALL scripts?
   ns.killall(serverName);
@@ -110,7 +110,7 @@ function isHomeRunningScripts(ns) {
 
 async function smartDistribution(ns) {
   const allServers = importServersData(ns);
-  if (allServers == null) {
+  if (allServers === null) {
     printError(ns, "Failed to find any servers");
     return;
   }

@@ -151,7 +151,7 @@ function lowerWantedLevelMoneyFocus(ns) {
   if (currentTaskIndex === -1) {
     throw `[${fname}] Member ${highestWantedWorker.name} is doing an unknown task ${highestWantedWorker.task}`;
   }
-  if (currentTaskIndex == 0) {
+  if (currentTaskIndex === 0) {
     // Worker's task is already the task with the lowest wanted level, we cannot reduce more the wanted level gain.
     workingMemberToEthical(highestWantedWorker);
     return;
@@ -294,7 +294,7 @@ function tryUpgradeWorkingMemberMoney(ns) {
     }
   }
 
-  if (lowestGainingMember == null) {
+  if (lowestGainingMember === null) {
     return false;
   }
 

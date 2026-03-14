@@ -14,13 +14,21 @@ const maxScriptRam = 1.75;
 function printUsage(ns) {
   ns.tprint(`Usage: run ${ns.getScriptName()} [TARGET_SERVER]`);
   ns.tprint("");
-  ns.tprint("This script will attack server for money.");
+  ns.tprint("Attacks the target server for money.");
+  ns.tprint(
+    "- When target server is not specified, finds the best target server for money farming.",
+  );
+  ns.tprint(
+    "- Calculates the number of threads to run on each server and invokes them.",
+  );
+  ns.tprint("");
   ns.tprint("Invocation will kill all previous running of the scripts");
   ns.tprint("");
   ns.tprint("Arguments");
   ns.tprint("==========");
+  ns.tprint("\t TARGET_SERVER : specify target server for the script.");
   ns.tprint(
-    "\tTARGET_SERVER : specify target server for the script. If not specified, the script will try to find the best target server for money farming.",
+    "\t\tIf not specified, the script will try to find the best target server for money farming.",
   );
   ns.tprint(
     "\t--free_memory : amount of free memory (GB) to leave on home server.",
@@ -115,7 +123,7 @@ export async function main(ns) {
 
   // Home - calculate number of threads
   const threads = distributeScriptsToServer("home");
-  if (threads == 0) {
+  if (threads === 0) {
     ns.tprint(
       `[${fname}] Not enough memory to run script on home. Max Ram: ${ns.getServerMaxRam("home")}, Used RAM: ${ns.getServerUsedRam("home")}`,
     );
@@ -131,14 +139,14 @@ export async function main(ns) {
    */
   function calculateScriptThreads(serverName, maxRamForScript = maxScriptRam) {
     const serverMaxRam = ns.getServerMaxRam(serverName);
-    if (serverMaxRam == 0) {
+    if (serverMaxRam === 0) {
       // not enough memory
       ns.printf(`[${fname}] has 0 RAM`);
       return 0;
     }
     const ramUsed = ns.getServerUsedRam(serverName);
     let ramDiff = serverMaxRam - ramUsed;
-    if (serverName == "home" && memoryFree > 0) {
+    if (serverName === "home" && memoryFree > 0) {
       ramDiff -= memoryFree - ns.getScriptRam(ns.getScriptName());
     }
     if (ramDiff < maxRamForScript) {
@@ -191,7 +199,7 @@ export async function main(ns) {
           scriptThreads.growThreads,
         );
         scriptThreads.growThreads -= threadsRun;
-        if (serverInfo[1] == 0) {
+        if (serverInfo[1] === 0) {
           // Skip if we used all available threads on the server
           continue;
         }
@@ -204,7 +212,7 @@ export async function main(ns) {
           scriptThreads.weakenThreads,
         );
         scriptThreads.weakenThreads -= threadsRun;
-        if (serverInfo[1] == 0) {
+        if (serverInfo[1] === 0) {
           // Skip if we used all available threads on the server
           continue;
         }
@@ -216,7 +224,7 @@ export async function main(ns) {
           serverInfo[0],
           ns.getScriptRam(scriptName),
         );
-        if (serverInfo[1] != scriptThreads.hackThreads) {
+        if (serverInfo[1] !== scriptThreads.hackThreads) {
           ns.tprint(
             `[${fname}] Available threads on ${serverInfo[0]} for hack script is different than expected. Available: ${serverInfo[1]}, Expected: ${scriptThreads.hackThreads}.`,
           );
@@ -227,7 +235,7 @@ export async function main(ns) {
           serverInfo[1],
         );
         scriptThreads.hackThreads -= threadsRun;
-        if (serverInfo[1] == 0) {
+        if (serverInfo[1] === 0) {
           // Skip if we used all available threads on the server
           continue;
         }
@@ -242,14 +250,14 @@ export async function main(ns) {
   function runScriptOnServer(serverData, scriptName, maxThreads) {
     const fname = "runScriptOnServer";
 
-    if (maxThreads == 0) {
+    if (maxThreads === 0) {
       return 0;
     }
 
     const serverName = serverData[0];
     const serverThreads = serverData[1];
 
-    if (serverThreads == 0) {
+    if (serverThreads === 0) {
       ns.alert(
         `[${fname}] No available threads on ${serverName} to run the script.`,
       );
@@ -295,7 +303,7 @@ export async function main(ns) {
 
     // Make sure we calculated right
     const calculatedTotalThreads = hackThreads + weakenThreads + growThreads;
-    if (calculatedTotalThreads == totalThreads) {
+    if (calculatedTotalThreads === totalThreads) {
       return returnThreads();
     }
 
@@ -345,7 +353,7 @@ export async function main(ns) {
       ns.printf("=> [%s] Server: %s", fname, serverName);
 
       const runnableThreads = distributeScriptsToServer(serverName);
-      if (runnableThreads == 0) {
+      if (runnableThreads === 0) {
         // Failed to distribute script to the server. Skip it.
         continue;
       }
@@ -372,7 +380,7 @@ export async function main(ns) {
       return 0;
     }
 
-    if (serverName != "home") {
+    if (serverName !== "home") {
       ns.killall(serverName);
     } else {
       // Home - don't kill other running scripts.
@@ -383,11 +391,11 @@ export async function main(ns) {
 
     // Calculate number of threads
     const threads = calculateScriptThreads(serverName);
-    if (threads == 0) {
+    if (threads === 0) {
       return 0;
     }
 
-    if (serverName == "home") {
+    if (serverName === "home") {
       // Don't copy scripts to home, just run them
       return threads;
     }
@@ -416,7 +424,7 @@ export async function main(ns) {
     return true;
 
     function isMyServer() {
-      if (serverName == "home" || myServers.indexOf(serverName) != -1) {
+      if (serverName === "home" || myServers.indexOf(serverName) !== -1) {
         return true;
       }
       return false;

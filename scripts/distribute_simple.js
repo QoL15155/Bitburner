@@ -36,7 +36,10 @@ export async function main(ns) {
       `Usage: run ${ns.getScriptName()} [TARGET_SERVER] [[--kill_script, -k] | [--kill_all]]`,
     );
     ns.tprint("");
-    ns.tprint("This script will attack server for money.");
+    ns.tprint("Attacks the target server for money.");
+    ns.tprint(
+      "When target server is not specified, finds the best target server for money farming.",
+    );
     ns.tprint("");
     ns.tprint("Arguments");
     ns.tprint("==========");
@@ -120,7 +123,7 @@ export async function main(ns) {
   }
 
   function isMyServer(serverName) {
-    if (serverName === "home" || myServers.indexOf(serverName) != -1) {
+    if (serverName === "home" || myServers.indexOf(serverName) !== -1) {
       return true;
     }
     return false;
@@ -180,7 +183,7 @@ export async function main(ns) {
       ns.tprint(`[${fname}] Failed to execute script on ${serverName}.`);
       return false;
     }
-    return ppid != 0;
+    return ppid !== 0;
   }
 
   function distributeToServer(serverName) {

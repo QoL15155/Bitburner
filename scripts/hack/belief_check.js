@@ -34,7 +34,7 @@ function calculateServerExecutionTimesTest(ns, serverName) {
 
   // Logger
   function testTimes(type, expected, actual) {
-    if (expected == actual) return;
+    if (expected === actual) return;
     success = false;
 
     const msg = `[${fname}] Server '${serverName}' - unexpected ${type} time: ${expected} != ${actual}`;
@@ -56,13 +56,13 @@ function distributionScriptsTest(ns) {
     const category = distributionScripts[key];
 
     let scriptRam = ns.getScriptRam(category.loopScript);
-    if (category.ram != scriptRam)
+    if (category.ram !== scriptRam)
       printError(
         ns,
         `[${fname}] Unexpected RAM for '${category.loopScript}': ${category.ram}!=${scriptRam}`,
       );
     scriptRam = ns.getScriptRam(category.targetScript);
-    if (category.ram != scriptRam)
+    if (category.ram !== scriptRam)
       printError(
         ns,
         `[${fname}] Unexpected RAM for '${category.targetScript}': ${category.ram}!=${scriptRam}`,

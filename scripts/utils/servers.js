@@ -42,7 +42,7 @@ export function listServers(ns) {
   /* Scans for children of the current host */
   function scanHostsRec(serverName, parent) {
     let knownHosts = [];
-    if (serverName != "home") knownHosts = knownHosts.concat(serverName);
+    if (serverName !== "home") knownHosts = knownHosts.concat(serverName);
 
     const children = scanHost(ns, serverName, parent);
     if (children.length > 0) {

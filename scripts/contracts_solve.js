@@ -20,7 +20,7 @@ export function solveContract(ns, contract) {
   }
 
   let contractAnswer = contract.scriptCallback(contractData);
-  if (contractAnswer == null) {
+  if (contractAnswer === null) {
     ns.tprint(`Failed to solve contract ${contract}. No answer found.`);
     return;
   }
@@ -43,7 +43,7 @@ export function solveContract(ns, contract) {
     contract.contractName,
     contract.serverName,
   );
-  if (result != null) {
+  if (result !== null) {
     ns.tprint(result);
   } else {
     ns.tprint(
@@ -95,7 +95,7 @@ export async function main(ns) {
 
   const availableContracts = analyzeContractsServers(ns);
   const solvableContracts = availableContracts.filter(
-    (c) => c.scriptCallback != null,
+    (c) => c.scriptCallback !== null,
   );
 
   ns.tprint(

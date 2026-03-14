@@ -49,7 +49,7 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
   const growThreads = processGrow(ns, player, cpuCores, targetObject);
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
-  if (weakenThreads == 0 && growThreads == 0) {
+  if (weakenThreads === 0 && growThreads === 0) {
     ns.print(`[${fname}] Server is already prepped.`);
     return false;
   }
@@ -108,7 +108,7 @@ function getAttackParameters(ns, cpuCores, attackBatch) {
 function handleAttackParameters(ns, cpuCores, attackBatch) {
   const fname = "handleAttackParameters";
 
-  if (attackBatch.cpuCores == cpuCores) {
+  if (attackBatch.cpuCores === cpuCores) {
     // Parameters are already set
     return;
   }
@@ -150,7 +150,7 @@ function sanitizeServerMaxMoney(ns, serverObject) {
   const moneyMax = formatMoney(serverObject.moneyMax);
   const moneyAvailable = formatMoney(serverObject.moneyAvailable);
   // Due to floating point crap, sometime we get to 99% percent of the max money
-  if (moneyMax == moneyAvailable) return true;
+  if (moneyMax === moneyAvailable) return true;
 
   printError(
     ns,
@@ -165,7 +165,7 @@ function testTargetServerValues(ns, targetName) {
   let success = true;
 
   // Hack difficulty
-  if (hackedObject.hackDifficulty != hackedObject.minDifficulty) {
+  if (hackedObject.hackDifficulty !== hackedObject.minDifficulty) {
     printError(
       ns,
       `[${fname}] Target '${targetName}' with unexpected Hack difficulty: ${hackedObject.hackDifficulty}, expected ${hackedObject.minDifficulty}`,
@@ -195,7 +195,7 @@ function testScriptsNotRunning(ns, attackBatch) {
   let badScripts = [];
 
   attackBatch.getActions().forEach((action) => {
-    if (action.pid == 0) return;
+    if (action.pid === 0) return;
 
     if (ns.isRunning(action.pid, action.hostname, targetName)) {
       badScripts.push(action.scriptName);
@@ -204,7 +204,7 @@ function testScriptsNotRunning(ns, attackBatch) {
     }
   });
 
-  if (badScripts.length == 0) {
+  if (badScripts.length === 0) {
     // Success
     return true;
   }
@@ -339,7 +339,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const message = `Finished Attack-Round ${round} -`;
     if (attackedServers > 0) {
       printLogInfo(ns, `${message} Attacked servers: ${attackedServers}`);
-      if (sleepTime == 0) {
+      if (sleepTime === 0) {
         throw "Sleep Time is 0";
       }
     } else {
@@ -363,7 +363,7 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
   ]);
-  if (args.help || args.h || args._.length != 2) {
+  if (args.help || args.h || args._.length !== 2) {
     ns.tprint(
       `Usage: run ${ns.getScriptName()} [ATTACKING_SERVERS] [TARGET_SERVERS]`,
     );
