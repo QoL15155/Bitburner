@@ -18,6 +18,11 @@ import {
   runAttackAction,
 } from "/hack/utils";
 
+/**
+ * Controller script for batch attacking.
+ * Uses formulas !
+ */
+
 //#region Parameters
 
 /**

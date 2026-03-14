@@ -1,6 +1,55 @@
-import { hackServer, runTerminalCommand, listServers } from "/utils/servers.js";
+import {
+  hackServer,
+  runTerminalCommand,
+  listServers,
+  importServersData,
+  writeServersData,
+} from "/utils/servers.js";
 import { connectToServer } from "/connect.js";
 import { printInfo } from "/utils/print.js";
+
+//#region Backdoor
+
+async function processBackdoor(ns, server, serverList) {
+  if (!(await getBackdoor(ns, server.name))) {
+    return false;
+  }
+
+  server["backdoorInstalled"] = true;
+  server["hasAdminRights"] = true;
+
+  // Update the server in the list
+  serverList = serverList.filter((s) => s.name !== server.name);
+  serverList.push(server);
+  return true;
+}
+
+/**
+ * Backdoor a server if possible
+ *
+ * @param {NS} ns
+ * @param {string} serverName : Server to backdoor
+ * @return {boolean} true if backdoor received, false otherwise
+ */
+async function getBackdoor(ns, serverName) {
+  let result = hackServer(ns, serverName);
+  if (!result) {
+    ns.tprint(`Failed to hack ${serverName}`);
+    return false;
+  }
+
+  result = await connectToServer(ns, serverName);
+  if (!result) {
+    ns.tprint(`Failed to connect to ${serverName}`);
+    return false;
+  }
+
+  await runTerminalCommand(ns, "backdoor");
+  await runTerminalCommand(ns, "home");
+  return true;
+}
+
+//#endregion Backdoor
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -22,68 +71,41 @@ export async function main(ns) {
     ns.tprint("Backdoor all possible servers");
     ns.tprint("==============================");
     ns.tprint("");
-    ns.tprint("The script will try to backdoor all listed servers.");
+    ns.tprint("Backdoors all servers that are not already backdoored.");
     return;
   }
 
   ns.disableLog("sleep");
   ns.disableLog("scan");
 
-  let alreadyBackdoored = 0;
+  let serverList = importServersData(ns);
+
+  const serversOwned = serverList.filter((s) => s.purchasedByPlayer).length;
+  const serversWithBackdoor = serverList.filter(
+    (s) => s.backdoorInstalled,
+  ).length;
+
+  const targetServers = serverList.filter(
+    (s) => !s.purchasedByPlayer && !s.backdoorInstalled,
+  );
+
   let backdooredServers = 0;
-  let ownedMachinesCount = 0;
-
-  const serverList = listServers(ns);
-  const myServers = ns.getPurchasedServers();
-  // Target server is not specified, backdoor the default list of servers.
-  for (const serverName of serverList) {
-    if (myServers.includes(serverName)) {
-      ownedMachinesCount++;
-      continue;
-    }
-    const server = ns.getServer(serverName);
-    if (server.backdoorInstalled == true) {
-      alreadyBackdoored++;
-      continue;
-    }
-
-    let success = await getBackdoor(ns, serverName);
-    printInfo(ns, `Server: ${serverName}, Backdoor Success: ${success}`);
-    if (success) {
+  for (let server of targetServers) {
+    if (await processBackdoor(ns, server, serverList)) {
       backdooredServers++;
     }
   }
 
   const report = {
     totalServers: serverList.length,
-    owned: ownedMachinesCount,
+    owned: serversOwned,
+    alreadyBackdoored: serversWithBackdoor,
     backdooredNow: backdooredServers,
-    alreadyBackdoored: alreadyBackdoored,
   };
   printInfo(ns, JSON.stringify(report, null, 2));
-}
 
-/**
- * Backdoors a server if possible
- *
- * @param {NS} ns
- * @param {string} serverName : Server to backdoor
- * @return {boolean} true if backdoored successfully, false otherwise
- */
-async function getBackdoor(ns, serverName) {
-  let result = hackServer(ns, serverName);
-  if (!result) {
-    ns.tprint(`Failed to hack ${serverName}`);
-    return false;
+  if (backdooredServers > 0) {
+    writeServersData(ns, serverList);
+    ns.print("Updated servers data file with backdoor information.");
   }
-
-  result = await connectToServer(ns, serverName);
-  if (!result) {
-    ns.tprint(`Failed to connect to ${serverName}`);
-    return false;
-  }
-
-  await runTerminalCommand(ns, "backdoor");
-  await runTerminalCommand(ns, "home");
-  return true;
 }

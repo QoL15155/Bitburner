@@ -67,6 +67,10 @@ export function listServers(ns) {
   return serverList;
 }
 
+export function writeServersData(ns, serversData) {
+  ns.write(serverDataFile, JSON.stringify(serversData), "w");
+}
+
 export function exportServersData(ns) {
   function getServerData(serverName) {
     const serverObject = ns.getServer(serverName);
@@ -94,7 +98,7 @@ export function exportServersData(ns) {
   const servers = listServers(ns);
   let serversData = servers.map((server) => getServerData(server));
   serversData.push(getServerData("home"));
-  ns.write(serverDataFile, JSON.stringify(serversData), "w");
+  writeServersData(ns, serversData);
 }
 
 /**

@@ -2,59 +2,70 @@
  * Checks the beliefs of the various scripts
  */
 
-import { printError, printInfo } from "/utils/print";
+import { printError, printWarn, printInfo } from "/utils/print";
 import { calculateServerExecutionTimes, distributionScripts } from "./utils";
 
+/**
+ * Tests that the server execution times are calculated as expected.
+ * @param {NS} ns
+ * @param {string} serverName
+ * @return {bool} true if the times are as expected, false otherwise
+ */
 function calculateServerExecutionTimesTest(ns, serverName) {
   const fname = "calculateServerExecutionTimesTest";
+  let success = true;
 
   // Act
   const times = calculateServerExecutionTimes(ns, serverName);
 
   // Assert
   const actualHackTime = ns.getHackTime(serverName);
-  if (times.hack != actualHackTime)
-    printError(
-      ns,
-      `[${fname}] Unexpected hack time. Expected: ${times.hack}, got: ${actualWeakenTime}`,
-    );
+  testTimes("hack", times.hack, actualHackTime);
 
   const actualWeakenTime = ns.getWeakenTime(serverName);
-  if (times.weaken != actualWeakenTime)
-    printError(
-      ns,
-      `[${fname}] Unexpected weaken time. Expected: ${times.weaken}, got: ${actualWeakenTime}`,
-    );
+  testTimes("weaken", times.weaken, actualWeakenTime);
 
   // FIXME: see if this difference is an issue. if not, make sure no error
   const actualGrowTime = ns.getGrowTime(serverName);
-  if (times.grow != actualGrowTime)
-    printError(
-      ns,
-      `[${fname}] Unexpected grow time. Expected: ${times.grow}, got: ${actualGrowTime}`,
-    );
+  testTimes("grow", times.grow, actualGrowTime);
 
-  // Final
   ns.tprint(`[${fname}] Finished execution`);
+  return success;
+
+  // Logger
+  function testTimes(type, expected, actual) {
+    if (expected == actual) return;
+    success = false;
+
+    const msg = `[${fname}] Server '${serverName}' - unexpected ${type} time: ${expected} != ${actual}`;
+    if (Math.abs(expected - actual) < 1) {
+      printWarn(ns, msg);
+    } else {
+      printError(ns, msg);
+    }
+  }
 }
 
+/**
+ * Tests that the RAM on the distribution scripts is as expected.
+ */
 function distributionScriptsTest(ns) {
   const fname = "distributionScriptsTest";
 
   for (const key in distributionScripts) {
-    const catgeory = distributionScripts[key];
+    const category = distributionScripts[key];
 
-    let scriptRam = ns.getScriptRam(catgeory.loopScript);
-    if (catgeory.ram != scriptRam)
+    let scriptRam = ns.getScriptRam(category.loopScript);
+    if (category.ram != scriptRam)
       printError(
         ns,
-        `[${fname}] Unexpected RAM for '${catgeory.loopScript}': ${catgeory.ram}!=${scriptRam}`,
+        `[${fname}] Unexpected RAM for '${category.loopScript}': ${category.ram}!=${scriptRam}`,
       );
-    scriptRam = ns.getScriptRam(catgeory.targetScript);
-    if (catgeory.ram != scriptRam)
+    scriptRam = ns.getScriptRam(category.targetScript);
+    if (category.ram != scriptRam)
       printError(
         ns,
-        `[${fname}] Unexpected RAM for '${catgeory.targetScript}': ${catgeory.ram}!=${scriptRam}`,
+        `[${fname}] Unexpected RAM for '${category.targetScript}': ${category.ram}!=${scriptRam}`,
       );
   }
   ns.tprint(`[${fname}] Finished execution`);
@@ -62,8 +73,9 @@ function distributionScriptsTest(ns) {
 
 function checkBeliefs(ns) {
   const serverName = "ecorp";
-  calculateServerExecutionTimesTest(ns, serverName);
+
   distributionScriptsTest(ns);
+  calculateServerExecutionTimesTest(ns, serverName);
 
   printInfo(ns, "=> Check completed");
 }

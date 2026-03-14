@@ -8,28 +8,37 @@ import {
 } from "/utils/print";
 import { importServersData, canHackServer3 } from "/utils/servers";
 
-/**
- * This script uses formulas
- */
-
+/* Scripts  */
 const scriptsToDistribute = [
   "target_weaken.js",
   "target_grow.js",
   "target_hack.js",
 ];
-const controllerScript = "/hack/controller_batch.js";
+
+// Requires Formulas
+const controllerScriptFormulas = "/hack/controller_batch.js";
+
+/* Utils */
+
+function wasServerHacked(server) {
+  return server.hasAdminRights || server.backdoorInstalled;
+}
 
 //#region Distribution
 
 /**
- * Get servers that can run scripts, and distribute the scripts to them.
+ * Get servers that can run scripts and distribute the scripts to them.
  *
  * @param {NS} ns
  * @param {Array} allServers - list of all servers in the game
- * @returns {Array} servers that can run scripts, sorted by CPU cores (secondary max RAM), descending.
+ * @returns {Array} servers that can run scripts, sorted by max RAM (secondary cpu cores), descending.
  */
 function handleAttackingServers(ns, allServers) {
-  const attackingServers = allServers.filter((s) => canRunScriptsOnServer(s));
+  const attackingServers = allServers.filter((server) => {
+    return (
+      server.maxRam > 0 && (server.purchasedByPlayer || wasServerHacked(server))
+    );
+  });
 
   attackingServers.forEach((server) =>
     distributeScriptsToServer(ns, server.name),
@@ -42,17 +51,6 @@ function handleAttackingServers(ns, allServers) {
     return getMaxRam(b) - getMaxRam(a);
   });
 
-  function canRunScriptsOnServer(server) {
-    return (
-      server.maxRam > 0 &&
-      (server.purchasedByPlayer ||
-        canHackServer3(
-          ns,
-          server.numOpenPortsRequired,
-          server.requiredHackingLevel,
-        ))
-    );
-  }
   function getMaxRam(server) {
     return server.name == "home" ? Infinity : server.maxRam;
   }
@@ -86,7 +84,7 @@ function distributeScriptsToServer(ns, serverName) {
  */
 function isHomeRunningScripts(ns) {
   for (const process of ns.ps()) {
-    if (controllerScript.endsWith(process.filename)) {
+    if (controllerScriptFormulas.endsWith(process.filename)) {
       return true;
     }
 
@@ -116,9 +114,9 @@ async function smartDistribution(ns) {
     .filter(
       (s) =>
         s.maxMoney > 0 &&
-        canHackServer3(ns, s.numOpenPortsRequired, s.requiredHackingLevel),
+        wasServerHacked(s) &&
+        s.requiredHackingLevel < maxHackingLevel,
     )
-    .filter((s) => s.requiredHackingLevel < maxHackingLevel)
     .sort((a, b) => b.maxMoney - a.maxMoney);
 
   const infoDescription = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
@@ -128,7 +126,7 @@ async function smartDistribution(ns) {
   const targetNames = targetServers.map((s) => s.name);
 
   ns.run(
-    controllerScript,
+    controllerScriptFormulas,
     { threads: 1 },
     JSON.stringify(attackingNames),
     JSON.stringify(targetNames),
@@ -169,12 +167,17 @@ export async function main(ns) {
     return;
   }
 
-  // TODO: Kill the current script if it is already running
-
   ns.disableLog("scp");
 
   if (isHomeRunningScripts(ns)) {
+    // TODO: Kill the current script if it is already running?
     print(ns, `Controller script is already running. Quit`);
+    return;
+  }
+
+  // Check if controller script can be ran
+  if (!ns.fileExists("Formulas.exe", "home")) {
+    printError(ns, "Formulas.exe is required to run the controller script.");
     return;
   }
 
