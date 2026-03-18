@@ -69,6 +69,7 @@ export function processHack(ns, targetObject) {
 /**
  * Calculates the number of required threads to maximize money on target server.
  * Updates the server's object accordingly.
+ * Uses Formulas to do it
  *
  * @param {NS} ns - NS object
  * @param {Person} player - the player object
@@ -76,7 +77,7 @@ export function processHack(ns, targetObject) {
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-export function processGrow(ns, player, cpuCores, targetObject) {
+export function processGrowFormulas(ns, player, cpuCores, targetObject) {
   targetObject.moneyAvailable = 0;
 
   let threads = ns.formulas.hacking.growThreads(
@@ -99,6 +100,41 @@ export function processGrow(ns, player, cpuCores, targetObject) {
   targetObject.hackDifficulty += securityIncrease;
   targetObject.moneyAvailable = targetObject.moneyMax;
   return threads;
+}
+
+/**
+ * Calculates the number of required threads to maximize money on target server.
+ * Doesn't use Formulas
+ */
+export function processGrowClean(ns, cpuCores, targetObject) {
+  let moneyMax = targetObject.moneyMax;
+  const moneyAvailable = targetObject.moneyAvailable;
+
+  const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
+  let threads = ns.growthAnalyze(
+    targetObject.hostname,
+    moneyMultiplier,
+    cpuCores,
+  );
+
+  if (threads === 0) {
+    return threads;
+  }
+
+  // FIXME: performance
+  // if (targetObject.moneyAvailable === 0) {
+  //   threads *= 2 / 3;
+  // }
+
+  const securityIncrease = ns.growthAnalyzeSecurity(
+    threads,
+    targetObject.name,
+    cpuCores,
+  );
+  targetObject.hackDifficulty += securityIncrease;
+  targetObject.moneyAvailable = targetObject.moneyMax;
+
+  return Math.ceil(threads);
 }
 
 function getWeakenThreads(cpuCores, targetObject) {
@@ -208,6 +244,7 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   );
 
   if (!availableRam) {
+    // We should never get here.
     ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}}`);
     return EnumAttackActionResult.NOT_ENOUGH_RAM;
   }

@@ -10,16 +10,18 @@ import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
   calculateServerExecutionTimes,
   distributionScripts,
-  processGrow,
+  processGrowFormulas,
+  processGrowClean,
   processWeaken,
   processHack,
   runAttackAction,
 } from "/hack/utils.js";
 
 /**
- * Controller script for batch attacking.
- * Uses formulas !
+ * Controller script for batch attacking with sleep.
  */
+
+let useFormulas = false;
 
 //#region Parameters
 
@@ -40,12 +42,17 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
   const targetName = attackBatch.targetName;
   const targetObject = ns.getServer(targetName);
 
-  const player = ns.getPlayer();
   // FIXME: do we need ALL execution times here? we only need weaken
   const executionTimes = calculateServerExecutionTimes(ns, targetName);
 
-  // Must run BEFORE process Weaken. Updates targetObject security level
-  const growThreads = processGrow(ns, player, cpuCores, targetObject);
+  // Grow must run BEFORE process Weaken. Updates targetObject security level
+  let growThreads = 0;
+  if (useFormulas) {
+    const player = ns.getPlayer();
+    growThreads = processGrowFormulas(ns, player, cpuCores, targetObject);
+  } else {
+    growThreads = processGrowClean(ns, cpuCores, targetObject);
+  }
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   if (weakenThreads === 0 && growThreads === 0) {
@@ -76,7 +83,6 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
  * @param {AttackBatch} attackBatch
  */
 function getAttackParameters(ns, cpuCores, attackBatch) {
-  const player = ns.getPlayer();
   const targetObject = ns.getServer(attackBatch.targetName);
   const executionTimes = calculateServerExecutionTimes(
     ns,
@@ -84,7 +90,13 @@ function getAttackParameters(ns, cpuCores, attackBatch) {
   );
 
   const hackingThreads = processHack(ns, targetObject);
-  const growThreads = processGrow(ns, player, cpuCores, targetObject);
+  let growThreads = 0;
+  if (useFormulas) {
+    const player = ns.getPlayer();
+    growThreads = processGrowFormulas(ns, player, cpuCores, targetObject);
+  } else {
+    growThreads = processGrowClean(ns, cpuCores, targetObject);
+  }
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   attackBatch.setAttackActions(
@@ -362,7 +374,7 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
   ]);
-  if (args.help || args.h || args._.length !== 2) {
+  if (args.help || args.h || args._.length !== 3) {
     ns.tprint(
       `Usage: run ${ns.getScriptName()} [ATTACKING_SERVERS] [TARGET_SERVERS]`,
     );
@@ -382,6 +394,7 @@ export async function main(ns) {
 
   const attackingServers = JSON.parse(args._[0]);
   const targetServers = JSON.parse(args._[1]);
+  useFormulas = args._[2] == 2;
 
   ns.disableLog("exec");
   ns.disableLog("sleep");

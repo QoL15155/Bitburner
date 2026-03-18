@@ -16,7 +16,7 @@ const scriptsToDistribute = [
 ];
 
 // Requires Formulas
-const controllerScriptFormulas = "/hack/controller_batch.js";
+const controllerScript = "/hack/controller_batch.js";
 
 /* Utils */
 
@@ -78,33 +78,41 @@ function distributeScriptsToServer(ns, serverName) {
 
 /**
  * Checks if the controller script or any of the distribution scripts are running on 'home'
+ *
  * Note that we only check against 'home' server.
  *
  * @param {NS} ns
  * @returns {boolean} true if any of the scripts to distribute is running on 'home'
  */
-function isHomeRunningScripts(ns) {
+async function checkHomeRunningScripts(ns) {
   const processes = ns.ps();
 
   // Check if controller script is running on home
   const isControllerRunning = processes.some((process) => {
-    return controllerScriptFormulas.endsWith(process.filename);
+    return controllerScript.endsWith(process.filename);
   });
   if (isControllerRunning) {
     ns.tprint("Controller script is already running on home.");
     return true;
   }
 
-  const isAttackingScriptRunning = processes.some((process) => {
-    return scriptsToDistribute.includes(process.filename);
-  });
+  let attempts = 20;
+  while (attempts > 0) {
+    const isAttackingScriptRunning = processes.some((process) => {
+      return scriptsToDistribute.includes(process.filename);
+    });
 
-  if (isAttackingScriptRunning) {
+    if (!isAttackingScriptRunning) return false;
+
     ns.tprint(
-      `Attacking script is already running on home. Wait for it to finish...`,
+      `Attacking scripts are running on home. Waiting for the to finish... Attempts left: ${attempts}`,
     );
+    await ns.sleep(1000);
+    attempts--;
   }
-  return isAttackingScriptRunning;
+
+  // Scripts are still running after waiting.
+  return true;
 }
 
 async function smartDistribution(ns) {
@@ -130,14 +138,22 @@ async function smartDistribution(ns) {
   const infoDescription = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
   print(ns, infoDescription);
 
+  // TODO: targets / attackers should be dynamic - and chosen by the controller script?
   const attackingNames = attackingServers.map((s) => s.name);
   const targetNames = targetServers.map((s) => s.name);
 
+  let useFormulas = false;
+  // if (ns.fileExists("Formulas.exe", "home")) {
+  //   useFormulas = true;
+  // }
+  ns.tprint(`Starting attack with${useFormulas ? "" : "out"} Formulas.exe.`);
+
   ns.run(
-    controllerScriptFormulas,
+    controllerScript,
     { threads: 1 },
     JSON.stringify(attackingNames),
     JSON.stringify(targetNames),
+    useFormulas,
   );
   return;
 }
@@ -177,14 +193,8 @@ export async function main(ns) {
 
   ns.disableLog("scp");
 
-  if (isHomeRunningScripts(ns)) {
+  if (await checkHomeRunningScripts(ns)) {
     // TODO: Kill the current script if it is already running?
-    return;
-  }
-
-  // Check if controller script can be ran
-  if (!ns.fileExists("Formulas.exe", "home")) {
-    printError(ns, "Formulas.exe is required to run the controller script.");
     return;
   }
 
