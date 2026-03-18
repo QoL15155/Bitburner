@@ -190,4 +190,13 @@ export class AttackBatch {
 
     return 0;
   }
+
+  /** Total threads for all actions */
+  getTotalThreads() {
+    return (
+      this.#hackAction.threads +
+      this.#growAction.threads +
+      this.#weakenAction.threads
+    );
+  }
 }

@@ -5,6 +5,7 @@ import {
   printLogInfo,
   print,
 } from "/utils/print.js";
+import { AttackMeasurements } from "/hack/attack_measurements.js";
 import { formatRam, formatMoney } from "/utils/formatters.js";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
@@ -231,9 +232,10 @@ function testScriptsNotRunning(ns, attackBatch) {
 //#region Attack
 
 class AttackResult {
-  constructor(success, delayTime) {
+  constructor(success, delayTime, threads = 0) {
     this.success = success;
     this.duration = delayTime;
+    this.threads = threads;
   }
 }
 
@@ -290,7 +292,11 @@ function performAttack(ns, attackingServers, attackBatch) {
       .forEach((action) => runAttackAction(ns, serverName, targetName, action));
 
     attackBatch.setEndTime();
-    return new AttackResult(true, attackBatch.getAttackDuration());
+    return new AttackResult(
+      true,
+      attackBatch.getAttackDuration(),
+      attackBatch.getTotalThreads(),
+    );
   }
 
   printError(
@@ -326,10 +332,11 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     attackList.push(attackBatch);
   });
 
-  let round = 1;
+  let measurements = new AttackMeasurements(useFormulas);
   while (true) {
     let sleepTime = Infinity;
     let attackedServers = 0;
+    let totalThreads = 0;
 
     // Perform attack on each target server.
     attackList.forEach((attackBatch) => {
@@ -343,13 +350,19 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       }
       if (result.success) {
         attackedServers += 1;
+        totalThreads += result.threads;
       }
     });
 
+    measurements.addRound(attackedServers, totalThreads, sleepTime);
+
     // Log results and wait for the next attack round
-    const message = `Finished Attack-Round ${round} -`;
+    const message = `Finished Attack-Round ${measurements.rounds} -`;
     if (attackedServers > 0) {
-      printLogInfo(ns, `${message} Attacked servers: ${attackedServers}`);
+      printLogInfo(
+        ns,
+        `${message} Attacked servers: ${attackedServers}, Total threads: ${totalThreads}`,
+      );
       if (sleepTime === 0) {
         throw "Sleep Time is 0";
       }
@@ -363,8 +376,8 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     }
 
     sleepTime = Math.max(sleepTime, delayIncrease);
+    measurements.display(ns, attackedServers, totalThreads, sleepTime);
     await ns.sleep(sleepTime);
-    round++;
   }
 }
 
@@ -394,12 +407,14 @@ export async function main(ns) {
 
   const attackingServers = JSON.parse(args._[0]);
   const targetServers = JSON.parse(args._[1]);
-  useFormulas = args._[2] == 2;
+  useFormulas = args._[2] == true;
 
   ns.disableLog("exec");
   ns.disableLog("sleep");
 
   ns.ui.openTail();
+  ns.ui.resizeTail(700, 600);
+  ns.ui.setTailTitle("Batch Attack Controller");
 
   await doBatchAttack(ns, attackingServers, targetServers);
 }

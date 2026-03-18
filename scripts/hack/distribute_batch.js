@@ -77,42 +77,130 @@ function distributeScriptsToServer(ns, serverName) {
 //#region Main
 
 /**
- * Checks if the controller script or any of the distribution scripts are running on 'home'
- *
- * Note that we only check against 'home' server.
+ * Checks if the controller script is running.
  *
  * @param {NS} ns
- * @returns {boolean} true if any of the scripts to distribute is running on 'home'
+ * @param {Array} processes - list of processes to check against
+ * @param {boolean} toKill - if true, kills the controller script if it is running.
+ *    Otherwise just checks if it is running.
+ * @return {boolean} true if the controller script is running (after killing if toKill is true),
+ * false otherwise.
  */
-async function checkHomeRunningScripts(ns) {
-  const processes = ns.ps();
+function isControllerScriptRunning(ns, processes, toKill = false) {
+  const isRunning = processes.some((process) => {
+    return isScriptRunning(process);
+  });
+
+  return isRunning;
+
+  function isScriptRunning(process) {
+    if (!controllerScript.endsWith(process.filename)) return false;
+
+    if (!toKill) return true;
+
+    ns.tprint(`Killing running controller script: ${process.filename}`);
+    const killed = ns.kill(process.pid);
+    if (!killed) {
+      printError(
+        ns,
+        `Failed to kill controller script with PID: ${process.pid}`,
+      );
+      return true;
+    }
+
+    // process no longer running
+    return false;
+  }
+}
+
+/**
+ * Checks if the controller script or any of the attacking scripts are running on 'home'.
+ *
+ * When attacking scripts are running, waits for them to finish.
+ * If they don't finish after a certain number of attempts, kills them (if killScripts is true).
+ *
+ * If killScripts is true, kills the controller script and any distribution scripts running on 'home'.
+ *
+ * Note that we only check distribution scripts against 'home' server.
+ *
+ * @param {NS} ns
+ * @param {boolean} killScripts - if true, kills the controller script and any distribution scripts running on 'home'.
+ *  In any case, waits for any distribution scripts to finish before killing/returning.
+ * @returns {boolean} true if the controller or any of the scripts to distribute are running on 'home'
+ */
+async function checkHomeRunningScripts(ns, killScripts = false) {
+  let processes = ns.ps();
 
   // Check if controller script is running on home
-  const isControllerRunning = processes.some((process) => {
-    return controllerScript.endsWith(process.filename);
-  });
+  const isControllerRunning = isControllerScriptRunning(
+    ns,
+    processes,
+    killScripts,
+  );
   if (isControllerRunning) {
     ns.tprint("Controller script is already running on home.");
     return true;
   }
 
   let attempts = 20;
+  ns.ui.openTail();
+  ns.ui.resizeTail(800, 500);
   while (attempts > 0) {
-    const isAttackingScriptRunning = processes.some((process) => {
+    processes = ns.ps();
+    const runningScripts = processes.filter((process) => {
       return scriptsToDistribute.includes(process.filename);
     });
 
-    if (!isAttackingScriptRunning) return false;
+    if (runningScripts.length === 0) {
+      ns.ui.closeTail();
+      return false;
+    }
 
-    ns.tprint(
-      `Attacking scripts are running on home. Waiting for the to finish... Attempts left: ${attempts}`,
+    const len = runningScripts.length;
+
+    ns.clearLog();
+    // ns.ui.resizeTail(800, len + 5);
+    runningScripts.forEach((process) => {
+      ns.print(`- (${process.pid}) ${process.filename} - ${process.args}`);
+    });
+    ns.print(" ");
+    ns.print(
+      "Attacking scripts are running on home. Waiting for them to finish...",
     );
+    ns.print(`Scripts running: ${len}, Attempts left: ${attempts}`);
+    ns.tprint(`Scripts running: ${len}, Attempts left: ${attempts}`);
     await ns.sleep(1000);
     attempts--;
   }
+  ns.ui.closeTail();
+
+  if (!killScripts) {
+    // Scripts are still running after waiting
+    return true;
+  }
+
+  ns.tprint("Killing remaining attacking scripts on home.");
+  let isRunning = false;
+  processes = ns.ps();
+  processes.forEach((process) => {
+    if (!scriptsToDistribute.includes(process.filename)) return;
+
+    const killed = ns.kill(process.pid);
+    if (!killed) {
+      printError(
+        ns,
+        `Failed to kill attacking script ${process.filename} with PID: ${process.pid}`,
+      );
+      isRunning = true;
+    }
+  });
 
   // Scripts are still running after waiting.
-  return true;
+  ns.tprint(
+    `Scripts running after waiting: ${isRunning}. Killed: ${!isRunning}.`,
+  );
+
+  return isRunning;
 }
 
 async function smartDistribution(ns) {
@@ -143,9 +231,9 @@ async function smartDistribution(ns) {
   const targetNames = targetServers.map((s) => s.name);
 
   let useFormulas = false;
-  // if (ns.fileExists("Formulas.exe", "home")) {
-  //   useFormulas = true;
-  // }
+  if (ns.fileExists("Formulas.exe", "home")) {
+    useFormulas = true;
+  }
   ns.tprint(`Starting attack with${useFormulas ? "" : "out"} Formulas.exe.`);
 
   ns.run(
@@ -177,6 +265,8 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
+    ["k", false],
+    ["kill", false],
   ]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
@@ -192,9 +282,12 @@ export async function main(ns) {
   }
 
   ns.disableLog("scp");
+  ns.disableLog("sleep");
+  ns.disableLog("ps");
+  ns.disableLog("kill");
 
-  if (await checkHomeRunningScripts(ns)) {
-    // TODO: Kill the current script if it is already running?
+  const killRunningScripts = args.kill || args.k;
+  if (await checkHomeRunningScripts(ns, killRunningScripts)) {
     return;
   }
 

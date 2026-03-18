@@ -1,6 +1,6 @@
 //#region Print Colors
 
-const Color = {
+export const Color = {
   Reset: "\x1b[0m",
   Bright: "\x1b[1m",
   Dim: "\x1b[2m",
