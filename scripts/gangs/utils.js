@@ -68,20 +68,39 @@ export function readGangTasks(ns, isHackingGang = true) {
 //#region Member Finder
 
 // Hacking Level
+
+/**
+ * Finds the gang member with the lowest hacking level.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the lowest hack stat
+ */
 export function findMemberLowestHackingLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
+
   const bestMember = members.reduce((prev, current) => {
     return current.hack < prev.hack ? current : prev;
   });
   return bestMember;
 }
 
+/**
+ * Finds the gang member with the highest hacking level.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the highest hack stat
+ */
 export function findMemberHighestHackingLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
+
   const bestMember = members.reduce((prev, current) => {
     return prev.hack < current.hack ? current : prev;
   });
@@ -90,6 +109,7 @@ export function findMemberHighestHackingLevel(ns, memberNames) {
 
 // Wanted level
 export function findMemberHighestWantedLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );

@@ -26,6 +26,18 @@ import {
 
 //#region Recruitment
 
+function getRespectNeededForNextRecruit(gangInformation) {
+  if (gangInformation.respectForNextRecruit === Infinity) {
+    return Infinity;
+  }
+
+  if (gangInformation.respectForNextRecruit <= gangInformation.respect) {
+    return 0;
+  }
+
+  return gangInformation.respectForNextRecruit - gangInformation.respect;
+}
+
 /**
  * Recruits new gang members until the maximum number of members is reached.
  * Each new member is assigned the default task.
@@ -42,7 +54,7 @@ export function recruitGangMembers(ns, defaultTask) {
   let membersCount = ns.gang.getMemberNames().length;
   let newMembers = [];
 
-  while (ns.gang.canRecruitMember()) {
+  while (getRespectNeededForNextRecruit(ns.gang.getGangInformation()) == 0) {
     membersCount++;
     const memberName = `${memberNamePrefix}${membersCount}`;
     if (!ns.gang.recruitMember(memberName)) {
@@ -93,12 +105,10 @@ export function getRecruitmentStatus(ns) {
 
   // Check if we are close to recruiting the next member.
   // If we are close, wait for respect to recruit the next member instead of ascending current members.
-  const respectNextRecruit =
-    gangInformation.respectForNextRecruit - gangInformation.respect;
+  const neededRespect = getRespectNeededForNextRecruit(gangInformation);
   const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
-  const timeToNextRecruitSeconds =
-    respectNextRecruit / respectGainRatePerSecond;
-  let message = `[${fname}] Respect needed: ${doConversion(respectNextRecruit)}, `;
+  const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
+  let message = `[${fname}] Respect needed: ${doConversion(neededRespect)}, `;
   message += `gain: ${respectGainRatePerSecond.toFixed(3)}/sec. `;
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
