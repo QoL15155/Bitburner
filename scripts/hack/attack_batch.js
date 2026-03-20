@@ -54,16 +54,16 @@ export class AttackBatch {
     this.targetName = targetName;
 
     this.#hackAction = new AttackAction(
-      distributionScripts.hack.targetScript,
-      distributionScripts.hack.ram,
+      distributionScripts.hackScript.targetScript,
+      distributionScripts.hackScript.ram,
     );
     this.#growAction = new AttackAction(
-      distributionScripts.grow.targetScript,
-      distributionScripts.grow.ram,
+      distributionScripts.growScript.targetScript,
+      distributionScripts.growScript.ram,
     );
     this.#weakenAction = new AttackAction(
-      distributionScripts.weaken.targetScript,
-      distributionScripts.weaken.ram,
+      distributionScripts.weakenScript.targetScript,
+      distributionScripts.weakenScript.ram,
     );
   }
 
@@ -90,10 +90,10 @@ export class AttackBatch {
     this.#weakenAction.threads = weakenThreads;
 
     this.#hackAction.time = 0;
-    this.#growAction.time = executionTimes.grow;
-    this.#weakenAction.time = executionTimes.weaken;
+    this.#growAction.time = executionTimes.growTime;
+    this.#weakenAction.time = executionTimes.weakenTime;
 
-    this.#attackDuration = executionTimes.weaken;
+    this.#attackDuration = executionTimes.weakenTime;
 
     this.#setRequiredRam();
     this.#endTime = 0;
@@ -112,11 +112,11 @@ export class AttackBatch {
     this.#growAction.threads = growThreads;
     this.#weakenAction.threads = weakenThreads;
 
-    this.#hackAction.time = executionTimes.hack;
-    this.#growAction.time = executionTimes.grow;
-    this.#weakenAction.time = executionTimes.weaken;
+    this.#hackAction.time = executionTimes.hackTime;
+    this.#growAction.time = executionTimes.growTime;
+    this.#weakenAction.time = executionTimes.weakenTime;
 
-    this.#attackDuration = executionTimes.weaken;
+    this.#attackDuration = executionTimes.weakenTime;
 
     this.#setRequiredRam();
     this.#endTime = 0;

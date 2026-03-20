@@ -19,26 +19,26 @@ export function calculateServerExecutionTimes(ns, targetName) {
   // const weakenTime = ns.getWeakenTime(targetName);
 
   return {
-    hack: hackTime,
-    grow: growTime,
-    weaken: weakenTime,
+    hackTime: hackTime,
+    growTime: growTime,
+    weakenTime: weakenTime,
   };
 }
 
 export const distributionScripts = {
-  hack: {
+  hackScript: {
     loopScript: "do_hack.js",
     targetScript: "target_hack.js",
     ram: 1.7,
   },
 
-  grow: {
+  growScript: {
     loopScript: "do_grow.js",
     targetScript: "target_grow.js",
     ram: 1.75,
   },
 
-  weaken: {
+  weakenScript: {
     loopScript: "do_weaken.js",
     targetScript: "target_weaken.js",
     ram: 1.75,
