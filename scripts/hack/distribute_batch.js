@@ -1,9 +1,11 @@
 import {
   printError,
+  printLogError,
   printWarn,
   printInfo,
   printLogInfo,
   print,
+  Color,
 } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
 import { importServersData } from "/utils/servers.js";
@@ -142,24 +144,19 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
     return true;
   }
 
-  let attempts = 20;
-  ns.ui.openTail();
-  ns.ui.resizeTail(800, 500);
+  let attempts = 15;
   while (attempts > 0) {
-    processes = ns.ps();
-    const runningScripts = processes.filter((process) => {
+    const runningScripts = ns.ps().filter((process) => {
       return scriptsToDistribute.includes(process.filename);
     });
 
     if (runningScripts.length === 0) {
-      ns.ui.closeTail();
       return false;
     }
 
     const len = runningScripts.length;
 
     ns.clearLog();
-    // ns.ui.resizeTail(800, len + 5);
     runningScripts.forEach((process) => {
       ns.print(`- (${process.pid}) ${process.filename} - ${process.args}`);
     });
@@ -167,12 +164,14 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
     ns.print(
       "Attacking scripts are running on home. Waiting for them to finish...",
     );
-    ns.print(`Scripts running: ${len}, Attempts left: ${attempts}`);
-    ns.tprint(`Scripts running: ${len}, Attempts left: ${attempts}`);
+
+    ns.print(
+      `${Color.FgBlueBright}Scripts running${Color.Reset}: ${len}, ${Color.FgBlueBright}Attempts left${Color.Reset}: ${attempts}`,
+    );
+    ns.print("");
     await ns.sleep(1000);
     attempts--;
   }
-  ns.ui.closeTail();
 
   if (!killScripts) {
     // Scripts are still running after waiting
@@ -180,27 +179,23 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
   }
 
   ns.tprint("Killing remaining attacking scripts on home.");
-  let isRunning = false;
-  processes = ns.ps();
-  processes.forEach((process) => {
-    if (!scriptsToDistribute.includes(process.filename)) return;
-
-    const killed = ns.kill(process.pid);
-    if (!killed) {
-      printError(
-        ns,
-        `Failed to kill attacking script ${process.filename} with PID: ${process.pid}`,
-      );
-      isRunning = true;
-    }
+  scriptsToDistribute.forEach((script) => {
+    ns.scriptKill(script, "home");
   });
 
-  // Scripts are still running after waiting.
-  ns.tprint(
-    `Scripts running after waiting: ${isRunning}. Killed: ${!isRunning}.`,
-  );
+  const runningScripts = ns.ps().filter((process) => {
+    return scriptsToDistribute.includes(process.filename);
+  });
+  if (runningScripts.length == 0) {
+    return false;
+  }
 
-  return isRunning;
+  printError(ns, `Failed to kill attacking scripts`);
+  printLogError(
+    ns,
+    runningScripts.map((p) => `${p.pid}: ${p.filename} - ${p.args}`).join("\n"),
+  );
+  return true;
 }
 
 async function smartDistribution(ns) {
@@ -236,14 +231,14 @@ async function smartDistribution(ns) {
   }
   ns.tprint(`Starting attack with${useFormulas ? "" : "out"} Formulas.exe.`);
 
-  ns.run(
+  const result = ns.run(
     controllerScript,
     { threads: 1 },
     JSON.stringify(attackingNames),
     JSON.stringify(targetNames),
     useFormulas,
   );
-  return;
+  return result;
 }
 
 //#endregion Main
@@ -281,15 +276,23 @@ export async function main(ns) {
     return;
   }
 
+  ns.disableLog("disableLog");
   ns.disableLog("scp");
   ns.disableLog("sleep");
   ns.disableLog("ps");
   ns.disableLog("kill");
+
+  ns.ui.openTail();
+  ns.ui.resizeTail(800, 500);
+  ns.ui.setTailTitle("Batch Attack - Distribution");
 
   const killRunningScripts = args.kill || args.k;
   if (await checkHomeRunningScripts(ns, killRunningScripts)) {
     return;
   }
 
-  await smartDistribution(ns);
+  const result = await smartDistribution(ns);
+  if (result) {
+    ns.ui.closeTail();
+  }
 }

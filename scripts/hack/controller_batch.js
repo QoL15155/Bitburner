@@ -1,10 +1,4 @@
-import {
-  printError,
-  printWarn,
-  printInfo,
-  printLogInfo,
-  print,
-} from "/utils/print.js";
+import { FileLogger } from "/utils/logger.js";
 import { AttackMeasurements } from "/hack/attack_measurements.js";
 import { formatRam, formatMoney } from "/utils/formatters.js";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
@@ -21,6 +15,10 @@ import {
 /**
  * Controller script for batch attacking with sleep.
  */
+
+const logFile = "/logs/controller_batch.txt";
+/** @type {FileLogger} */
+let logger = null;
 
 let useFormulas = false;
 
@@ -57,7 +55,7 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   if (weakenThreads === 0 && growThreads === 0) {
-    ns.print(`[${fname}] Server is already prepped.`);
+    logger.info(fname, "Server is already prepped.");
     return false;
   }
 
@@ -131,8 +129,9 @@ function handleAttackParameters(ns, cpuCores, attackBatch) {
       return;
     }
 
-    ns.print(
-      `[${fname}] Server is already prepped. Gathering attack parameters`,
+    logger.info(
+      fname,
+      "Server is already prepped. Gathering attack parameters",
     );
   }
 
@@ -144,51 +143,43 @@ function handleAttackParameters(ns, cpuCores, attackBatch) {
 
 //#region Sanity Checks
 
-function doSanityTests(ns, attackBatch) {
+function doSanityTests(ns, attackBatch, errorMessages) {
   if (attackBatch.getState() === BatchState.INIT) return true;
 
-  const result = testScriptsNotRunning(ns, attackBatch);
+  const result = testScriptsNotRunning(ns, attackBatch, errorMessages);
   if (!result) return false;
 
   // Don't update result. (DO NOT SKIP Target)
   // If the scripts are not running, these values won't change.
-  testTargetServerValues(ns, attackBatch.targetName);
+  testTargetServerValues(ns, attackBatch.targetName, errorMessages);
 
   return true;
 }
 
-function sanitizeServerMaxMoney(ns, serverObject) {
-  const fname = "sanitizeServerMaxMoney";
-  const moneyMax = formatMoney(serverObject.moneyMax);
-  const moneyAvailable = formatMoney(serverObject.moneyAvailable);
-  // Due to floating point crap, sometime we get to 99% percent of the max money
-  if (moneyMax === moneyAvailable) return true;
-
-  printError(
-    ns,
-    `[${fname}] Server ${serverObject.hostname} Money is not at max. ${moneyAvailable} != ${moneyMax}`,
-  );
-  return false;
-}
-
-function testTargetServerValues(ns, targetName) {
+function testTargetServerValues(ns, targetName, errorMessages) {
   const fname = "testTargetServerValues";
   const hackedObject = ns.getServer(targetName);
   let success = true;
 
   // Hack difficulty
   if (hackedObject.hackDifficulty !== hackedObject.minDifficulty) {
-    printError(
-      ns,
-      `[${fname}] Target '${targetName}' with unexpected Hack difficulty: ${hackedObject.hackDifficulty}, expected ${hackedObject.minDifficulty}`,
-    );
+    const message = `Target '${targetName}' with unexpected Hack difficulty: ${hackedObject.hackDifficulty}, expected ${hackedObject.minDifficulty}`;
+    logger.error(fname, message);
+    errorMessages.push(message);
     success = false;
   }
 
   // Money
-  success |= sanitizeServerMaxMoney(ns, hackedObject);
-
-  return success;
+  const moneyMax = formatMoney(hackedObject.moneyMax);
+  const moneyAvailable = formatMoney(hackedObject.moneyAvailable);
+  // Due to floating point crap, sometime we get to 99% percent of the max money
+  if (moneyMax === moneyAvailable) {
+    return success;
+  }
+  const message = `Server ${hackedObject.hostname} Money is not at max. ${moneyAvailable} != ${moneyMax}`;
+  logger.error(fname, message);
+  errorMessages.push(message);
+  return false;
 }
 
 /**
@@ -200,7 +191,7 @@ function testTargetServerValues(ns, targetName) {
  * @param {AttackBatch} attackBatch
  * @returns {boolean} true if all attack scripts are not running, false otherwise
  */
-function testScriptsNotRunning(ns, attackBatch) {
+function testScriptsNotRunning(ns, attackBatch, errorMessages) {
   const fname = "testScriptsNotRunning";
   const targetName = attackBatch.targetName;
 
@@ -221,8 +212,9 @@ function testScriptsNotRunning(ns, attackBatch) {
     return true;
   }
 
-  const message = `[${fname}] server:${targetName}, running scripts: ${badScripts.join(", ")}. Current time: ${Date.now()}`;
-  printError(ns, message);
+  const message = `server:${targetName}, running scripts: ${badScripts.join(", ")}. Current time: ${Date.now()}`;
+  logger.error(fname, message);
+  errorMessages.push(message);
 
   return false;
 }
@@ -232,10 +224,12 @@ function testScriptsNotRunning(ns, attackBatch) {
 //#region Attack
 
 class AttackResult {
-  constructor(success, delayTime, threads = 0) {
+  constructor(success, delayTime, threads = 0, errorMessages = []) {
     this.success = success;
     this.duration = delayTime;
     this.threads = threads;
+    /** @type {Array<string>} */
+    this.errorMessages = errorMessages;
   }
 }
 
@@ -256,14 +250,16 @@ function performAttack(ns, attackingServers, attackBatch) {
     return new AttackResult(false, timeToWait);
   }
 
-  if (!doSanityTests(ns, attackBatch)) {
-    return new AttackResult(false, 0);
+  /** @type {Array<string>} */
+  let errorMessages = [];
+  if (!doSanityTests(ns, attackBatch, errorMessages)) {
+    return new AttackResult(false, 0, errorMessages);
     // throw "Unexpected state before attack";
   }
 
   attackBatch.reset();
 
-  ns.print(`[${fname}] Attacking ${targetName}`);
+  logger.info(fname, `Attacking ${targetName}`);
 
   for (const serverName of attackingServers) {
     const serverObject = ns.getServer(serverName);
@@ -275,17 +271,18 @@ function performAttack(ns, attackingServers, attackBatch) {
     const availableRam = serverObject.maxRam - serverObject.ramUsed;
     let ramString = `RAM(required ${formatRam(requiredRam)}, available ${formatRam(availableRam)})`;
     if (requiredRam > availableRam) {
-      ns.print(
-        `[${fname}] Cannot attack from ${serverName} - not enough RAM. ${ramString}`,
+      logger.warn(
+        fname,
+        `Cannot attack from ${serverName} - not enough RAM. ${ramString}`,
       );
       continue;
     }
 
-    printLogInfo(
-      ns,
-      `[${fname}] Attacking ${targetName} from ${serverName}. ${ramString}. Time: ${Date.now()}`,
+    logger.info(
+      fname,
+      `Attacking ${targetName} from ${serverName}. ${ramString}. Time: ${Date.now()}`,
     );
-    ns.print(`[${fname}] ${attackBatch.toString()}`);
+    logger.info(fname, attackBatch.toString());
 
     attackBatch
       .getActions()
@@ -299,12 +296,11 @@ function performAttack(ns, attackingServers, attackBatch) {
     );
   }
 
-  printError(
-    ns,
-    `[${fname}] Failed to find server to run attack on ${targetName}`,
-  );
+  const message = `Failed to find server to run attack on ${targetName}`;
+  logger.error(fname, message);
+  errorMessages.push(message);
 
-  return new AttackResult(false, 0);
+  return new AttackResult(false, 0, 0, errorMessages);
 }
 
 //#endregion Attack
@@ -318,6 +314,7 @@ function performAttack(ns, attackingServers, attackBatch) {
  * @param {Array<string>} targetServers
  */
 async function doBatchAttack(ns, attackingServers, targetServers) {
+  const fname = "doBatchAttack";
   // TODO:
   // Without formulas, a common de facto algorithm for finding the best server to target is to parse the list down
   // to only servers with a hacking requirement of half your level,
@@ -337,31 +334,33 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     let sleepTime = Infinity;
     let attackedServers = 0;
     let totalThreads = 0;
+    /** @type {Array<string>} */
+    let errorMessages = [];
 
     // Perform attack on each target server.
     attackList.forEach((attackBatch) => {
       /** @type {AttackResult} */
-      const result = performAttack(ns, attackingServers, attackBatch);
-      if (result.duration < 0) {
-        throw `performAttack returned an invalid duration: ${result.duration}`;
+      const attackResult = performAttack(ns, attackingServers, attackBatch);
+      if (attackResult.duration < 0) {
+        throw `performAttack returned an invalid duration: ${attackResult.duration}`;
       }
-      if (result.duration > 0 && result.duration < sleepTime) {
-        sleepTime = result.duration;
+      if (attackResult.duration > 0 && attackResult.duration < sleepTime) {
+        sleepTime = attackResult.duration;
       }
-      if (result.success) {
+
+      errorMessages.push(...attackResult.errorMessages);
+      if (attackResult.success) {
         attackedServers += 1;
-        totalThreads += result.threads;
+        totalThreads += attackResult.threads;
       }
     });
 
-    measurements.addRound(attackedServers, totalThreads, sleepTime);
-
     // Log results and wait for the next attack round
-    const message = `Finished Attack-Round ${measurements.rounds} -`;
+    const roundLabel = `Attack-Round ${measurements.rounds}`;
     if (attackedServers > 0) {
-      printLogInfo(
-        ns,
-        `${message} Attacked servers: ${attackedServers}, Total threads: ${totalThreads}`,
+      logger.info(
+        fname,
+        `Finished ${roundLabel} - Attacked servers: ${attackedServers}, Total threads: ${totalThreads}`,
       );
       if (sleepTime === 0) {
         throw "Sleep Time is 0";
@@ -369,14 +368,21 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     } else {
       // Bad flow. we shouldn't get here
       sleepTime = delayIncrease;
-      printWarn(
-        ns,
-        `${message} No attacked servers sleeping for ${sleepTime}ms`,
-      );
+      const message = `Finished ${roundLabel} - No attacked servers. Sleeping for ${sleepTime}ms.`;
+      logger.warn(fname, message);
+      errorMessages.push(message);
     }
+
+    measurements.addRound(
+      attackedServers,
+      totalThreads,
+      sleepTime,
+      errorMessages,
+    );
 
     sleepTime = Math.max(sleepTime, delayIncrease);
     measurements.display(ns, attackedServers, totalThreads, sleepTime);
+
     await ns.sleep(sleepTime);
   }
 }
@@ -412,8 +418,10 @@ export async function main(ns) {
   ns.disableLog("exec");
   ns.disableLog("sleep");
 
+  logger = new FileLogger(ns, { logFile: logFile });
+
   ns.ui.openTail();
-  ns.ui.resizeTail(700, 600);
+  ns.ui.resizeTail(700, 700);
   ns.ui.setTailTitle("Batch Attack Controller");
 
   await doBatchAttack(ns, attackingServers, targetServers);

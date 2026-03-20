@@ -2,6 +2,8 @@ import { Color } from "/utils/print.js";
 import { formatTime } from "/utils/formatters.js";
 
 export class AttackMeasurements {
+  static errorMessagesToKeep = 5;
+
   constructor(isFormulas) {
     this.rounds = 0;
     this.totalAttackPerRound = 0;
@@ -16,9 +18,23 @@ export class AttackMeasurements {
     this.totalSleepTime = 0;
     this.maxSleepTime = 0;
     this.minSleepTime = 0;
+
+    /**
+     * Contains the last @var {AttackMeasurements.errorMessagesToKeep}
+     * error messages from the most recent attack round.
+     * @type {Array<string>} */
+    this.lastErrorMessages = [];
   }
 
-  addRound(attacks, threads, delayTime = 0) {
+  /**
+   * Adds a new attack round's measurements to the dashboard.
+   *
+   * @param {number} attacks - number of servers attacked this round
+   * @param {number} threads - total threads used this round
+   * @param {number} delayTime - sleep time this round (ms)`
+   * @param {Array<string>} errorMessages - error messages for this round
+   */
+  addRound(attacks, threads, delayTime = 0, errorMessages = []) {
     this.rounds += 1;
     this.totalAttackPerRound += attacks;
 
@@ -39,6 +55,8 @@ export class AttackMeasurements {
     if (delayTime < this.minSleepTime || this.minSleepTime === 0) {
       this.minSleepTime = delayTime;
     }
+
+    this.addErrorMessages(errorMessages);
   }
 
   getAverageThreadsPerRound() {
@@ -53,8 +71,22 @@ export class AttackMeasurements {
     return this.totalSleepTime / this.rounds;
   }
 
+  addErrorMessages(messages) {
+    this.lastErrorMessages.push(...messages);
+    // Keep only the most recent error messages
+    if (
+      this.lastErrorMessages.length > AttackMeasurements.errorMessagesToKeep
+    ) {
+      this.lastErrorMessages.splice(
+        0,
+        this.lastErrorMessages.length - AttackMeasurements.errorMessagesToKeep,
+      );
+    }
+  }
+
   /**
    * Renders attack measurements as a formatted dashboard in the tail window.
+   *
    * @param {NS} ns
    * @param {number} attackedServers - servers attacked this round
    * @param {number} totalThreads - threads used this round
@@ -68,7 +100,7 @@ export class AttackMeasurements {
 
     ns.print(sep);
     ns.print(
-      `  ${c.Bright}${c.FgCyan}BATCH ATTACK DASHBOARD${c.Reset}. ${c.Dim}${c.FgGreen}Formulas?${c.Reset} ${this.useFormulas ? `${c.FgGreen}Yes` : `${c.FgRed}No`}${c.Reset}`,
+      `  ${c.Bold}${c.FgCyan}BATCH ATTACK DASHBOARD${c.Reset}. ${c.Dim}${c.FgGreenBright}Formulas?${c.Reset} ${this.useFormulas ? `${c.FgGreen}Yes` : `${c.FgRed}No`}${c.Reset}`,
     );
     ns.print(sep);
 
@@ -88,7 +120,7 @@ export class AttackMeasurements {
     ns.print(line);
 
     // Attack stats
-    ns.print(`  ${c.Bright}${c.FgRed}ATTACKS${c.Reset}`);
+    ns.print(`  ${c.FgCyanBright}ATTACKS${c.Reset}`);
     ns.print(
       `    ${c.FgWhite}Total:${c.Reset}          ${c.FgGreen}${this.totalAttackPerRound}${c.Reset}`,
     );
@@ -98,7 +130,7 @@ export class AttackMeasurements {
     ns.print(line);
 
     // Thread stats
-    ns.print(`  ${c.Bright}${c.FgYellow}THREADS${c.Reset}`);
+    ns.print(`  ${c.FgYellow}THREADS${c.Reset}`);
     ns.print(
       `    ${c.FgWhite}Avg/round:${c.Reset}      ${c.FgGreen}${this.getAverageThreadsPerRound().toFixed(2)}${c.Reset}`,
     );
@@ -111,7 +143,7 @@ export class AttackMeasurements {
     ns.print(line);
 
     // Sleep time stats
-    ns.print(`  ${c.Bright}${c.FgMagenta}SLEEP TIME${c.Reset}`);
+    ns.print(`  ${c.FgMagenta}SLEEP TIME${c.Reset}`);
     ns.print(
       `    ${c.FgWhite}Total:${c.Reset}          ${c.FgGreen}${formatTime(this.totalSleepTime)}${c.Reset}`,
     );
@@ -124,6 +156,17 @@ export class AttackMeasurements {
     ns.print(
       `    ${c.FgWhite}Min/round:${c.Reset}      ${c.FgGreen}${formatTime(this.minSleepTime)}${c.Reset}`,
     );
+    ns.print(line);
+
+    // Error messages from last round
+    ns.print(`  ${c.Bold}${c.FgRedBright}ERRORS (last round)${c.Reset}`);
+    if (this.lastErrorMessages.length > 0) {
+      for (const err of this.lastErrorMessages) {
+        ns.print(`    ${c.FgRed}• ${err}${c.Reset}`);
+      }
+    } else {
+      ns.print(`    ${c.FgGreen}None${c.Reset}`);
+    }
     ns.print(sep);
   }
 }
