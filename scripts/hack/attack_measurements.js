@@ -22,7 +22,7 @@ export class AttackMeasurements {
     // Error messages
     this.numberOfErrors = 0;
     /**
-     * Contains the last @var {AttackMeasurements.maxErrorMessages}
+     * Contains the last {@link AttackMeasurements.maxErrorMessages}
      * error messages from the most recent attack round.
      * @type {Array<string>} */
     this.lastErrors = [];
@@ -33,7 +33,7 @@ export class AttackMeasurements {
    *
    * @param {number} attacks - number of servers attacked this round
    * @param {number} threads - total threads used this round
-   * @param {number} delayTime - sleep time this round (ms)`
+   * @param {number} delayTime - sleep time this round (ms)
    * @param {Array<string>} errorMessages - error messages for this round
    */
   addRound(attacks, threads, delayTime = 0, errorMessages = []) {

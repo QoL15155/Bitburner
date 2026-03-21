@@ -120,8 +120,8 @@ function displayWaitingScripts(ns, runningScripts, scriptCount, attempts) {
  * @param {Array} processes - list of processes to check against
  * @param {boolean} toKill - if true, kills the controller script if it is running.
  *    Otherwise just checks if it is running.
- * @return {boolean} true if the controller script is running (after killing if toKill is true),
- * false otherwise.
+ * @return {boolean} true if the controller script is running
+ *  (after killing if @param toKill is true), false otherwise.
  */
 function isControllerScriptRunning(ns, processes, toKill = false) {
   const isRunning = processes.some((process) => {
