@@ -20,14 +20,14 @@ function calculateServerExecutionTimesTest(ns, serverName) {
 
   // Assert
   const actualHackTime = ns.getHackTime(serverName);
-  testTimes("hack", times.hack, actualHackTime);
+  testTimes("hack", times.hackTime, actualHackTime);
 
   const actualWeakenTime = ns.getWeakenTime(serverName);
-  testTimes("weaken", times.weaken, actualWeakenTime);
+  testTimes("weaken", times.weakenTime, actualWeakenTime);
 
   // FIXME: see if this difference is an issue. if not, make sure no error
   const actualGrowTime = ns.getGrowTime(serverName);
-  testTimes("grow", times.grow, actualGrowTime);
+  testTimes("grow", times.growTime, actualGrowTime);
 
   ns.tprint(`[${fname}] Finished execution`);
   return success;
