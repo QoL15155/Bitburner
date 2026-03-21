@@ -1,4 +1,4 @@
-import { FileLogger } from "./utils/logger";
+import { FileLogger } from "/utils/logger.js";
 
 /** @param {NS} ns */
 export async function main(ns) {
