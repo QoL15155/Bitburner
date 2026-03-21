@@ -94,7 +94,7 @@ export function processGrowFormulas(ns, player, cpuCores, targetObject) {
 
   const securityIncrease = ns.growthAnalyzeSecurity(
     threads,
-    targetObject.name,
+    undefined,
     cpuCores,
   );
   targetObject.hackDifficulty += securityIncrease;
@@ -128,7 +128,7 @@ export function processGrowClean(ns, cpuCores, targetObject) {
 
   const securityIncrease = ns.growthAnalyzeSecurity(
     threads,
-    targetObject.name,
+    undefined,
     cpuCores,
   );
   targetObject.hackDifficulty += securityIncrease;
