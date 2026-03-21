@@ -318,7 +318,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     attackList.push(attackBatch);
   });
 
-  let measurements = new AttackMeasurements(useFormulas);
+  const measurements = new AttackMeasurements(useFormulas);
   while (true) {
     let delayTime = Infinity;
     let attackedServers = 0;
@@ -346,7 +346,9 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     });
 
     // Log results and wait for the next attack round
-    const roundLabel = `Attack-Round ${measurements.rounds}`;
+    // We haven't updated measurements.rounds yet
+    const currentRound = measurements.rounds + 1;
+    const roundLabel = `Attack-Round ${currentRound}`;
     if (attackedServers > 0) {
       logger.info(
         fname,
