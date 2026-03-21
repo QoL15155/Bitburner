@@ -430,7 +430,8 @@ export async function main(ns) {
   logger = new FileLogger(ns, { logFile: logFile });
 
   ns.ui.openTail();
-  ns.ui.resizeTail(800, 750);
+  ns.ui.moveTail(20, 20);
+  ns.ui.resizeTail(1280, 750);
   ns.ui.setTailTitle("Batch Attack Controller");
 
   await doBatchAttack(ns, attackingServers, targetServers);

@@ -97,7 +97,7 @@ export class AttackMeasurements {
     ns.clearLog();
     const c = Color;
 
-    const frameWidth = 80;
+    const frameWidth = 130;
     const top = `${c.FgCyan}╔${"═".repeat(frameWidth)}╗${c.Reset}`;
     const bot = `${c.FgCyan}╚${"═".repeat(frameWidth)}╝${c.Reset}`;
     const mid = `${c.FgCyan}╠${"═".repeat(frameWidth)}╣${c.Reset}`;
