@@ -2,7 +2,7 @@ import { Color } from "/utils/print.js";
 import { formatTime } from "/utils/formatters.js";
 
 export class AttackMeasurements {
-  static errorMessagesToKeep = 5;
+  static maxErrorMessages = 5;
 
   constructor(isFormulas) {
     this.rounds = 0;
@@ -19,11 +19,13 @@ export class AttackMeasurements {
     this.maxSleepTime = 0;
     this.minSleepTime = 0;
 
+    // Error messages
+    this.numberOfErrors = 0;
     /**
      * Contains the last @var {AttackMeasurements.errorMessagesToKeep}
      * error messages from the most recent attack round.
      * @type {Array<string>} */
-    this.lastErrorMessages = [];
+    this.lastErrors = [];
   }
 
   /**
@@ -56,6 +58,8 @@ export class AttackMeasurements {
       this.minSleepTime = delayTime;
     }
 
+    // Error messages
+    this.numberOfErrors += errorMessages.length;
     this.addErrorMessages(errorMessages);
   }
 
@@ -72,15 +76,12 @@ export class AttackMeasurements {
   }
 
   addErrorMessages(messages) {
-    this.lastErrorMessages.push(...messages);
+    this.lastErrors.push(...messages);
     // Keep only the most recent error messages
-    if (
-      this.lastErrorMessages.length > AttackMeasurements.errorMessagesToKeep
-    ) {
-      this.lastErrorMessages.splice(
-        0,
-        this.lastErrorMessages.length - AttackMeasurements.errorMessagesToKeep,
-      );
+    if (this.lastErrors.length > AttackMeasurements.maxErrorMessages) {
+      const excess =
+        this.lastErrors.length - AttackMeasurements.maxErrorMessages;
+      this.lastErrors.splice(0, excess);
     }
   }
 
@@ -159,13 +160,14 @@ export class AttackMeasurements {
     ns.print(line);
 
     // Error messages from last round
-    ns.print(`  ${c.Bold}${c.FgRedBright}ERRORS (last round)${c.Reset}`);
-    if (this.lastErrorMessages.length > 0) {
-      for (const err of this.lastErrorMessages) {
-        ns.print(`    ${c.FgRed}• ${err}${c.Reset}`);
-      }
-    } else {
-      ns.print(`    ${c.FgGreen}None${c.Reset}`);
+    ns.print(
+      `  ${c.Bold}${c.FgRedBright}ERRORS (last ${AttackMeasurements.maxErrorMessages})${c.Reset}  ${c.FgWhite}Total:${c.Reset} ${c.FgRed}${this.numberOfErrors}${c.Reset}`,
+    );
+    const currentErrors = this.lastErrors.length;
+    for (let i = 0; i < AttackMeasurements.maxErrorMessages; i++) {
+      let err = "";
+      if (i < currentErrors) err = this.lastErrors[currentErrors - 1 - i];
+      ns.print(`    ${c.FgRed}• ${err}${c.Reset}`);
     }
     ns.print(sep);
   }

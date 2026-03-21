@@ -141,6 +141,7 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
   );
   if (isControllerRunning) {
     ns.tprint("Controller script is already running on home.");
+    ns.ui.closeTail();
     return true;
   }
 

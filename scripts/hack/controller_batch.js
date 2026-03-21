@@ -185,10 +185,12 @@ function testTargetServerValues(ns, targetName, errorMessages) {
 /**
  * Tests that the attack scripts are not running.
  *
- * Resets the attack action pid for the scripts that are not running..
+ * Resets the attack action pid for the scripts that are not running.
  *
  * @param {NS} ns
  * @param {AttackBatch} attackBatch
+ * @param {Array<string>} errorMessages - array to push error messages to.
+ *  Would later be used to display in the dashboard and log in case of attack failure.
  * @returns {boolean} true if all attack scripts are not running, false otherwise
  */
 function testScriptsNotRunning(ns, attackBatch, errorMessages) {
@@ -253,7 +255,7 @@ function performAttack(ns, attackingServers, attackBatch) {
   /** @type {Array<string>} */
   let errorMessages = [];
   if (!doSanityTests(ns, attackBatch, errorMessages)) {
-    return new AttackResult(false, 0, errorMessages);
+    return new AttackResult(false, 0, 0, errorMessages);
     // throw "Unexpected state before attack";
   }
 
@@ -331,7 +333,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
 
   let measurements = new AttackMeasurements(useFormulas);
   while (true) {
-    let sleepTime = Infinity;
+    let delayTime = Infinity;
     let attackedServers = 0;
     let totalThreads = 0;
     /** @type {Array<string>} */
@@ -344,11 +346,12 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       if (attackResult.duration < 0) {
         throw `performAttack returned an invalid duration: ${attackResult.duration}`;
       }
-      if (attackResult.duration > 0 && attackResult.duration < sleepTime) {
-        sleepTime = attackResult.duration;
+      if (attackResult.duration > 0 && attackResult.duration < delayTime) {
+        delayTime = attackResult.duration;
       }
 
       errorMessages.push(...attackResult.errorMessages);
+
       if (attackResult.success) {
         attackedServers += 1;
         totalThreads += attackResult.threads;
@@ -362,13 +365,13 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
         fname,
         `Finished ${roundLabel} - Attacked servers: ${attackedServers}, Total threads: ${totalThreads}`,
       );
-      if (sleepTime === 0) {
+      if (delayTime === 0) {
         throw "Sleep Time is 0";
       }
     } else {
       // Bad flow. we shouldn't get here
-      sleepTime = delayIncrease;
-      const message = `Finished ${roundLabel} - No attacked servers. Sleeping for ${sleepTime}ms.`;
+      delayTime = delayIncrease;
+      const message = `Finished ${roundLabel} - No attacked servers. Sleeping for ${delayTime}ms.`;
       logger.warn(fname, message);
       errorMessages.push(message);
     }
@@ -376,11 +379,11 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     measurements.addRound(
       attackedServers,
       totalThreads,
-      sleepTime,
+      delayTime,
       errorMessages,
     );
 
-    sleepTime = Math.max(sleepTime, delayIncrease);
+    const sleepTime = Math.max(delayTime, delayIncrease);
     measurements.display(ns, attackedServers, totalThreads, sleepTime);
 
     await ns.sleep(sleepTime);
@@ -421,7 +424,7 @@ export async function main(ns) {
   logger = new FileLogger(ns, { logFile: logFile });
 
   ns.ui.openTail();
-  ns.ui.resizeTail(700, 700);
+  ns.ui.resizeTail(800, 750);
   ns.ui.setTailTitle("Batch Attack Controller");
 
   await doBatchAttack(ns, attackingServers, targetServers);

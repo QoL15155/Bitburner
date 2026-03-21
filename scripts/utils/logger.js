@@ -6,6 +6,8 @@
  * Old rotated files are deleted to prevent unbounded growth.
  */
 export class FileLogger {
+  static errorDirectory = "/errors/";
+
   /**
    * @param {NS} ns
    * @param {object} options
@@ -87,11 +89,48 @@ export class FileLogger {
   }
 
   /**
+   * Copies the current log file and all rotated log files into an
+   * error snapshot directory (e.g. "/errors/20260320_143052/").
+   * The original log files are not removed.
+   */
+  _collectLogsOnError() {
+    const d = new Date();
+    const timestamp =
+      `${d.getFullYear()}` +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      String(d.getDate()).padStart(2, "0") +
+      "_" +
+      String(d.getHours()).padStart(2, "0") +
+      String(d.getMinutes()).padStart(2, "0") +
+      String(d.getSeconds()).padStart(2, "0");
+
+    const baseDir = FileLogger.errorDirectory + timestamp;
+    const baseName = this.logFile.slice(this.logFile.lastIndexOf("/") + 1);
+
+    // Copy the current (active) log file
+    const content = this.ns.read(this.logFile);
+    if (content) {
+      this.ns.write(`${baseDir}/${baseName}`, content, "w");
+    }
+
+    // Copy each rotated log file that exists
+    for (let i = 1; i <= this.maxFiles; i++) {
+      const rotatedSrc = this._getRotatedFileName(i);
+      const rotatedContent = this.ns.read(rotatedSrc);
+      if (!rotatedContent) continue;
+
+      const rotatedName = rotatedSrc.slice(rotatedSrc.lastIndexOf("/") + 1);
+      this.ns.write(`${baseDir}/${rotatedName}`, rotatedContent, "w");
+    }
+  }
+
+  /**
    * @param {string} fname - Function name
    * @param {string} msg - Log message
    */
   error(fname, msg) {
     this._write("ERROR", fname, msg);
+    this._collectLogsOnError();
   }
 
   /**
