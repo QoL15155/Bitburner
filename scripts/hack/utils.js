@@ -47,6 +47,26 @@ export const distributionScripts = {
 
 //#region HGW
 
+/**
+ * @param {number} threads - number of threads
+ * @returns {number} - security increase from the 'grow' action
+ */
+export function getGrowSecurityIncrease(threads) {
+  // Amount by which server's security increases when its grown
+  const serverFortifyAmount = 0.002;
+  return 2 * threads * serverFortifyAmount;
+}
+
+/**
+ * @param {number} threads - number of threads
+ * @returns {number} - security increase from the 'hack' action
+ */
+export function getHackSecurityIncrease(threads) {
+  // Amount by which server's security increases when its hacked
+  const serverFortifyAmount = 0.002;
+  return threads * serverFortifyAmount;
+}
+
 export function processHack(ns, targetObject) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
@@ -59,25 +79,55 @@ export function processHack(ns, targetObject) {
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
   threads = Math.ceil(threads);
-  const securityIncrease = ns.hackAnalyzeSecurity(threads, targetName);
+  if (threads <= 0) {
+    return 0;
+  }
 
   targetObject.moneyAvailable = 0;
-  targetObject.hackDifficulty += securityIncrease;
+  targetObject.hackDifficulty += getHackSecurityIncrease(threads);
   return threads;
 }
 
 /**
  * Calculates the number of required threads to maximize money on target server.
  * Updates the server's object accordingly.
- * Uses Formulas to do it
+ * Can use Formulas or not, based on the 'useFormulas' flag.
+ *
+ * @param {NS} ns
+ * @param {number} cpuCores
+ * @param {Server} targetObject - the server object to grow
+ * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
+ * @returns {number} - number of threads
+ */
+export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
+  let threads = 0;
+  if (useFormulas) {
+    threads = processGrowFormulas(ns, cpuCores, targetObject);
+  } else {
+    threads = processGrowClean(ns, cpuCores, targetObject);
+  }
+
+  threads = Math.ceil(threads);
+  if (threads <= 0) {
+    return 0;
+  }
+
+  targetObject.moneyAvailable = targetObject.moneyMax;
+  targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
+  return threads;
+}
+
+/**
+ * Uses Formulas to calculate the number of required threads to maximize money on target server.
  *
  * @param {NS} ns - NS object
- * @param {Person} player - the player object
  * @param {number} cpuCores - number of CPU cores of the attacking machine
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-export function processGrowFormulas(ns, player, cpuCores, targetObject) {
+function processGrowFormulas(ns, cpuCores, targetObject) {
+  const player = ns.getPlayer();
+
   targetObject.moneyAvailable = 0;
 
   let threads = ns.formulas.hacking.growThreads(
@@ -86,55 +136,35 @@ export function processGrowFormulas(ns, player, cpuCores, targetObject) {
     targetObject.moneyMax,
     cpuCores,
   );
-  threads = Math.ceil(threads);
 
-  if (threads === 0) {
-    return threads;
-  }
-
-  const securityIncrease = ns.growthAnalyzeSecurity(
-    threads,
-    undefined,
-    cpuCores,
-  );
-  targetObject.hackDifficulty += securityIncrease;
-  targetObject.moneyAvailable = targetObject.moneyMax;
   return threads;
 }
 
 /**
- * Calculates the number of required threads to maximize money on target server.
- * Doesn't use Formulas
+ * Calculates the number of required threads to maximize money on target server WITHOUT using Formulas.
+ *
+ * @param {NS} ns - NS object
+ * @param {number} cpuCores - number of CPU cores of the attacking machine
+ * @param {Server} targetObject - the server object to grow
+ * @returns {number} - number of threads
  */
-export function processGrowClean(ns, cpuCores, targetObject) {
+function processGrowClean(ns, cpuCores, targetObject) {
   let moneyMax = targetObject.moneyMax;
   const moneyAvailable = targetObject.moneyAvailable;
-
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
+
   let threads = ns.growthAnalyze(
     targetObject.hostname,
     moneyMultiplier,
     cpuCores,
   );
 
-  if (threads === 0) {
-    return threads;
-  }
-
   // FIXME: performance
   // if (targetObject.moneyAvailable === 0) {
   //   threads *= 2 / 3;
   // }
 
-  const securityIncrease = ns.growthAnalyzeSecurity(
-    threads,
-    undefined,
-    cpuCores,
-  );
-  targetObject.hackDifficulty += securityIncrease;
-  targetObject.moneyAvailable = targetObject.moneyMax;
-
-  return Math.ceil(threads);
+  return threads;
 }
 
 function getWeakenThreads(cpuCores, targetObject) {

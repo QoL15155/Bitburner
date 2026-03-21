@@ -5,8 +5,7 @@ import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
   calculateServerExecutionTimes,
   distributionScripts,
-  processGrowFormulas,
-  processGrowClean,
+  processGrow,
   processWeaken,
   processHack,
   runAttackAction,
@@ -45,13 +44,7 @@ export function getPrepParameters(ns, cpuCores, attackBatch) {
   const executionTimes = calculateServerExecutionTimes(ns, targetName);
 
   // Grow must run BEFORE process Weaken. Updates targetObject security level
-  let growThreads = 0;
-  if (useFormulas) {
-    const player = ns.getPlayer();
-    growThreads = processGrowFormulas(ns, player, cpuCores, targetObject);
-  } else {
-    growThreads = processGrowClean(ns, cpuCores, targetObject);
-  }
+  const growThreads = processGrow(ns, cpuCores, targetObject, useFormulas);
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   if (weakenThreads === 0 && growThreads === 0) {
@@ -89,13 +82,7 @@ function getAttackParameters(ns, cpuCores, attackBatch) {
   );
 
   const hackingThreads = processHack(ns, targetObject);
-  let growThreads = 0;
-  if (useFormulas) {
-    const player = ns.getPlayer();
-    growThreads = processGrowFormulas(ns, player, cpuCores, targetObject);
-  } else {
-    growThreads = processGrowClean(ns, cpuCores, targetObject);
-  }
+  const growThreads = processGrow(ns, cpuCores, targetObject, useFormulas);
   const weakenThreads = processWeaken(ns, cpuCores, targetObject);
 
   attackBatch.setAttackActions(
