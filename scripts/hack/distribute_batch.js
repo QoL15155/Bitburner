@@ -222,7 +222,7 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
   return true;
 }
 
-async function smartDistribution(ns) {
+async function smartDistribution(ns, useFormulas) {
   const allServers = importServersData(ns);
 
   // Distribute scripts and return list of the servers.
@@ -249,10 +249,6 @@ async function smartDistribution(ns) {
   const attackingNames = attackingServers.map((s) => s.name);
   const targetNames = targetServers.map((s) => s.name);
 
-  let useFormulas = false;
-  if (ns.fileExists("Formulas.exe", "home")) {
-    useFormulas = true;
-  }
   ns.tprint(`Starting attack with${useFormulas ? "" : "out"} Formulas.exe.`);
 
   const result = ns.run(
@@ -267,6 +263,26 @@ async function smartDistribution(ns) {
 
 //#endregion Main
 
+function usage(ns) {
+  ns.tprint(`Usage: run ${ns.getScriptName()}`);
+  ns.tprint("");
+  ns.tprint("Distribute Batch");
+  ns.tprint("=====================");
+  ns.tprint("");
+  ns.tprint(
+    "Distribute the grow...hack...weaken scripts to distribution servers.",
+  );
+  ns.tprint("Calls the controller script to activate the attack.");
+  ns.tprint("");
+  ns.tprint("Options:");
+  ns.tprint(
+    "  -k, --kill          Kill running controller/attack scripts before starting.",
+  );
+  ns.tprint(
+    "  --no-formulas       Run without Formulas.exe even if available.",
+  );
+}
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -274,9 +290,9 @@ async function smartDistribution(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  let servers = data.servers;
+  const additionalOptions = ["-k", "--kill", "--no-formulas"];
 
-  return [...defaultOptions, ...servers];
+  return [...defaultOptions, ...additionalOptions];
 }
 
 /** @param {NS} ns */
@@ -286,17 +302,10 @@ export async function main(ns) {
     ["h", false],
     ["k", false],
     ["kill", false],
+    ["no-formulas", false],
   ]);
   if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()}`);
-    ns.tprint("");
-    ns.tprint("Distribute Batch");
-    ns.tprint("=====================");
-    ns.tprint("");
-    ns.tprint(
-      "Distribute the grow...hack...weaken scripts to distribution servers.",
-    );
-    ns.tprint("Calls the controller script to activate the attack.");
+    usage(ns);
     return;
   }
 
@@ -315,7 +324,9 @@ export async function main(ns) {
     return;
   }
 
-  const result = await smartDistribution(ns);
+  const useFormulas =
+    !args["no-formulas"] && ns.fileExists("Formulas.exe", "home");
+  const result = await smartDistribution(ns, useFormulas);
   if (result) {
     ns.ui.closeTail();
   }
