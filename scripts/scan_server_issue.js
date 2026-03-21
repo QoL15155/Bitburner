@@ -17,7 +17,9 @@ function canSimulateGrow(ns, targetName) {
     return false;
   }
   if (moneyAvailable > moneyMax) {
-    throw "Money available is greater than money max for server " + targetName;
+    throw new Error(
+      `'${targetName}' - Money available: ${formatMoney(moneyAvailable)} is greater than max ${formatMoney(moneyMax)}`,
+    );
   }
 
   // TODO: For now only test with money 0

@@ -1,12 +1,4 @@
-import {
-  printError,
-  printLogError,
-  printWarn,
-  printInfo,
-  printLogInfo,
-  Color,
-} from "/utils/print.js";
-import { formatMoney } from "/utils/formatters.js";
+import { printError, printLogError, Color } from "/utils/print.js";
 import { importServersData } from "/utils/servers.js";
 
 /* Scripts  */

@@ -80,7 +80,7 @@ export class AttackBatch {
 
   setPrepActions(cpuCores, growThreads, weakenThreads, executionTimes) {
     if (this.#state !== BatchState.INIT) {
-      throw "Already initialized";
+      throw new Error("Attack Batch is already initialized.");
     }
 
     this.cpuCores = cpuCores;
@@ -146,7 +146,9 @@ export class AttackBatch {
   getRequiredRam() {
     const fname = "getRequiredRam";
     if (this.#requiredRam <= 0) {
-      throw `[${fname}] No action has been specified`;
+      throw new Error(
+        `[${fname}] Required RAM is set to ${this.#requiredRam}. Check if the attack actions have been properly initialized.`,
+      );
     }
     return this.#requiredRam;
   }

@@ -1,4 +1,4 @@
-import { printError, printWarn, printInfo, print } from "/utils/print.js";
+import { printError, printWarn } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
 import { AttackAction, EnumAttackActionResult } from "./attack_action.js";
 
@@ -71,10 +71,11 @@ export function processHack(ns, targetObject) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
+  // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
     printWarn(ns, `[${fname}] ${message}`);
-    throw message;
+    throw new Error(message);
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
@@ -100,6 +101,11 @@ export function processHack(ns, targetObject) {
  * @returns {number} - number of threads
  */
 export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
+  const moneyMax = targetObject.moneyMax;
+  if (moneyMax === 0 || targetObject.moneyAvailable === moneyMax) {
+    return 0;
+  }
+
   let threads = 0;
   if (useFormulas) {
     threads = processGrowFormulas(ns, cpuCores, targetObject);
@@ -112,7 +118,7 @@ export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
     return 0;
   }
 
-  targetObject.moneyAvailable = targetObject.moneyMax;
+  targetObject.moneyAvailable = moneyMax;
   targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
   return threads;
 }
@@ -128,9 +134,7 @@ export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
 function processGrowFormulas(ns, cpuCores, targetObject) {
   const player = ns.getPlayer();
 
-  targetObject.moneyAvailable = 0;
-
-  let threads = ns.formulas.hacking.growThreads(
+  const threads = ns.formulas.hacking.growThreads(
     targetObject,
     player,
     targetObject.moneyMax,
@@ -141,7 +145,7 @@ function processGrowFormulas(ns, cpuCores, targetObject) {
 }
 
 /**
- * Calculates the number of required threads to maximize money on target server WITHOUT using Formulas.
+ * Without using Formulas, calculates the number of required threads to maximize money on target server
  *
  * @param {NS} ns - NS object
  * @param {number} cpuCores - number of CPU cores of the attacking machine
@@ -153,7 +157,7 @@ function processGrowClean(ns, cpuCores, targetObject) {
   const moneyAvailable = targetObject.moneyAvailable;
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
 
-  let threads = ns.growthAnalyze(
+  const threads = ns.growthAnalyze(
     targetObject.hostname,
     moneyMultiplier,
     cpuCores,
@@ -208,6 +212,7 @@ export function processWeakenSanity(ns, cpuCores, targetObject) {
     let msg = `[${fname}] Hack difficulty: ${targetObject.hackDifficulty}, minimum: ${targetObject.minDifficulty}`;
     msg += `\tweaken threads: ${threads}, expected security decrease: ${securityDecrease}. New difficulty: ${newDifficulty}`;
     printError(ns, msg);
+    throw new Error(msg);
   }
 
   targetObject.hackDifficulty = targetObject.minDifficulty;
@@ -261,9 +266,10 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
 
   if (attackAction.threads <= 0) {
-    const message = `[${fname}] Skipping ${attackAction.scriptName} for '${targetName}' - no threads`;
-    printWarn(ns, message);
-    return EnumAttackActionResult.NO_THREADS_NEEDED;
+    throw new Error(`${fname} called without threads to run.`);
+    // const message = `[${fname}] Skipping ${attackAction.scriptName} for '${targetName}' - no threads`;
+    // printWarn(ns, message);
+    // return EnumAttackActionResult.NO_THREADS_NEEDED;
   }
 
   const availableRam = checkServerAvailableRam(

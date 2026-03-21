@@ -234,7 +234,7 @@ function performAttack(ns, attackingServers, attackBatch) {
 
   const timeToWait = attackBatch.getDelayForNextAttack();
   if (timeToWait < 0)
-    throw `[${fname}] Got invalid attack delay: ${timeToWait} < 0`;
+    throw new Error(`[${fname}] Invalid attack delay: ${timeToWait} < 0`);
   if (timeToWait > 0) {
     return new AttackResult(false, timeToWait);
   }
@@ -243,7 +243,7 @@ function performAttack(ns, attackingServers, attackBatch) {
   let errorMessages = [];
   if (!doSanityTests(ns, attackBatch, errorMessages)) {
     return new AttackResult(false, 0, 0, errorMessages);
-    // throw "Unexpected state before attack";
+    // throw new Error("Unexpected state before attack");
   }
 
   attackBatch.reset();
@@ -331,7 +331,9 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       /** @type {AttackResult} */
       const attackResult = performAttack(ns, attackingServers, attackBatch);
       if (attackResult.duration < 0) {
-        throw `performAttack returned an invalid duration: ${attackResult.duration}`;
+        throw new Error(
+          `performAttack returned an invalid duration: ${attackResult.duration}`,
+        );
       }
       if (attackResult.duration > 0 && attackResult.duration < delayTime) {
         delayTime = attackResult.duration;
@@ -355,7 +357,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
         `Finished ${roundLabel} - Attacked servers: ${attackedServers}, Total threads: ${totalThreads}`,
       );
       if (delayTime === 0) {
-        throw "Sleep Time is 0";
+        throw new Error("Sleep Time is 0");
       }
     } else {
       // Bad flow. we shouldn't get here
@@ -404,7 +406,10 @@ export async function main(ns) {
     ns.tprint("");
     ns.tprint("Options:");
     ns.tprint(
-      "  -k, --kill          Kill running controller/attack scripts before starting.",
+      "  --use-formulas       Run with Formulas.exe to calculate the optimal number of threads for each attack action.",
+    );
+    ns.tprint(
+      "     If not set, uses a simpler algorithm that may result in suboptimal attacks.",
     );
     return;
   }
