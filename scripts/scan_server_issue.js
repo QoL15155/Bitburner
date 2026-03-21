@@ -1,38 +1,76 @@
 import { listServers } from "/utils/servers.js";
 import { printError } from "/utils/print.js";
+import { formatMoney } from "/utils/formatters.js";
+
+function canSimulateGrow(ns, targetName) {
+  /** @type {Server} */
+  const targetObject = ns.getServer(targetName);
+
+  let moneyMax = targetObject.moneyMax;
+  if (!moneyMax) {
+    // Server has no money, skip it.
+    return false;
+  }
+  const moneyAvailable = targetObject.moneyAvailable;
+  if (moneyAvailable == moneyMax) {
+    // Server already at max money, no grow needed.
+    return false;
+  }
+  if (moneyAvailable > moneyMax) {
+    throw "Money available is greater than money max for server " + targetName;
+  }
+
+  // TODO: For now only test with money 0
+  if (moneyAvailable == 0) {
+    return true;
+  }
+
+  return false;
+}
 
 function simulateGrow(ns, targetName) {
+  /** @type {Server} */
   const serverHome = ns.getServer("home");
   const targetObject = ns.getServer(targetName);
   const player = ns.getPlayer();
 
-  const maxMoney = ns.getServerMaxMoney(targetName);
-  if (maxMoney <= 0) {
-    // Nothing to check here, skip
-    return true;
-  }
-  const moneyAvailable = ns.getServerMoneyAvailable(targetName);
-  const moneyMultiplier = maxMoney / Math.max(moneyAvailable, 1);
-  const growThreads = ns.growthAnalyze(
+  let moneyMax = targetObject.moneyMax;
+  const moneyAvailable = targetObject.moneyAvailable;
+
+  const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
+  let growThreads = ns.growthAnalyze(
     targetName,
     moneyMultiplier,
     serverHome.cpuCores,
   );
+  const grow2 = growThreads * (2 / 3);
+  const grow3 = growThreads * (3 / 4);
 
+  targetObject.moneyAvailable = 0;
   const growThreadsFormula = ns.formulas.hacking.growThreads(
     targetObject,
     player,
-    maxMoney,
+    moneyMax,
     serverHome.cpuCores,
   );
+
   if (
     Math.ceil(growThreads) !== growThreadsFormula &&
     Math.floor(growThreads) !== growThreadsFormula
   ) {
     printError(
       ns,
-      `Grow threads mismatch for ${targetName}. Expected: ${growThreads}, Actual: ${growThreadsFormula}`,
+      `Grow threads mismatch for '${targetName}'. Expected: ${growThreads}, Expected2: ${grow2}, Expected3: ${grow3}, Formula: ${growThreadsFormula}`,
     );
+    if (moneyAvailable == 0 && moneyMultiplier == moneyMax) {
+      printError(ns, `\tMax: ${formatMoney(moneyMax)} (${moneyMax}).`);
+    } else {
+      printError(
+        ns,
+        `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Max: ${formatMoney(moneyMax)} (${moneyMax}). `,
+        // `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Details: ${JSON.stringify(targetObject, null, 2)}`,
+      );
+    }
     return false;
   }
   return true;
@@ -57,7 +95,18 @@ export async function main(ns) {
   }
 
   const servers = listServers(ns);
+  let successfulServersList = [];
+  let legitServers = 0;
   for (const server of servers) {
-    simulateGrow(ns, server);
+    if (canSimulateGrow(ns, server)) {
+      legitServers++;
+      if (simulateGrow(ns, server)) {
+        successfulServersList.push(server);
+      }
+    }
   }
+
+  ns.tprint(
+    `Grow simulation completed. Success: ${successfulServersList.length}/${legitServers} servers: ${successfulServersList.join(", ")}`,
+  );
 }
