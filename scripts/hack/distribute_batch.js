@@ -4,7 +4,6 @@ import {
   printWarn,
   printInfo,
   printLogInfo,
-  print,
   Color,
 } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
@@ -75,6 +74,42 @@ function distributeScriptsToServer(ns, serverName) {
 }
 
 //#endregion Distribution
+
+//#region Display
+
+function displayWaitingScripts(ns, runningScripts, scriptCount, attempts) {
+  const c = Color;
+  const frameWidth = 50;
+  const sep = `${c.FgCyan}╔${"═".repeat(frameWidth)}╗${c.Reset}`;
+  const bot = `${c.FgCyan}╚${"═".repeat(frameWidth)}╝${c.Reset}`;
+  const ln = `${c.FgCyan}╟${c.Dim}${"─".repeat(frameWidth)}${c.Reset}${c.FgCyan}╢${c.Reset}`;
+  const w = `${c.FgCyan}║${c.Reset}`;
+
+  ns.clearLog();
+  runningScripts.forEach((process) => {
+    ns.print(
+      `  ${c.Dim}PID${c.Reset} ${c.FgCyanBright}${process.pid}${c.Reset}  ${c.FgMagenta}${process.filename}${c.Reset}  ${c.Dim}${process.args}${c.Reset}`,
+    );
+  });
+  ns.print("");
+  ns.print(sep);
+  const attColor =
+    attempts <= 3
+      ? c.FgRedBright
+      : attempts <= 7
+        ? c.FgYellowBright
+        : c.FgGreenBright;
+  ns.print(
+    `${w}  ${c.Bold}${c.FgYellowBright}⏳ WAITING FOR SCRIPTS TO FINISH${c.Reset}`,
+  );
+  ns.print(ln);
+  ns.print(
+    `${w}  ${c.FgWhite}Scripts running${c.Reset}  ${c.FgCyanBright}${scriptCount}${c.Reset}        ${c.FgWhite}Attempts left${c.Reset}  ${attColor}${attempts}${c.Reset}`,
+  );
+  ns.print(bot);
+}
+
+//#endregion Display
 
 //#region Main
 
@@ -157,19 +192,7 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
 
     const len = runningScripts.length;
 
-    ns.clearLog();
-    runningScripts.forEach((process) => {
-      ns.print(`- (${process.pid}) ${process.filename} - ${process.args}`);
-    });
-    ns.print(" ");
-    ns.print(
-      "Attacking scripts are running on home. Waiting for them to finish...",
-    );
-
-    ns.print(
-      `${Color.FgBlueBright}Scripts running${Color.Reset}: ${len}, ${Color.FgBlueBright}Attempts left${Color.Reset}: ${attempts}`,
-    );
-    ns.print("");
+    displayWaitingScripts(ns, runningScripts, len, attempts);
     await ns.sleep(1000);
     attempts--;
   }
@@ -219,8 +242,8 @@ async function smartDistribution(ns) {
     )
     .sort((a, b) => b.maxMoney - a.maxMoney);
 
-  const infoDescription = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
-  print(ns, infoDescription);
+  const distributionSummary = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
+  ns.tprint(distributionSummary);
 
   // TODO: targets / attackers should be dynamic - and chosen by the controller script?
   const attackingNames = attackingServers.map((s) => s.name);
