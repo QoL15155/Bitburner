@@ -22,7 +22,7 @@ export class AttackMeasurements {
     // Error messages
     this.numberOfErrors = 0;
     /**
-     * Contains the last @var {AttackMeasurements.errorMessagesToKeep}
+     * Contains the last @var {AttackMeasurements.maxErrorMessages}
      * error messages from the most recent attack round.
      * @type {Array<string>} */
     this.lastErrors = [];
