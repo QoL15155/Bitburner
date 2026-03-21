@@ -96,79 +96,95 @@ export class AttackMeasurements {
   display(ns, attackedServers, totalThreads, sleepTime) {
     ns.clearLog();
     const c = Color;
-    const sep = `${c.FgBlue}════════════════════════════════════════════════════════════${c.Reset}`;
-    const line = `${c.Dim}────────────────────────────────────────────────────────────${c.Reset}`;
 
-    ns.print(sep);
-    ns.print(
-      `  ${c.Bold}${c.FgCyan}BATCH ATTACK DASHBOARD${c.Reset}. ${c.Dim}${c.FgGreenBright}Formulas?${c.Reset} ${this.useFormulas ? `${c.FgGreen}Yes` : `${c.FgRed}No`}${c.Reset}`,
-    );
-    ns.print(sep);
+    const frameWidth = 80;
+    const top = `${c.FgCyan}╔${"═".repeat(frameWidth)}╗${c.Reset}`;
+    const bot = `${c.FgCyan}╚${"═".repeat(frameWidth)}╝${c.Reset}`;
+    const mid = `${c.FgCyan}╠${"═".repeat(frameWidth)}╣${c.Reset}`;
+    const line = `${c.FgCyan}╟${c.Dim}${"─".repeat(frameWidth)}${c.Reset}${c.FgCyan}╢${c.Reset}`;
+    const w = `${c.FgCyan}║${c.Reset}`;
 
-    // Current round info
+    // Title
+    const formulaTag = this.useFormulas
+      ? `${c.FgGreenBright}● ON${c.Reset}`
+      : `${c.FgRedBright}○ OFF${c.Reset}`;
+    ns.print(top);
     ns.print(
-      `  ${c.FgWhite}Current Round:${c.Reset}            ${c.FgGreen}${this.rounds}${c.Reset}`,
+      `${w}  ${c.Bold}${c.FgWhiteBright}⚡ BATCH ATTACK DASHBOARD${c.Reset}          ${c.Dim}Formulas${c.Reset} ${formulaTag}`,
+    );
+    ns.print(mid);
+
+    // Current round
+    ns.print(
+      `${w}  ${c.Bold}${c.FgCyanBright}◈ ROUND ${c.FgWhiteBright}#${this.rounds}${c.Reset}`,
     );
     ns.print(
-      `  ${c.FgWhite}Attacked (now):${c.Reset}           ${c.FgGreen}${attackedServers}${c.Reset}`,
+      `${w}    ${c.FgWhite}Attacked${c.Reset}   ${c.FgGreenBright}${attackedServers}${c.Reset}`,
     );
     ns.print(
-      `  ${c.FgWhite}Threads  (now):${c.Reset}           ${c.FgGreen}${totalThreads}${c.Reset}`,
+      `${w}    ${c.FgWhite}Threads${c.Reset}    ${c.FgGreenBright}${totalThreads}${c.Reset}`,
     );
     ns.print(
-      `  ${c.FgWhite}Sleep    (with delay):${c.Reset}    ${c.FgGreen}${formatTime(sleepTime)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Sleep${c.Reset}      ${c.FgGreenBright}${formatTime(sleepTime)}${c.Reset}`,
     );
     ns.print(line);
 
     // Attack stats
-    ns.print(`  ${c.FgCyanBright}ATTACKS${c.Reset}`);
+    ns.print(`${w}  ${c.Bold}${c.FgBlueBright}⚔ ATTACKS${c.Reset}`);
     ns.print(
-      `    ${c.FgWhite}Total:${c.Reset}          ${c.FgGreen}${this.totalAttackPerRound}${c.Reset}`,
+      `${w}    ${c.FgWhite}Total${c.Reset}      ${c.FgYellowBright}${this.totalAttackPerRound}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Avg/round:${c.Reset}      ${c.FgGreen}${this.getAverageAttacksPerRound().toFixed(2)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Avg/round${c.Reset}  ${c.FgYellowBright}${this.getAverageAttacksPerRound().toFixed(2)}${c.Reset}`,
     );
     ns.print(line);
 
     // Thread stats
-    ns.print(`  ${c.FgYellow}THREADS${c.Reset}`);
+    ns.print(`${w}  ${c.Bold}${c.FgYellowBright}⚙ THREADS${c.Reset}`);
     ns.print(
-      `    ${c.FgWhite}Avg/round:${c.Reset}      ${c.FgGreen}${this.getAverageThreadsPerRound().toFixed(2)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Avg/round${c.Reset}  ${c.FgCyanBright}${this.getAverageThreadsPerRound().toFixed(2)}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Max/round:${c.Reset}      ${c.FgGreen}${this.maxThreadsPerRound}${c.Reset}`,
+      `${w}    ${c.FgWhite}Max${c.Reset}        ${c.FgGreenBright}${this.maxThreadsPerRound}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Min/round:${c.Reset}      ${c.FgGreen}${this.minThreadsPerRound}${c.Reset}`,
+      `${w}    ${c.FgWhite}Min${c.Reset}        ${c.FgRedBright}${this.minThreadsPerRound}${c.Reset}`,
     );
     ns.print(line);
 
     // Sleep time stats
-    ns.print(`  ${c.FgMagenta}SLEEP TIME${c.Reset}`);
+    ns.print(`${w}  ${c.Bold}${c.FgMagentaBright}⏱ SLEEP TIME${c.Reset}`);
     ns.print(
-      `    ${c.FgWhite}Total:${c.Reset}          ${c.FgGreen}${formatTime(this.totalSleepTime)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Total${c.Reset}      ${c.FgMagenta}${formatTime(this.totalSleepTime)}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Avg/round:${c.Reset}      ${c.FgGreen}${formatTime(this.getAverageSleepTime())}${c.Reset}`,
+      `${w}    ${c.FgWhite}Avg/round${c.Reset}  ${c.FgMagenta}${formatTime(this.getAverageSleepTime())}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Max/round:${c.Reset}      ${c.FgGreen}${formatTime(this.maxSleepTime)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Max${c.Reset}        ${c.FgGreenBright}${formatTime(this.maxSleepTime)}${c.Reset}`,
     );
     ns.print(
-      `    ${c.FgWhite}Min/round:${c.Reset}      ${c.FgGreen}${formatTime(this.minSleepTime)}${c.Reset}`,
+      `${w}    ${c.FgWhite}Min${c.Reset}        ${c.FgRedBright}${formatTime(this.minSleepTime)}${c.Reset}`,
     );
     ns.print(line);
 
-    // Error messages from last round
+    // Error messages
+    const errCount =
+      this.numberOfErrors > 0
+        ? `${c.FgRedBright}${this.numberOfErrors}${c.Reset}`
+        : `${c.FgGreen}${this.numberOfErrors}${c.Reset}`;
     ns.print(
-      `  ${c.Bold}${c.FgRedBright}ERRORS (last ${AttackMeasurements.maxErrorMessages})${c.Reset}  ${c.FgWhite}Total:${c.Reset} ${c.FgRed}${this.numberOfErrors}${c.Reset}`,
+      `${w}  ${c.Bold}${c.FgRedBright}⚠ ERRORS${c.Reset} ${c.Dim}(last ${AttackMeasurements.maxErrorMessages})${c.Reset}                  ${c.FgWhite}Total:${c.Reset} ${errCount}`,
     );
     const currentErrors = this.lastErrors.length;
     for (let i = 0; i < AttackMeasurements.maxErrorMessages; i++) {
       let err = "";
       if (i < currentErrors) err = this.lastErrors[currentErrors - 1 - i];
-      ns.print(`    ${c.FgRed}• ${err}${c.Reset}`);
+      const bullet = err
+        ? `${c.FgRed}▸ ${err}${c.Reset}`
+        : `${c.Dim}▸${c.Reset}`;
+      ns.print(`${w}    ${bullet}`);
     }
-    ns.print(sep);
+    ns.print(bot);
   }
 }
