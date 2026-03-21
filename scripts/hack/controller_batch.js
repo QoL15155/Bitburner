@@ -177,7 +177,7 @@ function testTargetServerValues(ns, targetName, errorMessages) {
  * @param {NS} ns
  * @param {AttackBatch} attackBatch
  * @param {Array<string>} errorMessages - array to push error messages to.
- *  Would later be used to display in the dashboard and log in case of attack failure.
+ *    Would later be used to display in the dashboard and log in case of attack failure.
  * @returns {boolean} true if all attack scripts are not running, false otherwise
  */
 function testScriptsNotRunning(ns, attackBatch, errorMessages) {
@@ -411,6 +411,7 @@ export async function main(ns) {
     ns.tprint(
       "     If not set, uses a simpler algorithm that may result in suboptimal attacks.",
     );
+    ns.tprint("     Doesn't validate whether formulas.exe actually exists.");
     return;
   }
 
