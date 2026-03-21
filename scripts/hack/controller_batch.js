@@ -395,8 +395,9 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
+    ["use-formulas", false],
   ]);
-  if (args.help || args.h || args._.length !== 3) {
+  if (args.help || args.h || args._.length !== 2) {
     ns.tprint(
       `Usage: run ${ns.getScriptName()} [ATTACKING_SERVERS] [TARGET_SERVERS]`,
     );
@@ -411,12 +412,17 @@ export async function main(ns) {
     ns.tprint(
       "- Activate the grow...hack...weaken scripts on attacking servers to target servers.",
     );
+    ns.tprint("");
+    ns.tprint("Options:");
+    ns.tprint(
+      "  -k, --kill          Kill running controller/attack scripts before starting.",
+    );
     return;
   }
 
   const attackingServers = JSON.parse(args._[0]);
   const targetServers = JSON.parse(args._[1]);
-  useFormulas = args._[2] == true;
+  useFormulas = args["use-formulas"] === true;
 
   ns.disableLog("exec");
   ns.disableLog("sleep");

@@ -250,13 +250,17 @@ async function smartDistribution(ns, useFormulas) {
   const targetNames = targetServers.map((s) => s.name);
 
   ns.tprint(`Starting attack with${useFormulas ? "" : "out"} Formulas.exe.`);
+  let additionalArguments = [];
+  if (useFormulas) {
+    additionalArguments.push("--use-formulas");
+  }
 
   const result = ns.run(
     controllerScript,
     { threads: 1 },
     JSON.stringify(attackingNames),
     JSON.stringify(targetNames),
-    useFormulas,
+    ...additionalArguments,
   );
   return result;
 }
