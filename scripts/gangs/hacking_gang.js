@@ -63,6 +63,8 @@ let membersEthical = [];
 let membersWorking = [];
 let membersTraining = [];
 
+let gangMemberNames = [];
+
 //#region Wanted Level
 
 function wantedLevelGainRateString(gangInformation) {
@@ -70,7 +72,7 @@ function wantedLevelGainRateString(gangInformation) {
 }
 
 /**
- * Handles the wanted level of the gang.
+ * @summary Handles the wanted level of the gang.
  * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
  * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
  *
@@ -79,7 +81,7 @@ function wantedLevelGainRateString(gangInformation) {
  *
  * @param {NS} ns
  * @param {GangGenInfo} gangInformation
- * @param {bool} isFocusRespect
+ * @param {boolean} isFocusRespect
  */
 function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   const fname = "handleWantedLevel";
@@ -265,7 +267,8 @@ function findMemberNameLowestWantedLevel(ns, membersEthical) {
 }
 
 /**
- * Tries to find the working member with the lowest money gain task and assign them to the next better money gain task.
+ * @summary Tries to find the working member with the lowest money gain task
+ * and assign them to the next better money gain task.
  */
 function tryUpgradeWorkingMemberMoney(ns) {
   const fname = "tryUpgradeWorkingMemberMoney";
@@ -361,9 +364,7 @@ function arrangeMembersByTask(ns) {
   membersWorking = [];
   membersTraining = [];
 
-  for (let memberName of ns.gang.getMemberNames()) {
-    sortMemberByTask(ns, memberName);
-  }
+  gangMemberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
 
   let message = `Initial Members: - \n`;
   message += `- Training (${membersTraining.length}): ${membersTraining.join(", ")}\n`;
@@ -374,7 +375,7 @@ function arrangeMembersByTask(ns) {
 
 function sanityCheckMembers(ns) {
   const fname = "sanityCheckMembers";
-  const memberCount = ns.gang.getMemberNames().length;
+  const memberCount = gangMemberNames.length;
   const totalCategorizedMembers =
     membersTraining.length + membersEthical.length + membersWorking.length;
   if (memberCount !== totalCategorizedMembers) {
@@ -393,8 +394,13 @@ async function manageGang(ns) {
 
     let shouldWaitAscend = false;
     if (canRecruit) {
-      const newMembers = recruitGangMembers(ns, defaultTask);
-      for (let memberName of newMembers) {
+      const newMembers = recruitGangMembers(
+        ns,
+        defaultTask,
+        gangMemberNames.length,
+      );
+      for (const memberName of newMembers) {
+        gangMemberNames.push(memberName);
         membersTraining.push(memberName);
       }
 
@@ -404,7 +410,7 @@ async function manageGang(ns) {
         case RecruitmentStatus.DoneRequirement:
           printLogInfo(
             ns,
-            `Maximum number of gang members has been recruited - ${ns.gang.getMemberNames().length} members.`,
+            `Maximum number of gang members have been recruited - ${gangMemberNames.length} members.`,
           );
           canRecruit = false;
           break;
@@ -421,7 +427,7 @@ async function manageGang(ns) {
     }
 
     if (!shouldWaitAscend) {
-      ascendGangMembers(ns);
+      ascendGangMembers(ns, gangMemberNames);
     }
 
     // Update members tasks
@@ -450,8 +456,8 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
   ]);
-  if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()}`);
+  if (args.help || args.h || args._.length !== 1) {
+    ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES...]`);
     ns.tprint("");
     ns.tprint("Hacking Gang Running Script");
     ns.tprint("=============================");
@@ -460,12 +466,15 @@ export async function main(ns) {
     ns.tprint(
       "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
     );
-    ns.tprint(
-      "Ran by the initial gang join script when player joins/belongs to a hacking gang.",
-    );
+    ns.tprint("");
+    ns.tprint("Should be ran by 'gangs/start.js' script");
 
     return;
   }
+
+  ns.ui.setTailTitle("Hacking Gang Management");
+
+  gangMemberNames = JSON.parse(args._[0]);
 
   // Update Tasks List
   tasksList = readGangTasks(ns, true);

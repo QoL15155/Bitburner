@@ -39,19 +39,20 @@ function getRespectNeededForNextRecruit(gangInformation) {
 }
 
 /**
- * Recruits new gang members until the maximum number of members is reached.
+ * @summary Recruits new gang members until the maximum number of members is reached.
+ *
  * Each new member is assigned the default task.
  *
  * @param {NS} ns - the Netscript environment
  * @param {string} defaultTask - the task to assign to new members
- * @return {string[]} - the list of new members recruited
+ *  Should be a valid task for the gang type (hacking or combat).
+ *  For example, "Ransomware" is a valid task for hacking gangs, while "Vigilante Justice" is a valid task for combat gangs.
+ * @param {number} membersCount - the current number of members
  *
- * Note: The default task should be a valid task for the gang type (hacking or combat).
- *       For example, "Ransomware" is a valid task for hacking gangs, while "Vigilante Justice" is a valid task for combat gangs.
+ * @return {string[]} - the list of new members recruited
  */
-export function recruitGangMembers(ns, defaultTask) {
+export function recruitGangMembers(ns, defaultTask, membersCount) {
   const fname = "recruitGangMembers";
-  let membersCount = ns.gang.getMemberNames().length;
   let newMembers = [];
 
   while (getRespectNeededForNextRecruit(ns.gang.getGangInformation()) == 0) {
@@ -62,10 +63,9 @@ export function recruitGangMembers(ns, defaultTask) {
         ns,
         `[${fname}] Failed to recruit member ${memberName}. Current member count: ${membersCount - 1} `,
       );
-      return;
+      return newMembers;
     }
     ns.gang.setMemberTask(memberName, defaultTask);
-    // membersTraining.push(memberName);
     newMembers.push(memberName);
   }
 
@@ -83,14 +83,14 @@ export const RecruitmentStatus = {
   // Reached maximum number of members.
   DoneRequirement: "Done Requirement",
   // Close to recruiting next member
-  WaitingForRespect: "Waiting For respect",
+  WaitingForRespect: "Waiting for respect",
   // Try to ascend current members
   Ascending: "Ascend current members",
 };
 
 /**
- * Determines whether should wait for respect to recruit the next member before
- * ascending current members.
+ * @summary Determines whether should wait for respect to recruit the next member
+ * before ascending current members.
  *
  * @param {NS} ns - the Netscript environment
  * @param {GangInformation} gangInformation - the current gang information
@@ -108,6 +108,7 @@ export function getRecruitmentStatus(ns) {
   const neededRespect = getRespectNeededForNextRecruit(gangInformation);
   const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
   const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
+
   let message = `[${fname}] Respect needed: ${doConversion(neededRespect)}, `;
   message += `gain: ${respectGainRatePerSecond.toFixed(3)}/sec. `;
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
@@ -124,30 +125,36 @@ export function getRecruitmentStatus(ns) {
 
 //#region Ascend
 
-export function ascendGangMembers(ns) {
+/**
+ * @summary Ascends gang members if they meet the criteria
+ * Criteria: Ascend if the member will gain at least 2 levels in any stat after ascending.
+ *
+ * @param {NS} ns - the Netscript environment
+ * @param {string[]} memberNames - the list of gang member names to check for ascension
+ */
+export function ascendGangMembers(ns, memberNames) {
   const fname = "ascendGangMembers";
-  const members = ns.gang.getMemberNames();
 
-  for (let memberName of members) {
-    const canAscend = shouldAscendMember(ns, memberName);
-    if (canAscend) {
-      const result = ns.gang.ascendMember(memberName);
-      if (result) {
-        printLogInfo(
-          ns,
-          `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(result)}`,
-        );
-      } else {
-        printError(ns, `[${fname}] Failed to ascend member ${memberName}`);
-      }
+  for (const memberName of memberNames) {
+    if (!shouldAscendMember(ns, memberName)) {
+      continue;
+    }
+
+    const ascendResult = ns.gang.ascendMember(memberName);
+    if (ascendResult) {
+      printLogInfo(
+        ns,
+        `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(ascendResult)}`,
+      );
+    } else {
+      printError(ns, `[${fname}] Failed to ascend member ${memberName}`);
     }
   }
 }
 
 function shouldAscendMember(ns, memberName) {
-  const fname = "shouldAscendMember";
   const ascensionResult = ns.gang.getAscensionResult(memberName);
-  if (ascensionResult === null || ascensionResult === undefined) {
+  if (ascensionResult == null) {
     // Member cannot be ascended
     return false;
   }
