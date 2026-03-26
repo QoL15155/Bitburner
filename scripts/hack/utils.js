@@ -163,7 +163,11 @@ function processGrowClean(ns, cpuCores, targetObject) {
     cpuCores,
   );
 
+  // Heuristic adjustment to grow threads for performance sake.
+
   if (targetObject.hostname === "n00dles") {
+    // n00dles needs a few threads as it is.
+    // The heuristic adjustment seems to be too much for it, causing it to be undergrown.
     return threads;
   }
 
