@@ -43,7 +43,6 @@ export class AttackAction {
 }
 
 export const EnumAttackActionResult = {
-  NO_THREADS_NEEDED: "Action doesn't require threads",
   SCRIPT_RUN: "Script has been ran",
   NOT_ENOUGH_RAM: "Not enough RAM to run the script",
 };

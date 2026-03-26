@@ -21,9 +21,7 @@ export class AttackMeasurements {
 
     // Error messages
     this.numberOfErrors = 0;
-    /**
-     * Contains the last {@link AttackMeasurements.maxErrorMessages}
-     * error messages from the most recent attack round.
+    /** Contains the last {@link AttackMeasurements.maxErrorMessages} error messages
      * @type {Array<string>} */
     this.lastErrors = [];
   }

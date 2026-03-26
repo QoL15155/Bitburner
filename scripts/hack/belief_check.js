@@ -64,6 +64,11 @@ function testGrowthSecurityIncrease(
   const player = ns.getPlayer();
   const hostname = serverObject.hostname;
 
+  if (!ns.fileExists("Formulas.exe", "home")) {
+    ns.tprint(`ERROR - Formulas.exe is not present. Cannot run ${fname}.`);
+    return;
+  }
+
   let threads = ns.formulas.hacking.growThreads(
     serverObject,
     player,

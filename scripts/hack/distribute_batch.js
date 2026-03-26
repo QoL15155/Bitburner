@@ -8,7 +8,6 @@ const scriptsToDistribute = [
   "target_hack.js",
 ];
 
-// Requires Formulas
 const controllerScript = "/hack/controller_batch.js";
 
 /* Utils */

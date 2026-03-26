@@ -1,6 +1,6 @@
 import { printError, printWarn } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
-import { AttackAction, EnumAttackActionResult } from "./attack_action.js";
+import { AttackAction, EnumAttackActionResult } from "/hack/attack_action.js";
 
 /**
  * Calculates the server execution times
@@ -262,15 +262,13 @@ function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
  * @param {string} targetName : Name of server to attack
  * @param {AttackAction} attackAction : parameters for the attack
  * @returns {EnumAttackActionResult} Result of attack action
+ * @throws Error if attackAction.threads is not set or less than 1
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
 
   if (attackAction.threads <= 0) {
     throw new Error(`${fname} called without threads to run.`);
-    // const message = `[${fname}] Skipping ${attackAction.scriptName} for '${targetName}' - no threads`;
-    // printWarn(ns, message);
-    // return EnumAttackActionResult.NO_THREADS_NEEDED;
   }
 
   const availableRam = checkServerAvailableRam(
