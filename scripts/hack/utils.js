@@ -163,6 +163,10 @@ function processGrowClean(ns, cpuCores, targetObject) {
     cpuCores,
   );
 
+  if (targetObject.hostname === "n00dles") {
+    return threads;
+  }
+
   // FIXME: performance
   if (targetObject.moneyAvailable === 0) {
     // threads *= 2 / 3;
