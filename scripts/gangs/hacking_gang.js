@@ -457,7 +457,7 @@ export async function main(ns) {
     ["h", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES...]`);
+    ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES]`);
     ns.tprint("");
     ns.tprint("Hacking Gang Running Script");
     ns.tprint("=============================");
@@ -467,12 +467,17 @@ export async function main(ns) {
       "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
     );
     ns.tprint("");
+    ns.tprint("Arguments:");
+    ns.tprint(
+      "  MEMBER_NAMES: JSON stringified array of current gang member names.",
+    );
+    ns.tprint("");
     ns.tprint("Should be ran by 'gangs/start.js' script");
-
     return;
   }
 
   ns.ui.setTailTitle("Hacking Gang Management");
+  ns.ui.openTail();
 
   gangMemberNames = JSON.parse(args._[0]);
 

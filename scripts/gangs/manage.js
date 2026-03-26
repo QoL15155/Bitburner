@@ -55,7 +55,7 @@ export function recruitGangMembers(ns, defaultTask, membersCount) {
   const fname = "recruitGangMembers";
   let newMembers = [];
 
-  while (getRespectNeededForNextRecruit(ns.gang.getGangInformation()) == 0) {
+  while (getRespectNeededForNextRecruit(ns.gang.getGangInformation()) === 0) {
     membersCount++;
     const memberName = `${memberNamePrefix}${membersCount}`;
     if (!ns.gang.recruitMember(memberName)) {
@@ -99,13 +99,15 @@ export const RecruitmentStatus = {
 export function getRecruitmentStatus(ns) {
   const fname = "getRecruitmentStatus";
   const gangInformation = ns.gang.getGangInformation();
-  if (gangInformation.respectForNextRecruit === Infinity) {
-    return RecruitmentStatus.DoneRequirement;
-  }
 
   // Check if we are close to recruiting the next member.
   // If we are close, wait for respect to recruit the next member instead of ascending current members.
   const neededRespect = getRespectNeededForNextRecruit(gangInformation);
+  if (neededRespect === Infinity) {
+    return RecruitmentStatus.DoneRequirement;
+  }
+
+  // respect gain rate is per game cycle
   const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
   const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
 
