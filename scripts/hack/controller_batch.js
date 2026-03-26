@@ -164,7 +164,11 @@ function testTargetServerValues(ns, targetName, errorMessages) {
     return success;
   }
   const message = `Server ${hackedObject.hostname} Money is not at max. ${moneyAvailable} != ${moneyMax}`;
-  logger.error(fname, message);
+  if (useFormulas) {
+    logger.error(fname, message);
+  } else {
+    logger.warn(fname, message);
+  }
   errorMessages.push(message);
   return false;
 }
