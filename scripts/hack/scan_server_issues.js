@@ -2,6 +2,8 @@ import { listServers } from "/utils/servers.js";
 import { printError } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
 
+let onlyTestWithMoneyZero = false;
+
 function canSimulateGrow(ns, targetName) {
   /** @type {Server} */
   const targetObject = ns.getServer(targetName);
@@ -22,12 +24,11 @@ function canSimulateGrow(ns, targetName) {
     );
   }
 
-  // TODO: For now only test with money 0
-  if (moneyAvailable == 0) {
-    return true;
+  if (onlyTestWithMoneyZero) {
+    return moneyAvailable == 0;
   }
 
-  return false;
+  return true;
 }
 
 function simulateGrow(ns, targetName) {
@@ -36,7 +37,7 @@ function simulateGrow(ns, targetName) {
   const targetObject = ns.getServer(targetName);
   const player = ns.getPlayer();
 
-  let moneyMax = targetObject.moneyMax;
+  const moneyMax = targetObject.moneyMax;
   const moneyAvailable = targetObject.moneyAvailable;
 
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
@@ -59,26 +60,30 @@ function simulateGrow(ns, targetName) {
   growThreadsFormula = Math.ceil(growThreadsFormula);
 
   if (growResult < growThreadsFormula) {
-    const diff = growResult - growThreadsFormula;
-    printError(
-      ns,
-      `Grow threads mismatch for '${targetName}'. Expected: ${growResult}, Formula: ${growThreadsFormula}. Diff:${diff}`,
-    );
+    const diff = growThreadsFormula - growResult;
+    let errorMessage = `'${targetName}' Grow threads mismatch. Formula: ${growThreadsFormula}, Value: ${growResult}. Diff: ${diff}`;
     if (moneyAvailable == 0 && moneyMultiplier == moneyMax) {
-      printError(
-        ns,
-        `\tMoney - Current: $0, Max: ${formatMoney(moneyMax)} (${moneyMax}).`,
-      );
+      errorMessage += `\n\t\t Money - Current: $0, Max: ${formatMoney(moneyMax)} (${moneyMax}).`;
     } else {
-      printError(
-        ns,
-        `\tMoney available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Max: ${formatMoney(moneyMax)} (${moneyMax}). `,
-        // `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Details: ${JSON.stringify(targetObject, null, 2)}`,
-      );
+      errorMessage += `\n\t\t Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Max: ${formatMoney(moneyMax)} (${moneyMax}). `;
+      // `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Details: ${JSON.stringify(targetObject, null, 2)}`,
     }
+    printError(ns, errorMessage);
     return false;
   }
   return true;
+}
+
+/**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const defaultOptions = ["-h", "--help", "--tail"];
+  const options = ["--only-money-zero"];
+
+  return [...defaultOptions, ...options];
 }
 
 /** @param {NS} ns */
@@ -86,6 +91,7 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
+    ["only-money-zero", false],
   ]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()} `);
@@ -93,6 +99,8 @@ export async function main(ns) {
     ns.tprint("Checks for issue with my algos across all servers");
     return;
   }
+
+  onlyTestWithMoneyZero = args["only-money-zero"] == true;
 
   if (!ns.fileExists("Formulas.exe", "home")) {
     printError(ns, "Formulas.exe is required to run this script.");
@@ -111,7 +119,8 @@ export async function main(ns) {
     }
   }
 
+  successfulServersList = successfulServersList.sort();
   ns.tprint(
-    `Grow simulation completed. Success: ${successfulServersList.length}/${legitServers} servers: ${successfulServersList.join(", ")}`,
+    `Grow simulation completed. Success: ${successfulServersList.length}/${legitServers} \n\tservers: ${successfulServersList.join(", ")}`,
   );
 }
