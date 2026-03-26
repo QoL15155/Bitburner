@@ -51,7 +51,7 @@ export function readGangTasks(ns, isHackingGang = true) {
   if (!ns.fileExists(filename)) {
     printError(
       ns,
-      `[${fname}] Tasks file ${filename} does not exist. Please run the join_gang.js script to generate the tasks file.`,
+      `[${fname}] Tasks file ${filename} does not exist. Please run the gangs/start.js script to generate the tasks file.`,
     );
     return [];
   }

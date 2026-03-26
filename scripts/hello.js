@@ -1,6 +1,6 @@
 import { printInfo, printError } from "/utils/print.js";
 import { exportServersData, runTerminalCommand } from "/utils/servers.js";
-import { manageGang } from "/gangs/join_gang.js";
+import { manageGang } from "/gangs/start.js";
 
 const backdoorScript = "backdoor_all.js";
 
