@@ -1,6 +1,6 @@
-import { printError, printWarn, printInfo, print } from "/utils/print.js";
+import { printError, printWarn } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
-import { AttackAction, EnumAttackActionResult } from "./attack_action.js";
+import { AttackAction, EnumAttackActionResult } from "/hack/attack_action.js";
 
 /**
  * Calculates the server execution times
@@ -19,26 +19,26 @@ export function calculateServerExecutionTimes(ns, targetName) {
   // const weakenTime = ns.getWeakenTime(targetName);
 
   return {
-    hack: hackTime,
-    grow: growTime,
-    weaken: weakenTime,
+    hackTime: hackTime,
+    growTime: growTime,
+    weakenTime: weakenTime,
   };
 }
 
 export const distributionScripts = {
-  hack: {
+  hackScript: {
     loopScript: "do_hack.js",
     targetScript: "target_hack.js",
     ram: 1.7,
   },
 
-  grow: {
+  growScript: {
     loopScript: "do_grow.js",
     targetScript: "target_grow.js",
     ram: 1.75,
   },
 
-  weaken: {
+  weakenScript: {
     loopScript: "do_weaken.js",
     targetScript: "target_weaken.js",
     ram: 1.75,
@@ -47,57 +47,136 @@ export const distributionScripts = {
 
 //#region HGW
 
+/**
+ * @param {number} threads - number of threads
+ * @returns {number} - security increase from the 'grow' action
+ */
+export function getGrowSecurityIncrease(threads) {
+  // Amount by which server's security increases when its grown
+  const serverFortifyAmount = 0.002;
+  return 2 * threads * serverFortifyAmount;
+}
+
+/**
+ * @param {number} threads - number of threads
+ * @returns {number} - security increase from the 'hack' action
+ */
+export function getHackSecurityIncrease(threads) {
+  // Amount by which server's security increases when its hacked
+  const serverFortifyAmount = 0.002;
+  return threads * serverFortifyAmount;
+}
+
 export function processHack(ns, targetObject) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
+  // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
     printWarn(ns, `[${fname}] ${message}`);
-    throw message;
+    throw new Error(message);
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
   threads = Math.ceil(threads);
-  const securityIncrease = ns.hackAnalyzeSecurity(threads, targetName);
+  if (threads <= 0) {
+    return 0;
+  }
 
   targetObject.moneyAvailable = 0;
-  targetObject.hackDifficulty += securityIncrease;
+  targetObject.hackDifficulty += getHackSecurityIncrease(threads);
   return threads;
 }
 
 /**
  * Calculates the number of required threads to maximize money on target server.
  * Updates the server's object accordingly.
+ * Can use Formulas or not, based on the 'useFormulas' flag.
+ *
+ * @param {NS} ns
+ * @param {number} cpuCores
+ * @param {Server} targetObject - the server object to grow
+ * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
+ * @returns {number} - number of threads
+ */
+export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
+  const moneyMax = targetObject.moneyMax;
+  if (moneyMax === 0 || targetObject.moneyAvailable === moneyMax) {
+    return 0;
+  }
+
+  let threads = 0;
+  if (useFormulas) {
+    threads = processGrowFormulas(ns, cpuCores, targetObject);
+  } else {
+    threads = processGrowClean(ns, cpuCores, targetObject);
+  }
+
+  threads = Math.ceil(threads);
+  if (threads <= 0) {
+    return 0;
+  }
+
+  targetObject.moneyAvailable = moneyMax;
+  targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
+  return threads;
+}
+
+/**
+ * Uses Formulas to calculate the number of required threads to maximize money on target server.
  *
  * @param {NS} ns - NS object
- * @param {Person} player - the player object
  * @param {number} cpuCores - number of CPU cores of the attacking machine
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-export function processGrow(ns, player, cpuCores, targetObject) {
-  targetObject.moneyAvailable = 0;
+function processGrowFormulas(ns, cpuCores, targetObject) {
+  const player = ns.getPlayer();
 
-  let threads = ns.formulas.hacking.growThreads(
+  const threads = ns.formulas.hacking.growThreads(
     targetObject,
     player,
     targetObject.moneyMax,
     cpuCores,
   );
-  threads = Math.ceil(threads);
 
-  if (threads === 0) {
+  return threads;
+}
+
+/**
+ * Without using Formulas, calculates the number of required threads to maximize money on target server
+ *
+ * @param {NS} ns - NS object
+ * @param {number} cpuCores - number of CPU cores of the attacking machine
+ * @param {Server} targetObject - the server object to grow
+ * @returns {number} - number of threads
+ */
+function processGrowClean(ns, cpuCores, targetObject) {
+  let moneyMax = targetObject.moneyMax;
+  const moneyAvailable = targetObject.moneyAvailable;
+  const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
+
+  let threads = ns.growthAnalyze(
+    targetObject.hostname,
+    moneyMultiplier,
+    cpuCores,
+  );
+
+  // Heuristic adjustment to grow threads for performance sake.
+
+  if (targetObject.hostname === "n00dles") {
+    // n00dles needs a few threads as it is.
+    // The heuristic adjustment seems to be too much for it, causing it to be undergrown.
     return threads;
   }
 
-  const securityIncrease = ns.growthAnalyzeSecurity(
-    threads,
-    targetObject.name,
-    cpuCores,
-  );
-  targetObject.hackDifficulty += securityIncrease;
-  targetObject.moneyAvailable = targetObject.moneyMax;
+  // FIXME: performance
+  if (targetObject.moneyAvailable === 0) {
+    // threads *= 2 / 3;
+    threads *= 3 / 4;
+  }
+
   return threads;
 }
 
@@ -142,6 +221,7 @@ export function processWeakenSanity(ns, cpuCores, targetObject) {
     let msg = `[${fname}] Hack difficulty: ${targetObject.hackDifficulty}, minimum: ${targetObject.minDifficulty}`;
     msg += `\tweaken threads: ${threads}, expected security decrease: ${securityDecrease}. New difficulty: ${newDifficulty}`;
     printError(ns, msg);
+    throw new Error(msg);
   }
 
   targetObject.hackDifficulty = targetObject.minDifficulty;
@@ -190,14 +270,13 @@ function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
  * @param {string} targetName : Name of server to attack
  * @param {AttackAction} attackAction : parameters for the attack
  * @returns {EnumAttackActionResult} Result of attack action
+ * @throws Error if attackAction.threads is not set or less than 1
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
 
   if (attackAction.threads <= 0) {
-    const message = `[${fname}] Skipping ${attackAction.scriptName} for '${targetName}' - no threads`;
-    printWarn(ns, message);
-    return EnumAttackActionResult.NO_THREADS_NEEDED;
+    throw new Error(`${fname} called without threads to run.`);
   }
 
   const availableRam = checkServerAvailableRam(
@@ -208,7 +287,8 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   );
 
   if (!availableRam) {
-    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}}`);
+    // We should never get here.
+    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}`);
     return EnumAttackActionResult.NOT_ENOUGH_RAM;
   }
 

@@ -54,16 +54,16 @@ export class AttackBatch {
     this.targetName = targetName;
 
     this.#hackAction = new AttackAction(
-      distributionScripts.hack.targetScript,
-      distributionScripts.hack.ram,
+      distributionScripts.hackScript.targetScript,
+      distributionScripts.hackScript.ram,
     );
     this.#growAction = new AttackAction(
-      distributionScripts.grow.targetScript,
-      distributionScripts.grow.ram,
+      distributionScripts.growScript.targetScript,
+      distributionScripts.growScript.ram,
     );
     this.#weakenAction = new AttackAction(
-      distributionScripts.weaken.targetScript,
-      distributionScripts.weaken.ram,
+      distributionScripts.weakenScript.targetScript,
+      distributionScripts.weakenScript.ram,
     );
   }
 
@@ -80,7 +80,7 @@ export class AttackBatch {
 
   setPrepActions(cpuCores, growThreads, weakenThreads, executionTimes) {
     if (this.#state !== BatchState.INIT) {
-      throw "Already initialized";
+      throw new Error("Attack Batch is already initialized.");
     }
 
     this.cpuCores = cpuCores;
@@ -90,10 +90,10 @@ export class AttackBatch {
     this.#weakenAction.threads = weakenThreads;
 
     this.#hackAction.time = 0;
-    this.#growAction.time = executionTimes.grow;
-    this.#weakenAction.time = executionTimes.weaken;
+    this.#growAction.time = executionTimes.growTime;
+    this.#weakenAction.time = executionTimes.weakenTime;
 
-    this.#attackDuration = executionTimes.weaken;
+    this.#attackDuration = executionTimes.weakenTime;
 
     this.#setRequiredRam();
     this.#endTime = 0;
@@ -112,11 +112,11 @@ export class AttackBatch {
     this.#growAction.threads = growThreads;
     this.#weakenAction.threads = weakenThreads;
 
-    this.#hackAction.time = executionTimes.hack;
-    this.#growAction.time = executionTimes.grow;
-    this.#weakenAction.time = executionTimes.weaken;
+    this.#hackAction.time = executionTimes.hackTime;
+    this.#growAction.time = executionTimes.growTime;
+    this.#weakenAction.time = executionTimes.weakenTime;
 
-    this.#attackDuration = executionTimes.weaken;
+    this.#attackDuration = executionTimes.weakenTime;
 
     this.#setRequiredRam();
     this.#endTime = 0;
@@ -146,7 +146,9 @@ export class AttackBatch {
   getRequiredRam() {
     const fname = "getRequiredRam";
     if (this.#requiredRam <= 0) {
-      throw `[${fname}] No action has been specified`;
+      throw new Error(
+        `[${fname}] Required RAM is set to ${this.#requiredRam}. Check if the attack actions have been properly initialized.`,
+      );
     }
     return this.#requiredRam;
   }
@@ -189,5 +191,14 @@ export class AttackBatch {
     }
 
     return 0;
+  }
+
+  /** Total threads for all actions */
+  getTotalThreads() {
+    return (
+      this.#hackAction.threads +
+      this.#growAction.threads +
+      this.#weakenAction.threads
+    );
   }
 }
