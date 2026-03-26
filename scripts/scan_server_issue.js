@@ -45,25 +45,25 @@ function simulateGrow(ns, targetName) {
     moneyMultiplier,
     serverHome.cpuCores,
   );
-  const grow2 = growThreads * (2 / 3);
-  // const grow3 = growThreads * (3 / 4); -- not good
+  growThreads = Math.ceil(growThreads);
+  // const grow2 = growThreads * (2 / 3);
+  const growResult = growThreads * (3 / 4); //-- not good
 
   targetObject.moneyAvailable = 0;
-  const growThreadsFormula = ns.formulas.hacking.growThreads(
+  let growThreadsFormula = ns.formulas.hacking.growThreads(
     targetObject,
     player,
     moneyMax,
     serverHome.cpuCores,
   );
+  growThreadsFormula = Math.ceil(growThreadsFormula);
 
-  if (
-    Math.ceil(growThreads) !== growThreadsFormula &&
-    Math.floor(growThreads) !== growThreadsFormula
-  ) {
-    const diff = grow2 - growThreadsFormula;
+  if (growResult < growThreadsFormula) {
+    // if (growThreadsFormula !== grow2) {
+    const diff = growResult - growThreadsFormula;
     printError(
       ns,
-      `Grow threads mismatch for '${targetName}'. Expected: ${grow2}, Formula: ${growThreadsFormula}. Diff:${diff}`,
+      `Grow threads mismatch for '${targetName}'. Expected: ${growResult}, Formula: ${growThreadsFormula}. Diff:${diff}`,
     );
     if (moneyAvailable == 0 && moneyMultiplier == moneyMax) {
       printError(
@@ -73,7 +73,7 @@ function simulateGrow(ns, targetName) {
     } else {
       printError(
         ns,
-        `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Max: ${formatMoney(moneyMax)} (${moneyMax}). `,
+        `\tMoney available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Max: ${formatMoney(moneyMax)} (${moneyMax}). `,
         // `Money available:${formatMoney(moneyAvailable)} (${moneyAvailable}). Multiplier: ${moneyMultiplier}. Details: ${JSON.stringify(targetObject, null, 2)}`,
       );
     }

@@ -157,16 +157,17 @@ function processGrowClean(ns, cpuCores, targetObject) {
   const moneyAvailable = targetObject.moneyAvailable;
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
 
-  const threads = ns.growthAnalyze(
+  let threads = ns.growthAnalyze(
     targetObject.hostname,
     moneyMultiplier,
     cpuCores,
   );
 
   // FIXME: performance
-  // if (targetObject.moneyAvailable === 0) {
-  //   threads *= 2 / 3;
-  // }
+  if (targetObject.moneyAvailable === 0) {
+    // threads *= 2 / 3;
+    threads *= 3 / 4;
+  }
 
   return threads;
 }
