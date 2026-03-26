@@ -100,7 +100,9 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
       `[${fname}] Lowering wanted level (Gain rate: ${wantedLevelGainRate}). ${focusString} focus`,
     );
     if (isFocusRespect) {
-      throw `[${fname}] lowerWantedLevelRespectFocus is not implemented yet.`;
+      throw new Error(
+        `[${fname}] lowerWantedLevelRespectFocus is not implemented yet.`,
+      );
     } else {
       lowerWantedLevelMoneyFocus(ns);
     }
@@ -113,7 +115,7 @@ function handleWantedLevel(ns, gangInformation, isFocusRespect) {
   );
   if (isFocusRespect) {
     // Prioritize respect gain if we can recruit more members
-    throw `[${fname}] raiseRespectGain is not implemented yet.`;
+    throw new Error(`[${fname}] raiseRespectGain is not implemented yet.`);
   } else {
     raiseMoneyGain(ns);
   }
@@ -151,7 +153,9 @@ function lowerWantedLevelMoneyFocus(ns) {
     (task) => task.name === highestWantedWorker.task,
   );
   if (currentTaskIndex === -1) {
-    throw `[${fname}] Member ${highestWantedWorker.name} is doing an unknown task ${highestWantedWorker.task}`;
+    throw new Error(
+      `[${fname}] Member ${highestWantedWorker.name} is doing an unknown task ${highestWantedWorker.task}`,
+    );
   }
   if (currentTaskIndex === 0) {
     // Worker's task is already the task with the lowest wanted level, we cannot reduce more the wanted level gain.
@@ -242,6 +246,7 @@ function raiseMoneyGain(ns) {
     membersWorking.push(memberName);
     // Remove member from ethical list
     membersEthical = membersEthical.filter((name) => name !== memberName);
+
     printLogInfo(
       ns,
       `[${fname}] Assigned member ${memberName} from Ethical Hacking to task ${bestTask.name} for more money gain.`,
@@ -252,15 +257,19 @@ function raiseMoneyGain(ns) {
 /**
  * Among ethical members, find the member with the lowest wanted level gain.
  * Note: we want to keep the most "powerful" ethical member.
+ *
+ * @param {NS} ns
+ * @param {string[]} membersEthical - list of ethical members
+ * @return {string} member name with the lowest wanted level gain
  */
 function findMemberNameLowestWantedLevel(ns, membersEthical) {
   if (membersEthical.length === 1) {
     return membersEthical[0];
   }
-  const members = membersEthical.map((memberName) =>
+  const membersInfo = membersEthical.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
-  const bestMember = members.reduce((prev, current) => {
+  const bestMember = membersInfo.reduce((prev, current) => {
     return current.wantedLevelGain < prev.wantedLevelGain ? current : prev;
   });
   return bestMember.name;
@@ -273,7 +282,8 @@ function findMemberNameLowestWantedLevel(ns, membersEthical) {
 function tryUpgradeWorkingMemberMoney(ns) {
   const fname = "tryUpgradeWorkingMemberMoney";
 
-  const members = membersWorking.map((memberName) =>
+  /** @type {GangMemberInfo[]} */
+  const membersInfo = membersWorking.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
 
@@ -282,13 +292,15 @@ function tryUpgradeWorkingMemberMoney(ns) {
 
   // ns.printf(ascendingTasksByMoneyGain.map(task => `${task.name} (base money: ${task.baseMoney}, base wanted: ${task.baseWanted})`).join("\n"));
 
-  for (let member of members) {
+  for (const member of membersInfo) {
     const taskIndex = ascendingTasksByMoneyGain.findIndex(
       (task) => task.name === member.task,
     );
 
     if (taskIndex === -1) {
-      throw `[${fname}] Member ${member.name} is doing an unknown task ${member.task}`;
+      throw new Error(
+        `[${fname}] Member ${member.name} is doing an unknown task ${member.task}`,
+      );
     }
 
     if (taskIndex < maxTaskIdx) {
