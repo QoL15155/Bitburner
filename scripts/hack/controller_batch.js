@@ -35,7 +35,7 @@ let useFormulas = false;
  * @param {AttackBatch} attackBatch
  * @returns {bool} false when target server is already prepped
  */
-export function getPrepParameters(ns, cpuCores, attackBatch) {
+function getPrepParameters(ns, cpuCores, attackBatch) {
   const fname = "getPrepParameters";
   const targetName = attackBatch.targetName;
   const targetObject = ns.getServer(targetName);

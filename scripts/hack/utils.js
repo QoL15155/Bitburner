@@ -280,7 +280,7 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
 
   if (!availableRam) {
     // We should never get here.
-    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}}`);
+    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}`);
     return EnumAttackActionResult.NOT_ENOUGH_RAM;
   }
 

@@ -13,7 +13,7 @@ export async function main(ns) {
   const folder = args._[0];
 
   if (args.help || args.h || !folder) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} <folder> [--delay ms]`);
+    ns.tprint(`Usage: run ${ns.getScriptName()} <folder>`);
     ns.tprint("");
     ns.tprint("Download Folder");
     ns.tprint("=====================");

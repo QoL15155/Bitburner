@@ -46,7 +46,7 @@ function simulateGrow(ns, targetName) {
     serverHome.cpuCores,
   );
   growThreads = Math.ceil(growThreads);
-  // const grow2 = growThreads * (2 / 3);
+  // const growResult = growThreads * (2 / 3);
   const growResult = growThreads * (3 / 4); //-- not good
 
   targetObject.moneyAvailable = 0;
@@ -59,7 +59,6 @@ function simulateGrow(ns, targetName) {
   growThreadsFormula = Math.ceil(growThreadsFormula);
 
   if (growResult < growThreadsFormula) {
-    // if (growThreadsFormula !== grow2) {
     const diff = growResult - growThreadsFormula;
     printError(
       ns,
