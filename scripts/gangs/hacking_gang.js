@@ -72,7 +72,8 @@ function wantedLevelGainRateString(gangInformation) {
 }
 
 /**
- * @summary Handles the wanted level of the gang.
+ * Handles the wanted level of the gang.
+ *
  * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
  * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
  *
@@ -276,7 +277,7 @@ function findMemberNameLowestWantedLevel(ns, membersEthical) {
 }
 
 /**
- * @summary Tries to find the working member with the lowest money gain task
+ * Tries to find the working member with the lowest money gain task
  * and assign them to the next better money gain task.
  */
 function tryUpgradeWorkingMemberMoney(ns) {
@@ -318,9 +319,11 @@ function tryUpgradeWorkingMemberMoney(ns) {
   const currentTask = ascendingTasksByMoneyGain[lowerTaskIdx];
   const nextTask = ascendingTasksByMoneyGain[lowerTaskIdx + 1];
   ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
-  ns.printf(
-    `[${fname}] Previous Task: '${currentTask.name}' base money: ${currentTask.baseMoney}. New task base money: ${nextTask.baseMoney}`,
-  );
+
+  let message = `[${fname}] Assigned member ${lowestGainingMember.name} to a better money gain task: `;
+  message += `from '${currentTask.name}' (base money: ${currentTask.baseMoney}) to '${nextTask.name}' (base money: ${nextTask.baseMoney}).`;
+  ns.printf(message);
+
   return true;
 }
 
@@ -379,7 +382,7 @@ function arrangeMembersByTask(ns) {
 
   gangMemberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
 
-  let message = `Initial Members: - \n`;
+  let message = `Initial Members: \n`;
   message += `- Training (${membersTraining.length}): ${membersTraining.join(", ")}\n`;
   message += `- Ethical (${membersEthical.length}): ${membersEthical.join(", ")}\n`;
   message += `- Working (${membersWorking.length}): ${membersWorking.join(", ")}`;

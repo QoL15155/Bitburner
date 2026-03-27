@@ -21,9 +21,8 @@ const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
  */
 export function writeGangTasks(ns, isHackingGang = true) {
   const fname = "writeGangTasks";
-  let tasks = ns.gang.getTaskNames().map((taskName) => {
-    const task = ns.gang.getTaskStats(taskName);
-    return task;
+  const tasks = ns.gang.getTaskNames().map((taskName) => {
+    return ns.gang.getTaskStats(taskName);
   });
   const filename = isHackingGang
     ? tasksJsonHackingFilename
@@ -55,6 +54,7 @@ export function readGangTasks(ns, isHackingGang = true) {
     );
     return [];
   }
+
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
   ns.printf(
@@ -110,7 +110,7 @@ export function findMemberHighestHackingLevel(ns, memberNames) {
 }
 
 /**
- * Finds the gang member with the *highest wanted* level.
+ * Finds the gang member with the *highest wanted* level gain.
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through

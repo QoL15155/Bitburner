@@ -7,11 +7,7 @@ import {
   printWarn,
 } from "/utils/print.js";
 import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
-import {
-  memberNamePrefix,
-  findMemberLowestHackingLevel,
-  findMemberHighestWantedLevel,
-} from "./utils.js";
+import { memberNamePrefix } from "./utils.js";
 import {
   recruitmentMaxWaitTimeSeconds,
   wantedPenaltyMax,
