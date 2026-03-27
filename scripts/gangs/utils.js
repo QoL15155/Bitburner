@@ -114,7 +114,7 @@ export function findMemberHighestHackingLevel(ns, memberNames) {
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through
- * @returns {GangMemberInfo} The member info object with the highest wanted level
+ * @returns {GangMemberInfo} The member info object with the highest wanted level gain
  * @throws {TypeError} if memberNames is empty
  */
 export function findMemberHighestWantedLevel(ns, memberNames) {

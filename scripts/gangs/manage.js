@@ -34,16 +34,15 @@ function getRespectNeededForNextRecruit(gangInformation) {
 }
 
 /**
- * @summary Recruits new gang members until the maximum number of members is reached.
- *
+ * Recruits new gang members until we cannot recruit any more members.
  * Each new member is assigned the default task.
  *
  * @param {NS} ns - the Netscript environment
  * @param {string} defaultTask - the task to assign to new members
- *  Should be a valid task for the gang type (hacking or combat).
- *  For example, "Ransomware" is a valid task for hacking gangs, while "Vigilante Justice" is a valid task for combat gangs.
+ *  Should be a valid task for the gang type (hacking or combat). For example:
+ *    - "Ransomware" is a valid task for hacking gangs,
+ *    - "Vigilante Justice" is a valid task for combat gangs.
  * @param {number} membersCount - the current number of members
- *
  * @return {string[]} - the list of new members recruited
  */
 export function recruitGangMembers(ns, defaultTask, membersCount) {
@@ -84,12 +83,13 @@ export const RecruitmentStatus = {
 };
 
 /**
- * @summary Determines whether should wait for respect to recruit the next member
+ * Determines whether should wait for respect to recruit the next member
  * before ascending current members.
  *
  * @param {NS} ns - the Netscript environment
  * @param {GangInformation} gangInformation - the current gang information
- * @return {boolean} - true if should wait for respect to recruit the next member, false otherwise
+ * @return {boolean} true if should wait for respect to recruit the next member,
+ *              false otherwise
  */
 export function getRecruitmentStatus(ns) {
   const fname = "getRecruitmentStatus";
@@ -123,7 +123,7 @@ export function getRecruitmentStatus(ns) {
 //#region Ascend
 
 /**
- * @summary Ascends gang members if they meet the criteria
+ * Ascends gang members if they meet the criteria.
  * Criteria: Ascend if the member will gain at least 2 levels in any stat after ascending.
  *
  * @param {NS} ns - the Netscript environment
