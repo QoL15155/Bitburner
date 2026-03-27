@@ -123,7 +123,7 @@ export function findMemberHighestWantedLevel(ns, memberNames) {
     ns.gang.getMemberInformation(memberName),
   );
   const bestMember = members.reduce((prev, current) => {
-    return prev.wanted < current.wanted ? current : prev;
+    return prev.wantedLevelGain < current.wantedLevelGain ? current : prev;
   });
   return bestMember;
 }
