@@ -87,9 +87,7 @@ export const RecruitmentStatus = {
  * before ascending current members.
  *
  * @param {NS} ns - the Netscript environment
- * @param {GangInformation} gangInformation - the current gang information
- * @return {boolean} true if should wait for respect to recruit the next member,
- *              false otherwise
+ * @return {boolean} true if should wait for respect to recruit the next member
  */
 export function getRecruitmentStatus(ns) {
   const fname = "getRecruitmentStatus";
