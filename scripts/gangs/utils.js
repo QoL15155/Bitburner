@@ -21,9 +21,8 @@ const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
  */
 export function writeGangTasks(ns, isHackingGang = true) {
   const fname = "writeGangTasks";
-  let tasks = ns.gang.getTaskNames().map((taskName) => {
-    const task = ns.gang.getTaskStats(taskName);
-    return task;
+  const tasks = ns.gang.getTaskNames().map((taskName) => {
+    return ns.gang.getTaskStats(taskName);
   });
   const filename = isHackingGang
     ? tasksJsonHackingFilename
@@ -51,10 +50,11 @@ export function readGangTasks(ns, isHackingGang = true) {
   if (!ns.fileExists(filename)) {
     printError(
       ns,
-      `[${fname}] Tasks file ${filename} does not exist. Please run the join_gang.js script to generate the tasks file.`,
+      `[${fname}] Tasks file ${filename} does not exist. Please run the gangs/start.js script to generate the tasks file.`,
     );
     return [];
   }
+
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
   ns.printf(
@@ -68,33 +68,62 @@ export function readGangTasks(ns, isHackingGang = true) {
 //#region Member Finder
 
 // Hacking Level
+
+/**
+ * @summary Finds the gang member with the *lowest hacking* level.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the lowest hack stat
+ * @throws {TypeError} if memberNames is empty
+ */
 export function findMemberLowestHackingLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
+
   const bestMember = members.reduce((prev, current) => {
     return current.hack < prev.hack ? current : prev;
   });
   return bestMember;
 }
 
+/**
+ * Finds the gang member with the *highest hacking* level.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the highest hack stat
+ * @throws {TypeError} if memberNames is empty
+ */
 export function findMemberHighestHackingLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
+
   const bestMember = members.reduce((prev, current) => {
     return prev.hack < current.hack ? current : prev;
   });
   return bestMember;
 }
 
-// Wanted level
+/**
+ * Finds the gang member with the *highest wanted* level gain.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the highest wanted level gain
+ * @throws {TypeError} if memberNames is empty
+ */
 export function findMemberHighestWantedLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
   const bestMember = members.reduce((prev, current) => {
-    return prev.wanted < current.wanted ? current : prev;
+    return prev.wantedLevelGain < current.wantedLevelGain ? current : prev;
   });
   return bestMember;
 }
