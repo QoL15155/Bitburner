@@ -1,6 +1,6 @@
 import { printError, printWarn } from "/utils/print.js";
 import { formatMoney } from "/utils/formatters.js";
-import { AttackAction, EnumAttackActionResult } from "/hack/attack_action.js";
+import { AttackAction } from "/hack/attack_action.js";
 
 /**
  * Calculates the server execution times
@@ -263,14 +263,15 @@ function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
 }
 
 /**
- * Run one attack action
+ * Runs one attack action
  *
  * @param {NS} ns
  * @param {string} hostname : where the script will be running
  * @param {string} targetName : Name of server to attack
  * @param {AttackAction} attackAction : parameters for the attack
- * @returns {EnumAttackActionResult} Result of attack action
- * @throws Error if attackAction.threads is not set or less than 1
+ * @throws {Error} if attackAction.threads is not set or less than 1
+ * @throws {Error} if there is not enough RAM to run the attack action on the specified hostname
+ *  Both of these cases should be prevented by the calling function
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
@@ -287,9 +288,8 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   );
 
   if (!availableRam) {
-    // We should never get here.
-    ns.alert(`[${fname}] Not enough RAM to run script on ${hostname}`);
-    return EnumAttackActionResult.NOT_ENOUGH_RAM;
+    const message = `[${fname}] Not enough RAM to run ${attackAction.scriptName} on ${hostname} with ${attackAction.threads} threads.`;
+    throw new Error(message);
   }
 
   const pid = ns.exec(
@@ -300,7 +300,6 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
   );
   attackAction.pid = pid;
   attackAction.hostname = hostname;
-  return EnumAttackActionResult.SCRIPT_RUN;
 }
 
 //#endregion Run Actions

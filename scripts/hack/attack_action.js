@@ -41,8 +41,3 @@ export class AttackAction {
     return this.threads * this.scriptRam;
   }
 }
-
-export const EnumAttackActionResult = {
-  SCRIPT_RUN: "Script has been ran",
-  NOT_ENOUGH_RAM: "Not enough RAM to run the script",
-};
