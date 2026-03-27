@@ -4,8 +4,15 @@
  * @returns {string[]} - the array of possible autocomplete options
  */
 export function autocomplete(data, args) {
-  const defaultOptions = ["-h", "--help", "--tail"];
-  return [...defaultOptions];
+  const helpOptions = ["-h", "--help"];
+  const defaultOptions = helpOptions.concat("--tail");
+
+  // Once help is requested, suppress further suggestions for consistent UX
+  if (args.some((arg) => helpOptions.includes(arg))) {
+    return [];
+  }
+
+  return defaultOptions;
 }
 
 /**
