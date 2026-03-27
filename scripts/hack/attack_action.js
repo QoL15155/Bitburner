@@ -33,11 +33,17 @@ export class AttackAction {
   reset() {
     this.threads = 0;
     this.time = 0;
+
+    // Specified when the script is running.
     this.hostname = undefined;
     this.pid = 0;
   }
 
   getRequiredRam() {
     return this.threads * this.scriptRam;
+  }
+
+  toString() {
+    return `AttackAction(script: ${this.scriptName}, threads: ${this.threads}, time: ${this.time}ms)`;
   }
 }

@@ -272,12 +272,13 @@ function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
  * @throws {Error} if attackAction.threads is not set or less than 1
  * @throws {Error} if there is not enough RAM to run the attack action on the specified hostname
  *  Both of these cases should be prevented by the calling function
+ * @throws {Error} if ns.exec fails to run the script for any reason
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
 
   if (attackAction.threads <= 0) {
-    throw new Error(`${fname} called without threads to run.`);
+    throw new Error(`[${fname}] called without threads to run.`);
   }
 
   const availableRam = checkServerAvailableRam(
@@ -298,6 +299,12 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
     attackAction.threads,
     targetName,
   );
+
+  if (pid == 0) {
+    throw new Error(
+      `[${fname}] Failed to run on ${hostname}. ${attackAction.toString()}`,
+    );
+  }
   attackAction.pid = pid;
   attackAction.hostname = hostname;
 }
