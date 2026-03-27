@@ -288,10 +288,11 @@ function tryUpgradeWorkingMemberMoney(ns) {
   );
 
   let lowestGainingMember = null;
-  let maxTaskIdx = ascendingTasksByMoneyGain.length - 1;
+  let lowerTaskIdx = ascendingTasksByMoneyGain.length - 1;
 
   // ns.printf(ascendingTasksByMoneyGain.map(task => `${task.name} (base money: ${task.baseMoney}, base wanted: ${task.baseWanted})`).join("\n"));
 
+  // Find member with the lowest money gain task (with base money > 0)
   for (const member of membersInfo) {
     const taskIndex = ascendingTasksByMoneyGain.findIndex(
       (task) => task.name === member.task,
@@ -299,12 +300,12 @@ function tryUpgradeWorkingMemberMoney(ns) {
 
     if (taskIndex === -1) {
       throw new Error(
-        `[${fname}] Member ${member.name} is doing an unknown task ${member.task}`,
+        `[${fname}] Member ${member.name} is doing an unknown task: ${member.task}`,
       );
     }
 
-    if (taskIndex < maxTaskIdx) {
-      maxTaskIdx = taskIndex;
+    if (taskIndex < lowerTaskIdx) {
+      lowerTaskIdx = taskIndex;
       lowestGainingMember = member;
     }
   }
@@ -314,8 +315,8 @@ function tryUpgradeWorkingMemberMoney(ns) {
   }
 
   // Update the member with the best money gain task
-  const currentTask = ascendingTasksByMoneyGain[maxTaskIdx];
-  const nextTask = ascendingTasksByMoneyGain[maxTaskIdx + 1];
+  const currentTask = ascendingTasksByMoneyGain[lowerTaskIdx];
+  const nextTask = ascendingTasksByMoneyGain[lowerTaskIdx + 1];
   ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
   ns.printf(
     `[${fname}] Previous Task: '${currentTask.name}' base money: ${currentTask.baseMoney}. New task base money: ${nextTask.baseMoney}`,
@@ -390,11 +391,14 @@ function sanityCheckMembers(ns) {
   const memberCount = gangMemberNames.length;
   const totalCategorizedMembers =
     membersTraining.length + membersEthical.length + membersWorking.length;
-  if (memberCount !== totalCategorizedMembers) {
-    throw new Error(
-      `[${fname}] Sanity check failed: total members ${memberCount} does not match sum of categorized members ${totalCategorizedMembers}. Training: ${membersTraining.length}, Ethical: ${membersEthical.length}, Working: ${membersWorking.length}`,
-    );
-  }
+
+  if (memberCount === totalCategorizedMembers) return;
+
+  let message = `[${fname}] Sanity Check Failed: total members ${memberCount} does not match sum of categorized members ${totalCategorizedMembers}.`;
+  message += `\n- Training: ${membersTraining.length} (${membersTraining.join(", ")})`;
+  message += `\n- Ethical: ${membersEthical.length} (${membersEthical.join(", ")})`;
+  message += `\n- Working: ${membersWorking.length} (${membersWorking.join(", ")})`;
+  throw new Error(message);
 }
 
 async function manageGang(ns) {

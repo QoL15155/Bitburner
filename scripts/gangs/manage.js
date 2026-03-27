@@ -9,7 +9,6 @@ import {
 import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
 import {
   memberNamePrefix,
-  findMemberHighestHackingLevel,
   findMemberLowestHackingLevel,
   findMemberHighestWantedLevel,
 } from "./utils.js";

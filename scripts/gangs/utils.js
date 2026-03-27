@@ -70,11 +70,12 @@ export function readGangTasks(ns, isHackingGang = true) {
 // Hacking Level
 
 /**
- * Finds the gang member with the lowest hacking level.
+ * @summary Finds the gang member with the *lowest hacking* level.
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through
  * @returns {GangMemberInfo} The member info object with the lowest hack stat
+ * @throws Error if memberNames is empty
  */
 export function findMemberLowestHackingLevel(ns, memberNames) {
   /** @type {GangMemberInfo[]} */
@@ -89,11 +90,12 @@ export function findMemberLowestHackingLevel(ns, memberNames) {
 }
 
 /**
- * Finds the gang member with the highest hacking level.
+ * @summary Finds the gang member with the *highest hacking* level.
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through
  * @returns {GangMemberInfo} The member info object with the highest hack stat
+ * @throws Error if memberNames is empty
  */
 export function findMemberHighestHackingLevel(ns, memberNames) {
   /** @type {GangMemberInfo[]} */
@@ -107,7 +109,14 @@ export function findMemberHighestHackingLevel(ns, memberNames) {
   return bestMember;
 }
 
-// Wanted level
+/**
+ * @summary Finds the gang member with the *highest wanted* level.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - Array of gang member names to search through
+ * @returns {GangMemberInfo} The member info object with the highest wanted level
+ * @throws Error if memberNames is empty
+ */
 export function findMemberHighestWantedLevel(ns, memberNames) {
   /** @type {GangMemberInfo[]} */
   const members = memberNames.map((memberName) =>
