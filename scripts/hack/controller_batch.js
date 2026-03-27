@@ -25,15 +25,17 @@ let useFormulas = false;
 
 /**
  * Prep the target server for attack.
- * At the end of the prep phase the targe server would have maximum money and minimum security
+ * Updates the attack batch with the prep parameters.
+ * At the end of the prep phase the target server would have maximum money and minimum security
  *
+ * Prep strategy
  * [------ weaken ------]
  * [---- grow ----]
  *
  * @param {NS} ns
- * @param {number} cpuCores
- * @param {AttackBatch} attackBatch
- * @returns {bool} false when target server is already prepped
+ * @param {number} cpuCores - number of CPU cores available on the attacking server
+ * @param {AttackBatch} attackBatch - the attack batch to update with the prep parameters
+ * @returns {boolean} false when target server is already prepped, true otherwise
  */
 function getPrepParameters(ns, cpuCores, attackBatch) {
   const fname = "getPrepParameters";
@@ -64,6 +66,7 @@ function getPrepParameters(ns, cpuCores, attackBatch) {
 
 /**
  * Gathers attack parameters
+ * Updates the attack batch with the attack parameters.
  *
  * HGW strategy
  * [------- weaken -------]
@@ -98,9 +101,8 @@ function getAttackParameters(ns, cpuCores, attackBatch) {
  * Retrieves attack parameters. (either prep or actual hack)
  *
  * @param {NS} ns
- * @param {number} cpuCores
- * @param {AttackBatch} attackBatch
- * @returns
+ * @param {number} cpuCores - number of CPU cores available on the attacking server
+ * @param {AttackBatch} attackBatch - the attack batch to update with the attack parameters
  */
 function handleAttackParameters(ns, cpuCores, attackBatch) {
   const fname = "handleAttackParameters";
@@ -223,7 +225,8 @@ class AttackResult {
 }
 
 /**
- * Performs an attack on the target server from the attack batch
+ * Performs an attack on the target server (@see attackBatch.targetName)
+ *
  * @param {NS} ns : NS object
  * @param {Array<string>} attackingServers : list of servers to attack from
  * @param {AttackBatch} attackBatch : attack parameters

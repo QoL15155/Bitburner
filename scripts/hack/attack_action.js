@@ -33,6 +33,8 @@ export class AttackAction {
   reset() {
     this.threads = 0;
     this.time = 0;
+
+    // Specified when the script is running.
     this.hostname = undefined;
     this.pid = 0;
   }
@@ -40,9 +42,8 @@ export class AttackAction {
   getRequiredRam() {
     return this.threads * this.scriptRam;
   }
-}
 
-export const EnumAttackActionResult = {
-  SCRIPT_RUN: "Script has been ran",
-  NOT_ENOUGH_RAM: "Not enough RAM to run the script",
-};
+  toString() {
+    return `AttackAction(script: ${this.scriptName}, threads: ${this.threads}, time: ${this.time}ms)`;
+  }
+}

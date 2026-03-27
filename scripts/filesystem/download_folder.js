@@ -1,4 +1,21 @@
 /**
+ * @param {AutocompleteData} data - context about the game, useful when autocompleting
+ * @param {string[]} args - current arguments, not including "run script.js"
+ * @returns {string[]} - the array of possible autocomplete options
+ */
+export function autocomplete(data, args) {
+  const helpOptions = ["-h", "--help"];
+  const defaultOptions = helpOptions.concat("--tail");
+
+  // Once help is requested, suppress further suggestions for consistent UX
+  if (args.some((arg) => helpOptions.includes(arg))) {
+    return [];
+  }
+
+  return defaultOptions;
+}
+
+/**
  * Downloads all files within a folder to your real computer.
  * Uses the DOM to trigger browser file downloads.
  *

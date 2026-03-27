@@ -7,7 +7,8 @@ export const BatchState = {
   ATTACK_PARAMS: 2,
 };
 
-// the necessary delay between script execution times may range between 20ms and 200ms
+// The necessary delay between script execution times may range between 20ms and 200ms
+// Depends on the computer's performance
 export const delayIncrease = 200;
 
 /**
