@@ -22,6 +22,7 @@ import {
   WantedLevelStatus,
 } from "/gangs/manage.js";
 import { normalEthicalMembers } from "./constants.js";
+import { formatWantedLevelGainRate } from "/utils/formatters.js";
 
 /**
  * Algorithm:
@@ -72,10 +73,6 @@ let membersTraining = [];
 
 //#region Wanted Level
 
-function wantedLevelGainRateString(gangInformation) {
-  return `${gangInformation.wantedLevelGainRate.toFixed(3)}/sec`;
-}
-
 /**
  * Handles the wanted level of the gang.
  *
@@ -93,7 +90,9 @@ function handleWantedLevel(ns, gangInformation) {
   const focusString = canRecruitMembers ? "Respect" : "Money";
 
   const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
-  const wantedLevelGainRate = wantedLevelGainRateString(gangInformation);
+  const wantedLevelGainRate = formatWantedLevelGainRate(
+    gangInformation.wantedLevelGainRate,
+  );
 
   if (wantedLevelStatus === WantedLevelStatus.Safe) {
     return;

@@ -6,7 +6,11 @@ import {
   printLogWarn,
   printWarn,
 } from "/utils/print.js";
-import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
+import {
+  doConversion,
+  formatTimeSeconds,
+  formatWantedLevelGainRate,
+} from "/utils/formatters.js";
 import { memberNamePrefix } from "./utils.js";
 import {
   recruitmentMaxWaitTimeSeconds,
@@ -201,10 +205,12 @@ function shouldLowerWantedLevel(ns, gangInformation) {
   }
 
   if (gangInformation.wantedPenalty < wantedPenaltyMax) {
-    const wantedGainRatePerSecond = gangInformation.wantedLevelGainRate * 5;
+    const wantedGainRatePerSecond = formatWantedLevelGainRate(
+      gangInformation.wantedLevelGainRate,
+    );
     printLogWarn(
       ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, wanted gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec`,
+      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, Wanted Gain Rate: ${wantedGainRatePerSecond}`,
     );
     return true;
   }
@@ -235,9 +241,11 @@ export function getWantedLevelStatus(ns, gangInformation) {
     gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
     gangInformation.wantedPenalty < wantedPenaltySafeThreshold
   ) {
-    const wantedGainRatePerSecond = gangInformation.wantedLevelGainRate * 5;
+    const wantedGainRatePerSecond = formatWantedLevelGainRate(
+      gangInformation.wantedLevelGainRate,
+    );
     ns.printf(
-      `Playing it safe. Wanted level gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec. Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`,
+      `Playing it safe. Wanted level gain rate: ${wantedGainRatePerSecond}. Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`,
     );
     return WantedLevelStatus.Safe;
   }

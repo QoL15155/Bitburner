@@ -95,3 +95,8 @@ export function formatRam(ramGB) {
 export function formatMoney(money) {
   return "$" + doConversion(money);
 }
+
+/** Gang rates are per-game game cycle (200 ms) */
+export function formatWantedLevelGainRate(gainRate) {
+  return `${(gainRate * 5).toFixed(3)}/sec`;
+}
