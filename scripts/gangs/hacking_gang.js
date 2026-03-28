@@ -277,7 +277,6 @@ function raiseMoneyGain(ns) {
 }
 
 function swapMembersTasks(ns, ethicalMember, workingMember) {
-  const fname = "swapMembersTasks";
   const ethicalTask = ethicalMember.task;
   const workingTask = workingMember.task;
 
@@ -497,7 +496,7 @@ function printUsage(ns) {
     "  MEMBER_NAMES: JSON stringified array of current gang member names.",
   );
   ns.tprint("");
-  ns.tprint("Should be ran by 'gangs/start.js' script");
+  ns.tprint("Should be run by 'gangs/start.js' script");
 }
 
 /**

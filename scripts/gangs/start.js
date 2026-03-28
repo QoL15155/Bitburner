@@ -17,7 +17,7 @@ import { printInfo, printError, print } from "utils/print.js";
  * Should only be called after a gang has been formed
  *
  * @param {NS} ns - Netscript API object
- * @return {boolean} True when gang management script was called without errors, false otherwise.
+ * @return {boolean} False when the script was called with errors
  */
 export function manageGang(ns) {
   // Write tasks info to a json file for other scripts to use.
@@ -41,7 +41,7 @@ export function manageGang(ns) {
 
   print(ns, `Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
-  return ns.run(gangManagementScript, { threads: 1 }, gangMembers);
+  return ns.run(gangManagementScript, { threads: 1 }, gangMembers) != 0;
 }
 
 /**
@@ -84,7 +84,7 @@ export async function main(ns) {
   }
 
   const result = manageGang(ns);
-  if (!result) {
+  if (result == false) {
     printError(ns, "Failed to call gang management script");
     ns.tail();
   }

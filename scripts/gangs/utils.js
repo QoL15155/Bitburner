@@ -134,7 +134,7 @@ export function findMemberHighestWantedLevel(ns, memberNames) {
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - list of members
- * @returns {GangMemberInfo} The member info object with the highest wanted level gain
+ * @returns {GangMemberInfo} The member info object with the lowest wanted level gain
  * @throws {TypeError} if memberNames is empty
  */
 export function findMemberLowestWantedLevel(ns, memberNames) {
