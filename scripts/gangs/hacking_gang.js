@@ -56,8 +56,6 @@ const defaultTask = trainingTasks[0];
 
 /** @type {GangTaskStats[]} */
 let tasksList = null;
-/** Only include tasks with baseMoney > 0
- * @type {GangTaskStats[]} */
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
 
@@ -316,7 +314,7 @@ function assignWorkingMemberToEthical(ns, member, ethicalTask) {
 }
 
 function tryUpgradeWorkingMember(ns) {
-  const fname = "tryUpgradeWorkingMemberRespect";
+  const fname = "tryUpgradeWorkingMember";
 
   let sortedTaskList = null;
   if (canRecruitMembers) {
@@ -379,12 +377,13 @@ function logMemberAssign(ns, fname, memberName, fromTaskName, toTaskName) {
 }
 
 /**
- * @param {GangTask} fromTask
- * @param {GangTask} toTask
+ * @param {GangTaskStats} fromTask
+ * @param {GangTaskStats} toTask
  */
 function logMemberAssignEx(ns, fname, memberName, fromTask, toTask) {
   let message = `[${fname}] Assigned member '${memberName}' `;
-  message += `from '${fromTask.name}' (base money: ${fromTask.baseMoney}) to '${toTask.name}' (base money: ${toTask.baseMoney}).`;
+  message += `\nfrom '${fromTask.name}' (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted}) `;
+  message += `\nto '${toTask.name}' (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted}).`;
   printLogInfo(ns, message);
 }
 
