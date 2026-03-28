@@ -335,22 +335,22 @@ function tryUpgradeWorkingMember(ns) {
     });
   }
 
-  const { lowestGainingMember, lowestTaskIdx } = findLeastProductiveMember(
+  const { member, taskIdx } = findLeastProductiveMember(
     ns,
     membersWorking,
     sortedTaskList,
   );
 
-  if (lowestGainingMember === null) {
+  if (member === null) {
     return false;
   }
 
   // Update the member with the best focus-gain task
-  const currentTask = sortedTaskList[lowestTaskIdx];
-  const nextTask = sortedTaskList[lowestTaskIdx + 1];
-  ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
+  const currentTask = sortedTaskList[taskIdx];
+  const nextTask = sortedTaskList[taskIdx + 1];
+  ns.gang.setMemberTask(member.name, nextTask.name);
 
-  logMemberAssignEx(ns, fname, lowestGainingMember.name, currentTask, nextTask);
+  logMemberAssignEx(ns, fname, member.name, currentTask, nextTask);
   return true;
 }
 

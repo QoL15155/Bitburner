@@ -1,5 +1,5 @@
 import { writeGangTasks, scriptHackingGang } from "./utils.js";
-import { printInfo, printError, print } from "utils/print.js";
+import { printInfo, printError, print } from "/utils/print.js";
 
 /**
  * Handles joining a new gang, or starting gang management after restart

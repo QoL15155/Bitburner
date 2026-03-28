@@ -159,7 +159,7 @@ export function findMemberLowestWantedLevel(ns, memberNames) {
  * @param {NS} ns
  * @param {string[]} memberNames
  * @param {GangTaskStats[]} sortedTasks - List of tasks sorted by focus gain (ascending)
- * @returns {{ lowestGainingMember: GangMemberInfo, lowestTaskIdx: number }}
+ * @returns {{ member: GangMemberInfo, taskIdx: number }}
  */
 export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
   const fname = "findLeastProductiveMember";
@@ -187,5 +187,5 @@ export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
       lowestGainingMember = member;
     }
   }
-  return { lowestGainingMember, lowestTaskIdx };
+  return { member: lowestGainingMember, taskIdx: lowestTaskIdx };
 }
