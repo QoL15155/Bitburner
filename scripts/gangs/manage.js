@@ -226,6 +226,11 @@ function shouldLowerWantedLevel(ns, gangInformation) {
   return false;
 }
 
+/** Counter for safe status messages to avoid spamming
+ * @type {number}
+ */
+let safeCounter = 0;
+
 /**
  * @param {NS} ns
  * @param {GangGenInfo} gangInformation
@@ -233,25 +238,35 @@ function shouldLowerWantedLevel(ns, gangInformation) {
  */
 export function getWantedLevelStatus(ns, gangInformation) {
   const fname = "getWantedLevelStatus";
-  if (shouldLowerWantedLevel(ns, gangInformation)) {
-    return WantedLevelStatus.ShouldLower;
-  }
 
+  // Safe
   if (
     gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
     gangInformation.wantedPenalty < wantedPenaltySafeThreshold
   ) {
-    const wantedGainRatePerSecond = formatWantedLevelGainRate(
-      gangInformation.wantedLevelGainRate,
-    );
-    ns.printf(
-      `Playing it safe. Wanted level gain rate: ${wantedGainRatePerSecond}. Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`,
-    );
+    displaySafeStatus();
+    safeCounter++;
     return WantedLevelStatus.Safe;
+  }
+
+  safeCounter = 0;
+
+  if (shouldLowerWantedLevel(ns, gangInformation)) {
+    return WantedLevelStatus.ShouldLower;
   }
 
   // Wanted level gain rate it low
   return WantedLevelStatus.CanBeRaise;
+
+  function displaySafeStatus() {
+    if (safeCounter % 10 !== 0) return;
+    safeCounter = 0;
+
+    let message = `Playing it safe.`;
+    message += ` Wanted level gain rate: ${formatWantedLevelGainRate(gangInformation.wantedLevelGainRate)}.`;
+    message += ` Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`;
+    ns.printf(message);
+  }
 }
 
 //#endregion Wanted Level
