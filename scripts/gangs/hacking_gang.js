@@ -6,7 +6,6 @@ import {
   printLogWarn,
   printWarn,
 } from "/utils/print.js";
-import { doConversion } from "/utils/formatters.js";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,
@@ -52,21 +51,24 @@ const defaultTask = trainingTasks[0];
 
 /* Variables */
 
+/** @type {GangTaskStats[]} */
 let tasksList = null;
-// Only include tasks with baseMoney > 0.
+/** Only include tasks with baseMoney > 0
+ * @type {GangTaskStats[]} */
 let ascendingTasksByMoneyGain = null;
+
+/**  False when maximum number of member has been recruited. True otherwise. */
+let canRecruitMembers = true;
+let shouldWaitAscend = false;
+let isFocusOptimized = false;
 
 // Members
 // =====================
-// Members doing "Ethical Hacking"
+let gangMemberNames = [];
+
 let membersEthical = [];
 let membersWorking = [];
 let membersTraining = [];
-
-let gangMemberNames = [];
-let isFocusOptimized = false;
-// False when maximum number of member has been recruited. True otherwise.
-let canRecruitMembers = true;
 
 //#region Wanted Level
 
@@ -113,12 +115,7 @@ function handleWantedLevel(ns, gangInformation) {
   ns.printf(
     `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Raising ${focusString} gain`,
   );
-  if (canRecruitMembers) {
-    // Prioritize respect gain if we can recruit more members
-    throw new Error(`[${fname}] raiseRespectGain is not implemented yet.`);
-  } else {
-    raiseMoneyGain(ns);
-  }
+  raiseFocusGain(ns);
 }
 
 function lowerWantedLevel(ns) {
@@ -151,10 +148,11 @@ function lowerWantedLevel(ns) {
   const memberObject = findMemberHighestWantedLevel(ns, membersWorking);
 
   if (membersEthical.length < normalEthicalMembers) {
-    workingMemberToEthical(ns, memberObject, ethicalTask);
+    assignWorkingMemberToEthical(ns, memberObject, ethicalTask);
     return;
   }
 
+  /** @type {GangTaskStats} */
   const memberTask = tasksList.find((task) => task.name === memberObject.task);
 
   const relevantTasks = tasksList.filter(
@@ -163,7 +161,7 @@ function lowerWantedLevel(ns) {
   // Working Task -> Ethical Task
   if (relevantTasks.length === 0) {
     // Worker's task is already the task with the lowest wanted level, we cannot reduce more the wanted level gain.
-    workingMemberToEthical(ns, memberObject, ethicalTask);
+    assignWorkingMemberToEthical(ns, memberObject, ethicalTask);
     return;
   }
 
@@ -188,46 +186,49 @@ function lowerWantedLevel(ns) {
   );
 }
 
-function workingMemberToEthical(ns, member, ethicalTask) {
-  const fname = "workingMemberToEthical";
-  const memberTask = member.task;
+/**
+ * Choose a task with better focus gain (money / respect) even if it means a higher wanted level gain.
+ */
+function raiseFocusGain(ns) {
+  const fname = "raiseFocusGain";
 
-  ns.gang.setMemberTask(member.name, ethicalTask);
-  membersEthical.push(member.name);
-  membersWorking = membersWorking.filter((name) => name !== member.name);
-  printLogInfo(
-    ns,
-    `[${fname}] Assigned member ${member.name} from '${memberTask}' to '${ethicalTask}' to reduce wanted level gain.`,
-  );
-}
-
-// Prioritize money gain
-function raiseMoneyGain(ns) {
-  const fname = "raiseMoneyGain";
+  if (canRecruitMembers) {
+    // Respect focus
+    const focusTasks = tasksList.filter((task) => task.baseRespect > 0);
+  } else {
+    const focusTasks = tasksList.filter((task) => task.baseMoney > 0);
+  }
 
   // Training -> Working
   if (membersTraining.length > 0) {
-    // FIXME: take training member with best experience?
-    const memberName = membersTraining.shift();
-    const bestTask = ascendingTasksByMoneyGain.reduce((prev, current) =>
-      current.difficulty < prev.difficulty ? current : prev,
-    );
-    ns.gang.setMemberTask(memberName, bestTask.name);
-    membersWorking.push(memberName);
-    ns.printf(
-      `[${fname}] Assigned member ${memberName} to task '${bestTask.name}' for more money gain.`,
-    );
+    assignTrainingMemberToWork(ns, focusTasks);
     return;
   }
 
   if (membersEthical.length > normalEthicalMembers) {
     // More than 2 members are doing ethical hacking, we can assign one of them to a money task.
-    assignEthicalMemberToWorkingTask();
+    assignEthicalMemberToWork(ns, focusTasks);
     return;
   }
 
   // Search among working members if someone can be assigned to a better money task.
-  if (tryUpgradeWorkingMemberMoney(ns)) {
+  let sortedTaskList = null;
+  if (canRecruitMembers) {
+    sortedTaskList = tasksList.sort((a, b) => {
+      if (a.baseRespect !== b.baseRespect) {
+        return a.baseRespect - b.baseRespect;
+      }
+      return a.baseWanted - b.baseWanted;
+    });
+  } else {
+    sortedTaskList = tasksList.sort((a, b) => {
+      if (a.baseMoney !== b.baseMoney) {
+        return a.baseMoney - b.baseMoney;
+      }
+      return a.baseWanted - b.baseWanted;
+    });
+  }
+  if (tryUpgradeWorkingMember(ns, sortedTaskList)) {
     return;
   }
 
@@ -235,7 +236,7 @@ function raiseMoneyGain(ns) {
     isFocusOptimized = true;
     printLogInfo(
       ns,
-      `[${fname}] All members are working on the best money gaining task`,
+      `[${fname}] All members are working on the best focus gaining task`,
     );
     return;
   }
@@ -246,34 +247,123 @@ function raiseMoneyGain(ns) {
   const bestEthicalMember = findMemberHighestHackingLevel(ns, membersEthical);
   if (worstWorkingMember.hack < bestEthicalMember.hack) {
     swapMembersTasks(ns, bestEthicalMember, worstWorkingMember);
-    ns.printf(
-      `[${fname}] Swapped member ${worstWorkingMember.name} with ${bestEthicalMember.name} to increase money gain.`,
+    printLogInfo(
+      ns,
+      `[${fname}] Swapped member ${worstWorkingMember.name} with ${bestEthicalMember.name} tasks.`,
     );
     return;
   }
 
   // Ethical -> Working
   // There is no working member with lower hacking level than ethical members. Remove Ethical member
-  assignEthicalMemberToWorkingTask();
+  assignEthicalMemberToWork(ns, focusTasks);
   return;
+}
 
-  function assignEthicalMemberToWorkingTask() {
-    const member = findMemberLowestWantedLevel(ns, membersEthical);
-    const memberTask = member.task;
-    const lowestWantedTask = ascendingTasksByMoneyGain.reduce(
-      (prev, current) =>
-        current.baseWanted < prev.baseWanted ? current : prev,
-      // current.difficulty < prev.difficulty ? current : prev,
-    );
-    ns.gang.setMemberTask(member.name, lowestWantedTask.name);
-    membersWorking.push(member.name);
-    membersEthical = membersEthical.filter((name) => name !== member.name);
+//#endregion Wanted Level
 
-    printLogInfo(
-      ns,
-      `[${fname}] Assigned member ${member.name} from '${memberTask}' to '${lowestWantedTask.name}' for more money gain.`,
+//#region Tasks
+
+/**
+ * Assign a member from training to the 'easiest' working task
+ *
+ * FIXME: take training member with best experience?
+ *
+ * @param {NS} ns
+ * @param {GangTaskStats[]} taskList
+ **/
+function assignTrainingMemberToWork(ns, taskList) {
+  const fname = "assignTrainingMemberToWork";
+
+  const memberName = membersTraining.shift();
+  const easiestTask = taskList.reduce((prev, current) =>
+    current.difficulty < prev.difficulty ? current : prev,
+  );
+  ns.gang.setMemberTask(memberName, easiestTask.name);
+  membersWorking.push(memberName);
+
+  logMemberAssign(ns, fname, memberName, "Training", easiestTask.name);
+}
+
+/**
+ * Assign a member from ethical to the less 'wanted' working task
+ * The 'ethical' member with the least wanted level gain is chosen to minimize the wanted level gain increase.
+ *
+ * @param {NS} ns
+ * @param {GangTaskStats[]} taskList
+ */
+function assignEthicalMemberToWork(ns, taskList) {
+  const fname = "assignEthicalMemberToWork";
+
+  const member = findMemberLowestWantedLevel(ns, membersEthical);
+  const memberTask = member.task;
+  const lowestWantedTask = taskList.reduce(
+    (prev, current) => (current.baseWanted < prev.baseWanted ? current : prev),
+    // current.difficulty < prev.difficulty ? current : prev,
+  );
+  ns.gang.setMemberTask(member.name, lowestWantedTask.name);
+  membersWorking.push(member.name);
+  membersEthical = membersEthical.filter((name) => name !== member.name);
+
+  logMemberAssign(ns, fname, member.name, memberTask, lowestWantedTask.name);
+}
+
+/**
+ * Working -> Ethical task
+ *
+ * @param {NS} ns
+ * @param {GangMemberInfo} member
+ * @param {string} ethicalTask to assign to the member
+ */
+function assignWorkingMemberToEthical(ns, member, ethicalTask) {
+  const fname = "assignWorkingMemberToEthical";
+  const memberTask = member.task;
+
+  ns.gang.setMemberTask(member.name, ethicalTask);
+  membersEthical.push(member.name);
+  membersWorking = membersWorking.filter((name) => name !== member.name);
+
+  logMemberAssign(ns, fname, member.name, memberTask, ethicalTask);
+}
+
+function tryUpgradeWorkingMember(ns, sortedTaskList) {
+  const fname = "tryUpgradeWorkingMemberRespect";
+
+  /** @type {GangMemberInfo[]} */
+  const membersInfo = membersWorking.map((memberName) =>
+    ns.gang.getMemberInformation(memberName),
+  );
+
+  let lowestGainingMember = null;
+  let lowerTaskIdx = sortedTaskList.length - 1;
+  for (const member of membersInfo) {
+    const taskIndex = sortedTaskList.findIndex(
+      (task) => task.name === member.task,
     );
+
+    if (taskIndex === -1) {
+      throw new Error(
+        `[${fname}] Member ${member.name} is doing an unknown task: ${member.task}`,
+      );
+    }
+
+    if (taskIndex < lowerTaskIdx) {
+      lowerTaskIdx = taskIndex;
+      lowestGainingMember = member;
+    }
   }
+
+  if (lowestGainingMember === null) {
+    return false;
+  }
+
+  // Update the member with the best focus-gain task
+  const currentTask = sortedTaskList[lowerTaskIdx];
+  const nextTask = sortedTaskList[lowerTaskIdx + 1];
+  ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
+
+  logMemberAssignEx(ns, fname, lowestGainingMember.name, currentTask, nextTask);
+  return true;
 }
 
 function swapMembersTasks(ns, ethicalMember, workingMember) {
@@ -290,58 +380,35 @@ function swapMembersTasks(ns, ethicalMember, workingMember) {
 }
 
 /**
- * Tries to find the working member with the lowest money gain task
- * and assign them to the next better money gain task.
+ * @param {NS} ns
+ * @param {string} fname
+ * @param {string} memberName
+ * @param {string} fromTaskName
+ * @param {string} toTaskName
  */
-function tryUpgradeWorkingMemberMoney(ns) {
-  const fname = "tryUpgradeWorkingMemberMoney";
-
-  /** @type {GangMemberInfo[]} */
-  const membersInfo = membersWorking.map((memberName) =>
-    ns.gang.getMemberInformation(memberName),
+function logMemberAssign(ns, fname, memberName, fromTaskName, toTaskName) {
+  printLogInfo(
+    ns,
+    `[${fname}] Assigned member '${memberName}' from '${fromTaskName}' to '${toTask}'.`,
   );
-
-  let lowestGainingMember = null;
-  let lowerTaskIdx = ascendingTasksByMoneyGain.length - 1;
-
-  // Find member with the lowest money gain task (with base money > 0)
-  for (const member of membersInfo) {
-    const taskIndex = ascendingTasksByMoneyGain.findIndex(
-      (task) => task.name === member.task,
-    );
-
-    if (taskIndex === -1) {
-      // FIXME: can happen when changing focus
-      throw new Error(
-        `[${fname}] Member ${member.name} is doing an unknown task: ${member.task}`,
-      );
-    }
-
-    if (taskIndex < lowerTaskIdx) {
-      lowerTaskIdx = taskIndex;
-      lowestGainingMember = member;
-    }
-  }
-
-  if (lowestGainingMember === null) {
-    return false;
-  }
-
-  // Update the member with the best money gain task
-  const currentTask = ascendingTasksByMoneyGain[lowerTaskIdx];
-  const nextTask = ascendingTasksByMoneyGain[lowerTaskIdx + 1];
-  ns.gang.setMemberTask(lowestGainingMember.name, nextTask.name);
-
-  let message = `[${fname}] Assigned member '${lowestGainingMember.name}' `;
-  message += `from '${currentTask.name}' (base money: ${currentTask.baseMoney}) to '${nextTask.name}' (base money: ${nextTask.baseMoney}).`;
-  printLogInfo(ns, message);
-
-  return true;
 }
 
-//#endregion Wanted Level
+/**
+ * @param {NS} ns
+ * @param {string} fname
+ * @param {string} memberName
+ * @param {GangTask} fromTask
+ * @param {GangTask} toTask
+ */
+function logMemberAssignEx(ns, fname, memberName, fromTask, toTask) {
+  let message = `[${fname}] Assigned member '${memberName}' `;
+  message += `from '${fromTask.name}' (base money: ${fromTask.baseMoney}) to '${toTask.name}' (base money: ${toTask.baseMoney}).`;
+  printLogInfo(ns, message);
+}
 
-//#region Tasks
+//#endregion Tasks
+
+//#region Members
 
 function sortMemberByTask(ns, memberName) {
   const memberInfo = ns.gang.getMemberInformation(memberName);
@@ -386,13 +453,6 @@ function sortMemberByTask(ns, memberName) {
   membersWorking.push(memberName);
 }
 
-function getMembersStrings() {
-  let message = `- Training: ${membersTraining.length} (${membersTraining.join(", ")})\n`;
-  message += `- Ethical: ${membersEthical.length} (${membersEthical.join(", ")})\n`;
-  message += `- Working: ${membersWorking.length} (${membersWorking.join(", ")})\n`;
-  return message;
-}
-
 function arrangeMembersByTask(ns) {
   // Initialize lists
   membersEthical = [];
@@ -406,9 +466,16 @@ function arrangeMembersByTask(ns) {
   ns.printf(message);
 }
 
-//#endregion Tasks
+function getMembersStrings() {
+  let message = `- Training: ${membersTraining.length} (${membersTraining.join(", ")})\n`;
+  message += `- Ethical: ${membersEthical.length} (${membersEthical.join(", ")})\n`;
+  message += `- Working: ${membersWorking.length} (${membersWorking.join(", ")})\n`;
+  return message;
+}
 
-//#region Main
+//#endregion Members
+
+//#region Manage
 
 function sanityCheckMembers(ns) {
   const fname = "sanityCheckMembers";
@@ -423,48 +490,64 @@ function sanityCheckMembers(ns) {
   throw new Error(message);
 }
 
+/**
+ * Handle the recruitment of new gang members.
+ * @param {NS} ns
+ * @returns {boolean} true when done recruiting (focus changes)
+ */
+function handleRecruitment(ns) {
+  const fname = "handleRecruitment";
+
+  const newMembers = recruitGangMembers(
+    ns,
+    defaultTask,
+    gangMemberNames.length,
+  );
+  if (newMembers.length !== 0) {
+    isFocusOptimized = false;
+    for (const memberName of newMembers) {
+      gangMemberNames.push(memberName);
+      membersTraining.push(memberName);
+    }
+  }
+
+  // Check if should wait to ascend members
+  const status = getRecruitmentStatus(ns);
+
+  if (status === RecruitmentStatus.DoneRequirement) {
+    printLogInfo(
+      ns,
+      `[${fname}] Maximum number of gang members have been recruited - ${gangMemberNames.length} members.`,
+    );
+    isFocusOptimized = false;
+    canRecruitMembers = false;
+    return true;
+  }
+
+  if (status === RecruitmentStatus.WaitingForRespect) {
+    printLogInfo(
+      ns,
+      `[${fname}] Waiting to recruit next member before ascending current members.`,
+    );
+    shouldWaitAscend = true;
+  }
+
+  return false;
+}
+
 async function manageGang(ns) {
+  const fname = "manageGang";
+  ns.print(
+    `[${fname}] Started. Recruiting? ${canRecruitMembers}, Wait to ascend? ${shouldWaitAscend}, Focus optimized? ${isFocusOptimized}`,
+  );
+
   while (true) {
+    shouldWaitAscend = false;
     sanityCheckMembers(ns);
 
-    let shouldWaitAscend = false;
-
-    // Recruit
     if (canRecruitMembers) {
-      const newMembers = recruitGangMembers(
-        ns,
-        defaultTask,
-        gangMemberNames.length,
-      );
-      if (newMembers.length !== 0) {
-        isFocusOptimized = false;
-        for (const memberName of newMembers) {
-          gangMemberNames.push(memberName);
-          membersTraining.push(memberName);
-        }
-      }
-
-      // Check if should wait to ascend members
-      const recruitmentStatus = getRecruitmentStatus(ns);
-      switch (recruitmentStatus) {
-        case RecruitmentStatus.DoneRequirement:
-          printLogInfo(
-            ns,
-            `Maximum number of gang members have been recruited - ${gangMemberNames.length} members.`,
-          );
-          isFocusOptimized = false;
-          canRecruitMembers = false;
-          break;
-        case RecruitmentStatus.WaitingForRespect:
-          printLogInfo(
-            ns,
-            `Waiting to recruit next member before ascending current members.`,
-          );
-          shouldWaitAscend = true;
-          break;
-        case RecruitmentStatus.Ascending:
-          break;
-      }
+      let focusChanged = handleRecruitment(ns);
+      // TODO: handle that
     }
 
     if (!shouldWaitAscend) {
@@ -479,6 +562,10 @@ async function manageGang(ns) {
     const duration = await ns.gang.nextUpdate();
   }
 }
+
+//#endregion Manage
+
+//#region Main
 
 function printUsage(ns) {
   ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES]`);
