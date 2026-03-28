@@ -150,3 +150,42 @@ export function findMemberLowestWantedLevel(ns, memberNames) {
 }
 
 //#endregion Member Finder
+
+/**
+ * Finds the least productive member based on the sorted tasks list.
+ * The least productive member is the one doing the task with the lowest focus gain.
+ * If all members are doing the most productive task, then no member would be returned.
+ *
+ * @param {NS} ns
+ * @param {string[]} memberNames
+ * @param {GangTaskStats[]} sortedTasks - List of tasks sorted by focus gain (ascending)
+ * @returns {{ lowestGainingMember: GangMemberInfo, lowestTaskIdx: number }}
+ */
+export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
+  const fname = "findLeastProductiveMember";
+
+  /** @type {GangMemberInfo[]} */
+  const members = memberNames.map((memberName) =>
+    ns.gang.getMemberInformation(memberName),
+  );
+
+  let lowestGainingMember = null;
+  let lowestTaskIdx = sortedTasks.length - 1;
+  for (const member of members) {
+    const taskIndex = sortedTasks.findIndex(
+      (task) => task.name === member.task,
+    );
+
+    if (taskIndex === -1) {
+      throw new Error(
+        `[${fname}] Member ${member.name} is doing an unknown task: ${member.task}`,
+      );
+    }
+
+    if (taskIndex < lowestTaskIdx) {
+      lowestTaskIdx = taskIndex;
+      lowestGainingMember = member;
+    }
+  }
+  return { lowestGainingMember, lowestTaskIdx };
+}
