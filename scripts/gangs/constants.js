@@ -16,9 +16,14 @@ const maxAscensionLevel = 25;
 
 // Wanted Level
 // =====================
-// If the wanted level gain is higher than this threshold, we will prioritize lowering the wanted level.
-const wantedGainThreshold = 1.5;
-const wantedLevelMax = 1000;
+
+// Wanted Lower : Lower
 // We want to keep the wanted level penalty below 10% (this is the inverse).
 // Money and respect gains multiplied by this number
 export const wantedPenaltyMax = 0.9;
+// const wantedLevelMax = 1000;
+
+// Wanted Level : Raise
+// When the wanted level is under these thresholds, we can focus on raising respect and money gain
+export const wantedGainSafeThreshold = 1;
+export const wantedPenaltySafeThreshold = 0.1;

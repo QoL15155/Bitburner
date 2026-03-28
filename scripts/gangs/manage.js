@@ -6,11 +6,17 @@ import {
   printLogWarn,
   printWarn,
 } from "/utils/print.js";
-import { doConversion, formatTimeSeconds } from "/utils/formatters.js";
+import {
+  doConversion,
+  formatTimeSeconds,
+  formatWantedLevelGainRate,
+} from "/utils/formatters.js";
 import { memberNamePrefix } from "./utils.js";
 import {
   recruitmentMaxWaitTimeSeconds,
+  wantedGainSafeThreshold,
   wantedPenaltyMax,
+  wantedPenaltySafeThreshold,
 } from "./constants.js";
 
 /**
@@ -194,31 +200,36 @@ export const WantedLevelStatus = {
 function shouldLowerWantedLevel(ns, gangInformation) {
   const fname = "shouldLowerWantedLevel";
 
-  const wantedGainRatePerSecond = gangInformation.wantedLevelGainRate * 5;
-
-  if (wantedGainRatePerSecond <= 0) {
+  if (gangInformation.wantedLevelGainRate <= 0) {
     return false;
   }
 
   if (gangInformation.wantedPenalty < wantedPenaltyMax) {
+    const wantedGainRatePerSecond = formatWantedLevelGainRate(
+      gangInformation.wantedLevelGainRate,
+    );
     printLogWarn(
       ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, wanted gain rate: ${wantedGainRatePerSecond.toFixed(3)}/sec`,
+      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, Wanted Gain Rate: ${wantedGainRatePerSecond}`,
     );
     return true;
   }
 
-  // // if (gangInformation.wantedLevel > wantedLevelMax) {
-  // //     printLogWarn(ns, `[${fname}] Wanted level ${gangInformation.wantedLevel} has reached the maximum level ${wantedLevelMax}. Penalty: ${gangInformation.wantedPenalty}.`);
-  // //     return true;
-  // // }
-
-  // // if (wantedGainRatePerSecond > wantedGainThreshold) {
-  // //     printLogWarn(ns, `[${fname}] Wanted level gain rate ${wantedGainRatePerSecond.toFixed(3)}/sec has reached the threshold ${wantedGainThreshold}. Penalty: ${gangInformation.wantedPenalty}.`);
-  // //     return true;
-  // }
+  /*
+  if (gangInformation.wantedLevel > wantedLevelMax) {
+    return true;
+  }
+  if (wantedGainRatePerSecond > wantedGainThreshold) {
+    return true;
+  }
+  */
   return false;
 }
+
+/** Counter for safe status messages to avoid spamming
+ * @type {number}
+ */
+let safeCounter = 0;
 
 /**
  * @param {NS} ns
@@ -227,16 +238,35 @@ function shouldLowerWantedLevel(ns, gangInformation) {
  */
 export function getWantedLevelStatus(ns, gangInformation) {
   const fname = "getWantedLevelStatus";
+
+  // Safe
+  if (
+    gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
+    gangInformation.wantedPenalty < wantedPenaltySafeThreshold
+  ) {
+    displaySafeStatus();
+    safeCounter++;
+    return WantedLevelStatus.Safe;
+  }
+
+  safeCounter = 0;
+
   if (shouldLowerWantedLevel(ns, gangInformation)) {
     return WantedLevelStatus.ShouldLower;
   }
 
-  if (gangInformation.wantedLevelGainRate > 0) {
-    return WantedLevelStatus.Safe;
-  }
-
   // Wanted level gain rate it low
   return WantedLevelStatus.CanBeRaise;
+
+  function displaySafeStatus() {
+    if (safeCounter % 10 !== 0) return;
+    safeCounter = 0;
+
+    let message = `Playing it safe.`;
+    message += ` Wanted level gain rate: ${formatWantedLevelGainRate(gangInformation.wantedLevelGainRate)}.`;
+    message += ` Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`;
+    ns.printf(message);
+  }
 }
 
 //#endregion Wanted Level

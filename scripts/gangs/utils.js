@@ -70,7 +70,7 @@ export function readGangTasks(ns, isHackingGang = true) {
 // Hacking Level
 
 /**
- * @summary Finds the gang member with the *lowest hacking* level.
+ * Finds the gang member with the *lowest hacking* level.
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through
@@ -122,10 +122,70 @@ export function findMemberHighestWantedLevel(ns, memberNames) {
   const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
+
   const bestMember = members.reduce((prev, current) => {
     return prev.wantedLevelGain < current.wantedLevelGain ? current : prev;
   });
   return bestMember;
 }
 
+/**
+ * Finds the gang member with the *lowest wanted* level gain.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string[]} memberNames - list of members
+ * @returns {GangMemberInfo} The member info object with the lowest wanted level gain
+ * @throws {TypeError} if memberNames is empty
+ */
+export function findMemberLowestWantedLevel(ns, memberNames) {
+  /** @type {GangMemberInfo[]} */
+  const members = memberNames.map((memberName) =>
+    ns.gang.getMemberInformation(memberName),
+  );
+
+  const bestMember = members.reduce((prev, current) => {
+    return current.wantedLevelGain < prev.wantedLevelGain ? current : prev;
+  });
+  return bestMember;
+}
+
 //#endregion Member Finder
+
+/**
+ * Finds the least productive member based on the sorted tasks list.
+ * The least productive member is the one doing the task with the lowest focus gain.
+ * If all members are doing the most productive task, then no member would be returned.
+ *
+ * @param {NS} ns
+ * @param {string[]} memberNames
+ * @param {GangTaskStats[]} sortedTasks - List of tasks sorted by focus gain (ascending)
+ * @returns {{ member: GangMemberInfo, taskIdx: number }}
+ */
+export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
+  const fname = "findLeastProductiveMember";
+
+  /** @type {GangMemberInfo[]} */
+  const members = memberNames.map((memberName) =>
+    ns.gang.getMemberInformation(memberName),
+  );
+
+  let lowestGainingMember = null;
+  let lowestTaskIdx = sortedTasks.length - 1;
+  for (const member of members) {
+    const taskIndex = sortedTasks.findIndex(
+      (task) => task.name === member.task,
+    );
+
+    if (taskIndex === -1) {
+      throw new Error(
+        `[${fname}] Member ${member.name} is doing an unknown task: ${member.task}`,
+      );
+    }
+
+    if (taskIndex < lowestTaskIdx) {
+      lowestTaskIdx = taskIndex;
+      lowestGainingMember = member;
+    }
+  }
+  return { member: lowestGainingMember, taskIdx: lowestTaskIdx };
+}

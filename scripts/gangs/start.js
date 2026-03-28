@@ -1,5 +1,5 @@
 import { writeGangTasks, scriptHackingGang } from "./utils.js";
-import { printInfo, printError, print } from "utils/print.js";
+import { printInfo, printError, print } from "/utils/print.js";
 
 /**
  * Handles joining a new gang, or starting gang management after restart
@@ -17,9 +17,10 @@ import { printInfo, printError, print } from "utils/print.js";
  * Should only be called after a gang has been formed
  *
  * @param {NS} ns - Netscript API object
- * @return {boolean} True when gang management script was successfully called
+ * @param {boolean} toKill - whether to kill currently running gang management script. Default: false
+ * @return {boolean} False when the script was called with errors
  */
-export function manageGang(ns) {
+export function startGangManagement(ns, toKill = false) {
   // Write tasks info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
   const isHackingGang = gangInformation.isHacking;
@@ -28,23 +29,59 @@ export function manageGang(ns) {
   // TODO: sort-out members?
 
   if (!isHackingGang) {
-    // TODO: implement combat gang
-    ns.alert(
-      "Combat gang is not implemented yet. Please switch to a hacking gang or implement combat gang management.",
+    ns.tprint("ERROR Combat gang is not implemented yet!");
+    return true;
+  }
+
+  const gangManagementScript = scriptHackingGang;
+  if (!handleRunningScript(ns, gangManagementScript, toKill)) {
+    return true;
+  }
+
+  print(ns, `Running ${gangManagementScript}`);
+  const gangMembers = JSON.stringify(ns.gang.getMemberNames());
+  const pid = ns.run(gangManagementScript, { threads: 1 }, gangMembers);
+  return pid !== 0;
+}
+
+/**
+ * Checks if the gang management script is already running, and kills it if toKill is true.
+ *
+ * @param {NS} ns - Netscript API object
+ * @param {string} scriptName - Name of the script to check
+ * @param {boolean} toKill - Whether to kill the script if it's running
+ * @returns {boolean} True if the script is not running or was killed successfully, false otherwise
+ */
+function handleRunningScript(ns, scriptName, toKill) {
+  if (!ns.scriptRunning(scriptName, "home")) {
+    return true;
+  }
+
+  // Script is already running
+  if (!toKill) {
+    ns.tprint(`WARN Script ${scriptName} is already running. SKIPPING...`);
+    return false;
+  }
+
+  const killResult = ns.scriptKill(scriptName, "home");
+
+  if (!killResult) {
+    ns.tprint(`ERROR Failed to kill already running script ${scriptName}.`);
+    return false;
+  }
+
+  if (ns.scriptRunning(scriptName, "home")) {
+    ns.tprint(
+      `ERROR Even after killing, script ${scriptName} is still running.`,
     );
     return false;
   }
 
-  const gangManagementScript = scriptHackingGang;
-
-  if (ns.isRunning(gangManagementScript)) {
-    print(ns, `script is already running. SKIP (${gangManagementScript})`);
-    return true;
-  }
-  print(ns, `Running ${gangManagementScript}`);
-  const gangMembers = JSON.stringify(ns.gang.getMemberNames());
-  return ns.run(gangManagementScript, { threads: 1 }, gangMembers);
+  ns.tprint(`Killed already running script ${scriptName}. Restarting...`);
+  return true;
 }
+
+//#region Main
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -53,7 +90,7 @@ export function manageGang(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--faction"];
+  const options = ["--faction", "-k", "--kill"];
 
   return [...defaultOptions, ...options];
 }
@@ -63,6 +100,8 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
     ["faction", "Slum Snakes"],
+    ["kill", false],
+    ["k", false],
   ]);
   if (args.help || args.h) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
@@ -75,6 +114,14 @@ export async function main(ns) {
     ns.tprint(
       "- Calls ongoing script to manage gang members' tasks and wanted level, and recruit new members when possible.",
     );
+    ns.tprint("");
+    ns.tprint("Options:");
+    ns.tprint(
+      "  --faction       - The faction to create the gang with. Default: Slum Snakes",
+    );
+    ns.tprint(
+      "  --kill, -k      - Kill currently running gang management script.",
+    );
     return 0;
   }
 
@@ -85,9 +132,12 @@ export async function main(ns) {
     printInfo(ns, `Gang for faction ${faction} created successfully.`);
   }
 
-  const result = manageGang(ns);
-  if (!result) {
+  const toKill = args.kill || args.k;
+  const result = startGangManagement(ns, toKill);
+  if (result === false) {
     printError(ns, "Failed to call gang management script");
     ns.tail();
   }
 }
+
+//#endregion Main
