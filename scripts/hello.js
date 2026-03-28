@@ -1,6 +1,6 @@
 import { printInfo, printError } from "/utils/print.js";
 import { exportServersData, runTerminalCommand } from "/utils/servers.js";
-import { manageGang } from "/gangs/start.js";
+import { startGangManagement } from "/gangs/start.js";
 
 const backdoorScript = "backdoor_all.js";
 
@@ -44,7 +44,7 @@ export async function main(ns) {
 
   if (ns.gang.inGang()) {
     ns.tprint("Running gang management script");
-    if (!manageGang(ns)) {
+    if (!startGangManagement(ns)) {
       printError(ns, "Failed to run gang management script");
       ns.ui.openTail();
     }
