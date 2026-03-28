@@ -138,11 +138,12 @@ export function findMemberHighestWantedLevel(ns, memberNames) {
  * @throws {TypeError} if memberNames is empty
  */
 export function findMemberLowestWantedLevel(ns, memberNames) {
-  const membersInfo = memberNames.map((memberName) =>
+  /** @type {GangMemberInfo[]} */
+  const members = memberNames.map((memberName) =>
     ns.gang.getMemberInformation(memberName),
   );
 
-  const bestMember = membersInfo.reduce((prev, current) => {
+  const bestMember = members.reduce((prev, current) => {
     return current.wantedLevelGain < prev.wantedLevelGain ? current : prev;
   });
   return bestMember;

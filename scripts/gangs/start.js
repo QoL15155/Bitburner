@@ -40,7 +40,8 @@ export function startGangManagement(ns, toKill = false) {
 
   print(ns, `Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
-  return ns.run(gangManagementScript, { threads: 1 }, gangMembers) != 0;
+  const pid = ns.run(gangManagementScript, { threads: 1 }, gangMembers);
+  return pid !== 0;
 }
 
 /**
@@ -133,7 +134,7 @@ export async function main(ns) {
 
   const toKill = args.kill || args.k;
   const result = startGangManagement(ns, toKill);
-  if (result == false) {
+  if (result === false) {
     printError(ns, "Failed to call gang management script");
     ns.tail();
   }

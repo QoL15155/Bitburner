@@ -153,6 +153,11 @@ function lowerWantedLevel(ns) {
 
   /** @type {GangTaskStats} */
   const memberTask = tasksList.find((task) => task.name === memberObject.task);
+  if (memberTask == null) {
+    throw new Error(
+      `[${fname}] Could not find task information for member '${memberObject.name}' task '${memberObject.task}'`,
+    );
+  }
 
   const relevantTasks = tasksList.filter(
     (task) => task.baseWanted < memberTask.baseWanted,
