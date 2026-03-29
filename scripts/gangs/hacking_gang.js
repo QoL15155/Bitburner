@@ -338,7 +338,7 @@ function logMemberAssignEx(ns, fname, memberName, fromTask, toTask) {
 
 function sortMemberByTask(ns, memberName) {
   const memberInfo = ns.gang.getMemberInformation(memberName);
-  const taskName = memberInfo.task;
+  let taskName = memberInfo.task;
 
   if (taskName === unassignedTask) {
     printWarn(
@@ -354,10 +354,11 @@ function sortMemberByTask(ns, memberName) {
       // NOTE: we still allow for "Train Charisma" for hacking gang.
       printWarn(
         ns,
-        `'${memberName}' is in a **Hacking Gang** but is training combat. Changing to Hacking Training.`,
+        `'${memberName}' is in a **Hacking Gang** but is training combat. Changing to 'Train Hacking'.`,
       );
+      taskName = "Train Hacking";
     }
-    myGang.addMemberToTraining(memberName, "Train Hacking");
+    myGang.addMemberToTraining(memberName, taskName);
     return;
   }
 
@@ -365,7 +366,7 @@ function sortMemberByTask(ns, memberName) {
     if (taskName === "Vigilante Justice") {
       printWarn(
         ns,
-        `${memberName} - is in a **Hacking Gang** but is doing Vigilante Justice. Changing to Ethical Hacking.`,
+        `${memberName} - is in a **Hacking Gang** but is doing Vigilante Justice. Changing to 'Ethical Hacking'.`,
       );
     }
     myGang.addMemberToEthical(memberName, "Ethical Hacking");

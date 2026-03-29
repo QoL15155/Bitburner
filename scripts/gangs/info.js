@@ -1,4 +1,4 @@
-import { print, printInfo } from "/utils/print.js";
+import { printInfo, toGreen } from "/utils/print.js";
 import {
   doConversion,
   formatGainRate,
@@ -8,7 +8,7 @@ import {
 function printTasks(ns) {
   for (const taskName of ns.gang.getTaskNames()) {
     const task = ns.gang.getTaskStats(taskName);
-    print(ns, JSON.stringify(task, null, 2));
+    ns.tprint(JSON.stringify(task, null, 2));
   }
 }
 
@@ -17,7 +17,7 @@ function printGangMembers(ns) {
   ns.tprint(`Gang members (${gangMembers.length})`);
   for (const memberName of gangMembers) {
     const memberInfo = ns.gang.getMemberInformation(memberName);
-    print(ns, JSON.stringify(memberInfo, null, 2));
+    ns.tprint(JSON.stringify(memberInfo, null, 2));
   }
 }
 
@@ -56,11 +56,9 @@ function printGangInformation(ns) {
     },
   };
 
-  printInfo(
-    ns,
-    `${gangInformation.faction}  (${gangInformation.isHacking ? "Hacking" : "Combat"} Gang)`,
-  );
-  print(ns, JSON.stringify(prettyGangInformation, null, 2));
+  const message = `${gangInformation.faction}  (${gangInformation.isHacking ? "Hacking" : "Combat"} Gang)`;
+  ns.tprint(`${toGreen(message)}`);
+  ns.tprint(JSON.stringify(prettyGangInformation, null, 2));
 }
 
 /**
