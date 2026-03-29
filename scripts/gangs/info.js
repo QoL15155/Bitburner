@@ -1,8 +1,12 @@
 import { print, printInfo } from "/utils/print.js";
-import { doConversion, formatGainRate } from "/utils/formatters.js";
+import {
+  doConversion,
+  formatGainRate,
+  formatMoney,
+} from "/utils/formatters.js";
 
 function printTasks(ns) {
-  for (let taskName of ns.gang.getTaskNames()) {
+  for (const taskName of ns.gang.getTaskNames()) {
     const task = ns.gang.getTaskStats(taskName);
     print(ns, JSON.stringify(task, null, 2));
   }
@@ -10,8 +14,8 @@ function printTasks(ns) {
 
 function printGangMembers(ns) {
   const gangMembers = ns.gang.getMemberNames();
-  print(ns, `Gang members (${gangMembers.length})`);
-  for (let memberName of gangMembers) {
+  ns.tprint(`Gang members (${gangMembers.length})`);
+  for (const memberName of gangMembers) {
     const memberInfo = ns.gang.getMemberInformation(memberName);
     print(ns, JSON.stringify(memberInfo, null, 2));
   }
@@ -20,7 +24,6 @@ function printGangMembers(ns) {
 function printGangInformation(ns) {
   const gangInformation = ns.gang.getGangInformation();
 
-  // Respect gain per game cycle.
   const respectPerSecond = formatGainRate(gangInformation.respectGainRate);
   const nextRecruit =
     gangInformation.respectForNextRecruit === Infinity
@@ -34,7 +37,7 @@ function printGangInformation(ns) {
   const territoryControlled = (gangInformation.territory * 100).toFixed(2);
 
   const prettyGangInformation = {
-    moneyGainRate: formatGainRate(gangInformation.moneyGainRate),
+    moneyGainRate: `${formatMoney(gangInformation.moneyGainRate * 5)}/sec`,
     power: gangInformation.power,
     respect: {
       current: doConversion(gangInformation.respect),

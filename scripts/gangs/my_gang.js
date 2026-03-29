@@ -1,32 +1,26 @@
-import {
-  printError,
-  printInfo,
-  print,
-  printLogInfo,
-  printLogWarn,
-  printWarn,
-} from "/utils/print.js";
+import { printLogInfo } from "/utils/print.js";
 
 export class MyGang {
   /** @type {NS} */
   #ns = null;
+
+  /** @type {string} */
+  #defaultTrainingTask = null;
 
   /** False when maximum number of members has been recruited */
   #canRecruit = true;
   #shouldWaitAscend = false;
   isFocusOptimized = false;
 
+  // Members
   /** @type {string[]} */
-  #gangMemberNames = [];
+  #gangMemberNames = null;
   /** @type {string[]} */
   #membersTraining = [];
   /** @type {string[]} */
   #membersEthical = [];
   /** @type {string[]} */
   #membersWorking = [];
-
-  /** @type {string} */
-  #defaultTrainingTask = null;
 
   /**
    * @param {NS} ns
@@ -35,17 +29,9 @@ export class MyGang {
    */
   constructor(ns, gangMemberNames, defaultTrainingTask) {
     this.#ns = ns;
-
-    // this.#canRecruit = true;
-    // this.#shouldWaitAscend = false;
-    // this.isFocusOptimized = false;
-
-    // Members
-    this.#gangMemberNames = gangMemberNames;
-    // this.#membersTraining = [];
-    // this.#membersEthical = [];
-    // this.#membersWorking = [];
     this.#defaultTrainingTask = defaultTrainingTask;
+
+    this.#gangMemberNames = gangMemberNames;
   }
 
   //#region Getters and Setters
@@ -230,8 +216,8 @@ export class MyGang {
   }
 
   /**
-   * @param {string} fromTaskName
-   * @param {string} toTaskName
+   * @param {string} fromTask
+   * @param {string} toTask
    */
   logMemberReassignTask(fname, memberName, fromTask, toTask) {
     printLogInfo(

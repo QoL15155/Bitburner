@@ -92,7 +92,7 @@ export function handleRecruitmentStatus(ns, myGang) {
   const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
 
   let message = `[${fname}] Respect needed: ${doConversion(neededRespect)}, `;
-  message += `gain: ${formatGainRate(gangInformation.respectGainRate)}`;
+  message += `gain: ${formatGainRate(gangInformation.respectGainRate)} `;
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
 
