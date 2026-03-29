@@ -54,7 +54,7 @@ const defaultTask = trainingTasks[0];
 
 /* Variables */
 
-/** @type {GangTaskStats[]} */
+/** @const {GangTaskStats[]} */
 let tasksList = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;

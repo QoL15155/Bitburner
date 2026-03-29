@@ -1,10 +1,10 @@
 import { printLogInfo } from "/utils/print.js";
 
 export class MyGang {
-  /** @type {NS} */
+  /** @const {NS} */
   #ns = null;
 
-  /** @type {string} */
+  /** @const {string} */
   #defaultTrainingTask = null;
 
   /** False when maximum number of members has been recruited */
