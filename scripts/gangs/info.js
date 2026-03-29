@@ -1,5 +1,5 @@
 import { print, printInfo } from "/utils/print.js";
-import { doConversion } from "/utils/formatters.js";
+import { doConversion, formatGainRate } from "/utils/formatters.js";
 
 function printTasks(ns) {
   for (let taskName of ns.gang.getTaskNames()) {
@@ -21,30 +21,29 @@ function printGangInformation(ns) {
   const gangInformation = ns.gang.getGangInformation();
 
   // Respect gain per game cycle.
-  // Game cycle is 200ms, so multiply by 5 to get respect gain per second.
-  const respectPerSecond = (gangInformation.respectGainRate * 5).toFixed(3);
+  const respectPerSecond = formatGainRate(gangInformation.respectGainRate);
   const nextRecruit =
     gangInformation.respectForNextRecruit === Infinity
       ? "N/A"
       : doConversion(gangInformation.respectForNextRecruit);
 
   // Wanted
-  const gainRate = (gangInformation.wantedLevelGainRate * 5).toFixed(3);
+  const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
 
   // Territory
   const territoryControlled = (gangInformation.territory * 100).toFixed(2);
 
   const prettyGangInformation = {
-    moneyGainRate: doConversion(gangInformation.moneyGainRate),
+    moneyGainRate: formatGainRate(gangInformation.moneyGainRate),
     power: gangInformation.power,
     respect: {
       current: doConversion(gangInformation.respect),
       nextRecruit: nextRecruit,
-      gainRate: `${respectPerSecond}/sec`,
+      gainRate: respectPerSecond,
     },
     wanted: {
       level: doConversion(gangInformation.wantedLevel.toFixed(3)),
-      gainRate: `${gainRate}/sec`,
+      gainRate: wantedGainRate,
       penalty: gangInformation.wantedPenalty,
     },
     territory: {

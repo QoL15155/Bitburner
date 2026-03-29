@@ -9,7 +9,7 @@ import {
 import {
   doConversion,
   formatTimeSeconds,
-  formatWantedLevelGainRate,
+  formatGainRate,
 } from "/utils/formatters.js";
 import { memberNamePrefix } from "./utils.js";
 import {
@@ -39,23 +39,21 @@ function getRespectNeededForNextRecruit(gangInformation) {
   return gangInformation.respectForNextRecruit - gangInformation.respect;
 }
 
+function canRecruit(gangInformation) {
+  return gangInformation.respectForNextRecruit <= gangInformation.respect;
+}
+
 /**
  * Recruits new gang members until we cannot recruit any more members.
- * Each new member is assigned the default task.
  *
  * @param {NS} ns - the Netscript environment
- * @param {string} defaultTask - the task to assign to new members
- *  Should be a valid task for the gang type (hacking or combat). For example:
- *    - "Ransomware" is a valid task for hacking gangs,
- *    - "Vigilante Justice" is a valid task for combat gangs.
- * @param {number} membersCount - the current number of members
- * @return {string[]} - the list of new members recruited
+ * @param {MyGang} myGang - the gang management object
  */
-export function recruitGangMembers(ns, defaultTask, membersCount) {
+export function recruitGangMembers(ns, myGang) {
   const fname = "recruitGangMembers";
-  let newMembers = [];
+  let membersCount = myGang.memberCount();
 
-  while (getRespectNeededForNextRecruit(ns.gang.getGangInformation()) === 0) {
+  while (canRecruit(ns.gang.getGangInformation())) {
     membersCount++;
     const memberName = `${memberNamePrefix}${membersCount}`;
     if (!ns.gang.recruitMember(memberName)) {
@@ -63,47 +61,30 @@ export function recruitGangMembers(ns, defaultTask, membersCount) {
         ns,
         `[${fname}] Failed to recruit member ${memberName}. Current member count: ${membersCount - 1} `,
       );
-      return newMembers;
+      return;
     }
-    ns.gang.setMemberTask(memberName, defaultTask);
-    newMembers.push(memberName);
-  }
 
-  if (newMembers.length > 0) {
-    const membersList = newMembers.join(", ");
-    printInfo(
-      ns,
-      `[${fname}] Finished recruiting ${newMembers.length}/${membersCount}. New members: ${membersList}`,
-    );
+    myGang.addNewMember(memberName);
   }
-  return newMembers;
 }
 
-export const RecruitmentStatus = {
-  // Reached maximum number of members.
-  DoneRequirement: "Done Requirement",
-  // Close to recruiting next member
-  WaitingForRespect: "Waiting for respect",
-  // Try to ascend current members
-  Ascending: "Ascend current members",
-};
-
 /**
- * Determines whether should wait for respect to recruit the next member
- * before ascending current members.
+ * Updates the recruitment status of the gang.
+ * Should be called after recruiting new members and after ascending members.
  *
  * @param {NS} ns - the Netscript environment
- * @return {boolean} true if should wait for respect to recruit the next member
+ * @param {MyGang} myGang - the gang management object
  */
-export function getRecruitmentStatus(ns) {
-  const fname = "getRecruitmentStatus";
+export function handleRecruitmentStatus(ns, myGang) {
+  const fname = "handleRecruitmentStatus";
   const gangInformation = ns.gang.getGangInformation();
 
   // Check if we are close to recruiting the next member.
   // If we are close, wait for respect to recruit the next member instead of ascending current members.
   const neededRespect = getRespectNeededForNextRecruit(gangInformation);
   if (neededRespect === Infinity) {
-    return RecruitmentStatus.DoneRequirement;
+    myGang.stopRecruit();
+    return;
   }
 
   // respect gain rate is per game cycle
@@ -111,15 +92,12 @@ export function getRecruitmentStatus(ns) {
   const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
 
   let message = `[${fname}] Respect needed: ${doConversion(neededRespect)}, `;
-  message += `gain: ${respectGainRatePerSecond.toFixed(3)}/sec. `;
+  message += `gain: ${formatGainRate(gangInformation.respectGainRate)}`;
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
 
-  const shouldWait = timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
-  if (shouldWait) {
-    return RecruitmentStatus.WaitingForRespect;
-  }
-  return RecruitmentStatus.Ascending;
+  myGang.shouldWaitAscend =
+    timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
 }
 
 //#endregion Recruitment
@@ -205,7 +183,7 @@ function shouldLowerWantedLevel(ns, gangInformation) {
   }
 
   if (gangInformation.wantedPenalty < wantedPenaltyMax) {
-    const wantedGainRatePerSecond = formatWantedLevelGainRate(
+    const wantedGainRatePerSecond = formatGainRate(
       gangInformation.wantedLevelGainRate,
     );
     printLogWarn(
@@ -263,7 +241,7 @@ export function getWantedLevelStatus(ns, gangInformation) {
     safeCounter = 0;
 
     let message = `Playing it safe.`;
-    message += ` Wanted level gain rate: ${formatWantedLevelGainRate(gangInformation.wantedLevelGainRate)}.`;
+    message += ` Wanted level gain rate: ${formatGainRate(gangInformation.wantedLevelGainRate)}.`;
     message += ` Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`;
     ns.printf(message);
   }
