@@ -8,7 +8,7 @@ export class MyGang {
   #defaultTrainingTask = null;
 
   /** False when maximum number of members has been recruited */
-  #canRecruit = true;
+  #isRecruiting = true;
   #shouldWaitAscend = false;
   isFocusOptimized = false;
 
@@ -36,8 +36,8 @@ export class MyGang {
 
   //#region Getters and Setters
 
-  get canRecruit() {
-    return this.#canRecruit;
+  get isRecruiting() {
+    return this.#isRecruiting;
   }
 
   get shouldWaitAscend() {
@@ -59,11 +59,11 @@ export class MyGang {
 
   stopRecruit() {
     const fname = "stopRecruit";
-    if (this.#canRecruit === false) {
-      throw new Error("stopRecruit called but canRecruit is already false");
+    if (this.isRecruiting === false) {
+      throw new Error("stopRecruit called but isRecruiting is already false");
     }
     this.isFocusOptimized = false;
-    this.#canRecruit = false;
+    this.#isRecruiting = false;
     // TODO:
     //   this.#evaluateFocus = true;
 
@@ -98,6 +98,38 @@ export class MyGang {
 
   //#endregion Getters and Setters
 
+  //#region Stringify
+
+  #membersString() {
+    let message = `Gang Members (${this.memberCount()}):`;
+
+    message += `\n- Training: ${this.#membersTraining.length} `;
+    if (this.#membersTraining.length > 0) {
+      message += `(${this.#membersTraining.join(", ")})`;
+    }
+
+    message += `\n- Ethical: ${this.#membersEthical.length} `;
+    if (this.#membersEthical.length > 0) {
+      message += `(${this.#membersEthical.join(", ")})`;
+    }
+
+    message += `\n- Working: ${this.#membersWorking.length} `;
+    if (this.#membersWorking.length > 0) {
+      message += `(${this.#membersWorking.join(", ")})`;
+    }
+
+    return message;
+  }
+
+  toString() {
+    let message = `Gang Status: `;
+    message += `Recruiting? ${this.isRecruiting}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
+    message += this.#membersString();
+    return message;
+  }
+
+  //#endregion Stringify
+
   //#region Members
 
   memberCount() {
@@ -106,13 +138,6 @@ export class MyGang {
 
   membersEthicalCount() {
     return this.#membersEthical.length;
-  }
-
-  membersString() {
-    let message = `- Training: ${this.#membersTraining.length} (${this.#membersTraining.join(", ")})\n`;
-    message += `- Ethical: ${this.#membersEthical.length} (${this.#membersEthical.join(", ")})\n`;
-    message += `- Working: ${this.#membersWorking.length} (${this.#membersWorking.join(", ")})`;
-    return message;
   }
 
   sanityCheckMembers() {
@@ -124,8 +149,8 @@ export class MyGang {
       this.#membersWorking.length;
     if (memberCount === totalCategorizedMembers) return;
 
-    let message = `[${fname}] Sanity Check Failed. Total members ${memberCount} does not match sum of categorized members ${totalCategorizedMembers}.\n`;
-    message += this.membersString();
+    let message = `[${fname}] Sanity Check Failed. Total members does not match sum of categorized members: ${totalCategorizedMembers}.\n`;
+    message += this.#membersString();
     throw new Error(message);
   }
   //#endregion Members

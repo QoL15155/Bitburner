@@ -78,7 +78,7 @@ let myGang = null;
  */
 function handleWantedLevel(ns, gangInformation) {
   const fname = "handleWantedLevel";
-  const focusString = myGang.canRecruit ? "Respect" : "Money";
+  const focusString = myGang.isRecruiting ? "Respect" : "Money";
 
   const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
   const wantedLevelGainRate = formatGainRate(
@@ -157,7 +157,7 @@ function lowerWantedLevel(ns) {
 
   // Get the best task with lower wanted level gain and higher respect or money gain depending on the focus.
   let nextTask = null;
-  if (myGang.canRecruit) {
+  if (myGang.isRecruiting) {
     // Respect Focus
     nextTask = relevantTasks.reduce((prev, current) => {
       return current.baseRespect > prev.baseRespect ? current : prev;
@@ -185,7 +185,7 @@ function lowerWantedLevel(ns) {
 function raiseFocusGain(ns) {
   const fname = "raiseFocusGain";
 
-  const focusTasks = myGang.canRecruit
+  const focusTasks = myGang.isRecruiting
     ? tasksWithRespectGain
     : tasksWithMoneyGain;
 
@@ -278,7 +278,7 @@ function tryUpgradeWorkingMember(ns) {
   const fname = "tryUpgradeWorkingMember";
 
   let sortedTaskList = null;
-  if (myGang.canRecruit) {
+  if (myGang.isRecruiting) {
     sortedTaskList = tasksList.sort((a, b) => {
       if (a.baseRespect !== b.baseRespect) {
         return a.baseRespect - b.baseRespect;
@@ -384,28 +384,16 @@ function sortMemberByTask(ns, memberName) {
   myGang.addMemberToWorking(memberName, taskName);
 }
 
-function arrangeMembersByTask(ns) {
-  myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
-
-  const message = `Initial Members: \n${myGang.membersString()} `;
-  ns.printf(message);
-}
-
 //#endregion Members
 
 //#region Manage
 
 async function manageGang(ns) {
-  const fname = "manageGang";
-  ns.print(
-    `[${fname}] Started. Recruiting? ${myGang.canRecruit}, Wait to ascend? ${myGang.shouldWaitAscend}, Focus optimized? ${myGang.isFocusOptimized}`,
-  );
-
   while (true) {
     myGang.shouldWaitAscend = false;
     myGang.sanityCheckMembers();
 
-    if (myGang.canRecruit) {
+    if (myGang.isRecruiting) {
       recruitGangMembers(ns, myGang);
       handleRecruitmentStatus(ns, myGang);
       // TODO: handle focus change
@@ -478,7 +466,9 @@ export async function main(ns) {
   tasksWithMoneyGain = tasksList.filter((task) => task.baseMoney > 0);
 
   myGang = new MyGang(ns, gangMemberNames, defaultTask);
-  arrangeMembersByTask(ns);
+  myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
+
+  ns.print(myGang.toString());
 
   await manageGang(ns);
 }
