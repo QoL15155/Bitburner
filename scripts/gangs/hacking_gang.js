@@ -123,10 +123,11 @@ function lowerWantedLevel(ns) {
   if (!myGang.isMembersWorking) {
     printLogWarn(
       ns,
-      `[${fname}] No working member to assign to ethical task. Need to wait.`,
+      `[${fname}] No working member to assign Ethical task to. Need to wait.`,
     );
     return;
   }
+
   /** @type {GangMemberInfo} */
   const memberObject = findMemberHighestWantedLevel(ns, myGang.membersWorking);
   if (myGang.membersEthicalCount() < normalEthicalMembers) {
@@ -251,8 +252,6 @@ function raiseFocusGain(ns) {
  * @param {GangTaskStats[]} taskList
  **/
 function assignTrainingMemberToWork(ns, taskList) {
-  const fname = "assignTrainingMemberToWork";
-
   const easiestTask = taskList.reduce((prev, current) =>
     current.difficulty < prev.difficulty ? current : prev,
   );
@@ -267,8 +266,6 @@ function assignTrainingMemberToWork(ns, taskList) {
  * @param {GangTaskStats[]} taskList
  */
 function assignEthicalMemberToWork(ns, taskList) {
-  const fname = "assignEthicalMemberToWork";
-
   const member = findMemberLowestWantedLevel(ns, myGang.membersEthical);
   const lowestWantedTask = taskList.reduce(
     (prev, current) => (current.baseWanted < prev.baseWanted ? current : prev),

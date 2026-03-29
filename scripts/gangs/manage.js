@@ -70,7 +70,7 @@ export function recruitGangMembers(ns, myGang) {
 
 /**
  * Updates the recruitment status of the gang.
- * Should be called after recruiting new members and after ascending members.
+ * Should be called after recruiting new members and before deciding whether to ascend members.
  *
  * @param {NS} ns - the Netscript environment
  * @param {MyGang} myGang - the gang management object
