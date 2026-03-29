@@ -120,7 +120,7 @@ function lowerWantedLevel(ns) {
   }
 
   // Working Task
-  if (myGang.isMembersWorking) {
+  if (!myGang.isMembersWorking) {
     printLogWarn(
       ns,
       `[${fname}] No working member to assign to ethical task. Need to wait.`,
@@ -130,7 +130,7 @@ function lowerWantedLevel(ns) {
   /** @type {GangMemberInfo} */
   const memberObject = findMemberHighestWantedLevel(ns, myGang.membersWorking);
   if (myGang.membersEthicalCount() < normalEthicalMembers) {
-    myGang.assignWorkingMemberToEthical(ns, memberObject, ethicalTask);
+    myGang.assignWorkingMemberToEthical(memberObject, ethicalTask);
     return;
   }
 
