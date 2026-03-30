@@ -1,4 +1,4 @@
-import { printInfo, toGreen } from "/utils/print.js";
+import { toGreen } from "/utils/print.js";
 import {
   doConversion,
   formatGainRate,

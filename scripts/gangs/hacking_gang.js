@@ -54,7 +54,7 @@ const defaultTask = trainingTasks[0];
 
 /* Variables */
 
-/** @const {GangTaskStats[]} */
+/** @type {GangTaskStats[]} */
 let tasksList = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
@@ -130,7 +130,7 @@ function lowerWantedLevel(ns) {
 
   /** @type {GangMemberInfo} */
   const memberObject = findMemberHighestWantedLevel(ns, myGang.membersWorking);
-  if (myGang.membersEthicalCount() < normalEthicalMembers) {
+  if (myGang.ethicalMembersCount() < normalEthicalMembers) {
     myGang.assignWorkingMemberToEthical(memberObject, ethicalTask);
     return;
   }
@@ -169,14 +169,7 @@ function lowerWantedLevel(ns) {
     });
   }
 
-  const currentTask = memberObject.task;
-  ns.gang.setMemberTask(memberObject.name, nextTask.name);
-  myGang.logMemberReassignTask(
-    fname,
-    memberObject.name,
-    currentTask,
-    nextTask.name,
-  );
+  myGang.updateMemberTask(memberObject, nextTask.name);
 }
 
 /**
@@ -195,7 +188,7 @@ function raiseFocusGain(ns) {
     return;
   }
 
-  if (myGang.membersEthical.length > normalEthicalMembers) {
+  if (myGang.ethicalMembersCount() > normalEthicalMembers) {
     // More than 2 members are doing ethical hacking, we can assign one of them to a money task.
     assignEthicalMemberToWork(ns, focusTasks);
     return;
@@ -337,13 +330,14 @@ function logMemberAssignEx(ns, fname, memberName, fromTask, toTask) {
 //#region Members
 
 function sortMemberByTask(ns, memberName) {
+  const fname = "sortMemberByTask";
   const memberInfo = ns.gang.getMemberInformation(memberName);
   let taskName = memberInfo.task;
 
   if (taskName === unassignedTask) {
     printWarn(
       ns,
-      `'${memberName}' is unassigned. Assigning to default task '${defaultTask}'.`,
+      `[${fname}] '${memberName}' is unassigned. Assigning to default task '${defaultTask}'.`,
     );
     myGang.addMemberToTraining(memberName, defaultTask);
     return;
@@ -352,10 +346,7 @@ function sortMemberByTask(ns, memberName) {
   if (trainingTasks.includes(taskName)) {
     if (taskName === "Train Combat") {
       // NOTE: we still allow for "Train Charisma" for hacking gang.
-      printWarn(
-        ns,
-        `'${memberName}' is in a **Hacking Gang** but is training combat. Changing to 'Train Hacking'.`,
-      );
+      printWarn(ns, getMessage("Train Combat", "Train Hacking"));
       taskName = "Train Hacking";
     }
     myGang.addMemberToTraining(memberName, taskName);
@@ -364,25 +355,23 @@ function sortMemberByTask(ns, memberName) {
 
   if (lowerWantedLevelTasks.includes(taskName)) {
     if (taskName === "Vigilante Justice") {
-      printWarn(
-        ns,
-        `${memberName} - is in a **Hacking Gang** but is doing Vigilante Justice. Changing to 'Ethical Hacking'.`,
-      );
+      printWarn(ns, getMessage("Vigilante Justice", "Ethical Hacking"));
     }
     myGang.addMemberToEthical(memberName, "Ethical Hacking");
     return;
   }
 
   if (taskName === territoryTask) {
-    printWarn(
-      ns,
-      `${memberName} - is in a **Hacking Gang** but is doing Territory Warfare. Changing to 'Train Hacking'.`,
-    );
+    printWarn(ns, getMessage("Territory Warfare", "Train Hacking"));
     myGang.addMemberToTraining(memberName, "Train Hacking");
     return;
   }
 
   myGang.addMemberToWorking(memberName, taskName);
+
+  function getMessage(currentTask, newTask) {
+    return `[${fname}] '${memberName}' is in a **Hacking Gang** but is doing '${currentTask}'. Changing to '${newTask}'.`;
+  }
 }
 
 //#endregion Members

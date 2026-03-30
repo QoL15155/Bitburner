@@ -4,7 +4,7 @@ export class MyGang {
   /** @const {NS} */
   #ns = null;
 
-  /** @const {string} */
+  /** @type {string} */
   #defaultTrainingTask = null;
 
   /** False when maximum number of members has been recruited */
@@ -74,14 +74,14 @@ export class MyGang {
   }
 
   get memberNames() {
-    return this.#gangMemberNames;
+    return [...this.#gangMemberNames];
   }
 
   get membersWorking() {
-    return this.#membersWorking;
+    return [...this.#membersWorking];
   }
   get membersEthical() {
-    return this.#membersEthical;
+    return [...this.#membersEthical];
   }
 
   get isMembersTraining() {
@@ -136,7 +136,7 @@ export class MyGang {
     return this.#gangMemberNames.length;
   }
 
-  membersEthicalCount() {
+  ethicalMembersCount() {
     return this.#membersEthical.length;
   }
 
@@ -153,6 +153,7 @@ export class MyGang {
     message += this.#membersString();
     throw new Error(message);
   }
+
   //#endregion Members
 
   //#region Add Members
@@ -162,6 +163,10 @@ export class MyGang {
     this.#ns.gang.setMemberTask(memberName, taskName);
   }
 
+  /**
+   * Calling function should ensure member is only in one category list at a time
+   * (training, ethical, working)
+   */
   addMemberToTraining(memberName, taskName) {
     this.#setMemberTask(memberName, taskName);
     if (!this.#membersTraining.includes(memberName)) {
@@ -169,6 +174,10 @@ export class MyGang {
     }
   }
 
+  /**
+   * Calling function should ensure member is only in one category list at a time
+   * (training, ethical, working)
+   */
   addMemberToEthical(memberName, taskName) {
     this.#setMemberTask(memberName, taskName);
     if (!this.#membersEthical.includes(memberName)) {
@@ -176,6 +185,10 @@ export class MyGang {
     }
   }
 
+  /**
+   * Calling function should ensure member is only in one category list at a time
+   * (training, ethical, working)
+   */
   addMemberToWorking(memberName, taskName) {
     this.#setMemberTask(memberName, taskName);
     if (!this.#membersWorking.includes(memberName)) {
@@ -219,25 +232,34 @@ export class MyGang {
 
   assignEthicalMemberToWork(memberObject, taskName) {
     const fname = "assignEthicalMemberToWork";
-    const memberTask = memberObject.task;
+    const prevTask = memberObject.task;
 
     this.addMemberToWorking(memberObject.name, taskName);
     this.#membersEthical = this.#membersEthical.filter(
       (name) => name !== memberObject.name,
     );
 
-    this.logMemberReassignTask(fname, memberObject.name, memberTask, taskName);
+    this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
   }
 
   assignWorkingMemberToEthical(memberObject, taskName) {
     const fname = "assignWorkingMemberToEthical";
-    const memberTask = memberObject.task;
+    const prevTask = memberObject.task;
 
     this.addMemberToEthical(memberObject.name, taskName);
     this.#membersWorking = this.#membersWorking.filter(
       (name) => name !== memberObject.name,
     );
-    this.logMemberReassignTask(fname, memberObject.name, memberTask, taskName);
+    this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
+  }
+
+  /** Update member task while preserving the member's category (training, ethical, working) */
+  updateMemberTask(memberObject, taskName) {
+    const fname = "updateMemberTask";
+    const prevTask = memberObject.task;
+    this.#setMemberTask(memberObject.name, taskName);
+
+    this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
   }
 
   /**
