@@ -41,6 +41,10 @@ export const Color = {
   BgWhite: "\x1b[0;47m",
 };
 
+export function toGreen(msg) {
+  return `${Color.FgGreen}${msg}${Color.Reset}`;
+}
+
 export function printError(ns, msg) {
   const formattedTime = getFormattedCurrentTime();
   ns.print(`${Color.FgRed}[${formattedTime}] ${msg}${Color.Reset}`);
@@ -66,7 +70,6 @@ export function printLogWarn(ns, msg) {
 export function printInfo(ns, msg) {
   const formattedTime = getFormattedCurrentTime();
   ns.print(`${Color.FgGreen}[${formattedTime}] ${msg}${Color.Reset}`);
-
   ns.tprint(`${Color.FgGreen}${msg}${Color.Reset}`);
 }
 
