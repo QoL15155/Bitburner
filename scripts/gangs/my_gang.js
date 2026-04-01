@@ -264,13 +264,12 @@ export class MyGang {
 
   //#region Reassign Members
 
-  /** Assigns the first training member to the gang's focus ethical task */
-  assignFirstTrainingMemberToEthical(ethicalTask) {
+  /** Assigns the first training member to the gang's focus ethical task
+   * @param {?string} ethicalTask (optional) ethical task to assign.
+   *    Defaults to the gang's default Ethical task
+   */
+  assignFirstTrainingMemberToEthical(ethicalTask = this.ethicalTask) {
     const fname = "assignFirstTrainingMemberToEthical";
-
-    if (ethicalTask == null) {
-      ethicalTask = this.ethicalTask;
-    }
 
     const memberName = this.#membersTraining.shift();
     this.addMemberToEthical(memberName, ethicalTask);
@@ -299,7 +298,9 @@ export class MyGang {
     this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
   }
 
-  /** Assign member to the default ethical task */
+  /** Assign member to the default ethical task
+   * @param {GangMemberInfo} memberObject
+   */
   assignWorkingMemberToEthical(memberObject) {
     const fname = "assignWorkingMemberToEthical";
     const memberName = memberObject.name;
@@ -312,12 +313,36 @@ export class MyGang {
     this.logMemberReassignTask(fname, memberName, prevTask, this.ethicalTask);
   }
 
-  /** Update member task while preserving the member's category (training, ethical, working) */
+  /** Assign member to the provided Ethical task
+   * @param {GangTaskStats} currentTask
+   * @param {GangTaskStats} nextTask
+   * */
+  assignWorkingMemberToEthicalTask(memberObject, currentTask, nextTask) {
+    const memberName = memberObject.name;
+    const taskName = currentTask.name;
+
+    this.addMemberToEthical(memberName, taskName);
+    this.#membersWorking = this.#membersWorking.filter(
+      (name) => name !== memberName,
+    );
+    this.logMemberReassignTaskEx(fname, memberName, currentTask, nextTask);
+  }
+
+  /** Update member task while preserving the member's category (training, ethical, working)
+   * @param {GangMemberInfo} memberObject
+   * @param {GangTaskStats} currentTask
+   * @param {GangTaskStats} nextTask
+   */
   updateMemberTask(memberObject, currentTask, nextTask) {
     const fname = "updateMemberTask";
     this.#setMemberTask(memberObject.name, nextTask.name);
 
-    this.logMemberAssignEx(fname, memberObject.name, currentTask, nextTask);
+    this.logMemberReassignTaskEx(
+      fname,
+      memberObject.name,
+      currentTask,
+      nextTask,
+    );
   }
 
   /**
@@ -335,7 +360,7 @@ export class MyGang {
    * @param {GangTaskStats} fromTask
    * @param {GangTaskStats} toTask
    */
-  logMemberAssignEx(fname, memberName, fromTask, toTask) {
+  logMemberReassignTaskEx(fname, memberName, fromTask, toTask) {
     let message = `[${fname}] Assigned member '${memberName}' `;
     message += `\n\tfrom '${fromTask.name}' (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted}) `;
     message += `\n\tto '${toTask.name}' (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted}).`;
