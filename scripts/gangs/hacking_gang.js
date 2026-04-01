@@ -568,6 +568,11 @@ export async function main(ns) {
   tasksByWantedLevel = readGangTasks(ns, true).sort(
     (a, b) => a.baseWanted - b.baseWanted,
   );
+  if (tasksByWantedLevel.length === 0) {
+    printError("Failed to read gang tasks.");
+    return;
+  }
+
   tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
   tasksWithRespectGain = tasksByWantedLevel.filter(
     (task) => task.baseRespect > 0,
