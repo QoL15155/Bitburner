@@ -46,36 +46,30 @@ export function toGreen(msg) {
 }
 
 export function printError(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgRed}[${formattedTime}] ${msg}${Color.Reset}`);
-  ns.tprint(`${Color.FgRed}[${formattedTime}] ${msg}${Color.Reset}`);
+  ns.print(`${Color.FgRed}${msg}${Color.Reset}`);
+  ns.tprint(`${Color.FgRed}${msg}${Color.Reset}`);
 }
 
 export function printLogError(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgRed}[${formattedTime}] ${msg}${Color.Reset}`);
+  ns.print(`${Color.FgRed}${msg}${Color.Reset}`);
 }
 
 export function printWarn(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgYellow}[${formattedTime}] ${msg}${Color.Reset}`);
-  ns.tprint(`${Color.FgYellow}[${formattedTime}] ${msg}${Color.Reset}`);
+  ns.print(`${Color.FgYellow}${msg}${Color.Reset}`);
+  ns.tprint(`${Color.FgYellow}${msg}${Color.Reset}`);
 }
 
 export function printLogWarn(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgYellow}[${formattedTime}] ${msg}${Color.Reset}`);
+  ns.print(`${Color.FgYellow}${msg}${Color.Reset}`);
 }
 
 export function printInfo(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgGreen}[${formattedTime}] ${msg}${Color.Reset}`);
-  ns.tprint(`${Color.FgGreen}${msg}${Color.Reset}`);
+  ns.print(toGreen(msg));
+  ns.tprint(toGreen(msg));
 }
 
 export function printLogInfo(ns, msg) {
-  const formattedTime = getFormattedCurrentTime();
-  ns.print(`${Color.FgGreen}[${formattedTime}] ${msg}${Color.Reset}`);
+  ns.print(toGreen(msg));
 }
 
 /** Prints message both to stdout and log file */
