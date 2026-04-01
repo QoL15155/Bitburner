@@ -266,7 +266,7 @@ export class MyGang {
   //#region Reassign Members
 
   /** Assigns the first training member to the gang's focus ethical task
-   * @param {?string} ethicalTask (optional) ethical task to assign.
+   * @param {string} [ethicalTask] - ethical task to assign.
    *    Defaults to the gang's default Ethical task
    */
   assignFirstTrainingMemberToEthical(ethicalTask = this.ethicalTask) {

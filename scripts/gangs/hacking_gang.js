@@ -308,6 +308,7 @@ function assignEthicalMemberWorkTask(ns) {
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
   if (relevantTasks.length === 0)
+    // Ethical task should never have the highest money/respect gain.
     throw new Error(
       `Failed to find a relevant task for member '${member.name}' task: ${member.task}`,
     );
