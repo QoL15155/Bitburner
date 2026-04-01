@@ -10,7 +10,8 @@ export class MyGang {
   #ns = null;
 
   /**
-   * Determines the gang's focus (hacking vs combat) when done recruiting members.
+   * Determines the gang's focus when done recruiting members
+   * money (hacking) vs power (combat)
    * @const {GangFocus}
    */
   #gangType = null;

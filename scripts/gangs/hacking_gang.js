@@ -321,7 +321,7 @@ function assignEthicalMemberWorkTask(ns) {
 }
 
 /** Try to find member another work task with better focus gain
- * @returns {bool} false - when all working members have the optimal task
+ * @returns {boolean} false - when all working members have the optimal task
  *    for focus gain
  */
 function tryUpdateWorkingMemberTask(ns) {
