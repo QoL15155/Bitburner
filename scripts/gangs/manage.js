@@ -27,11 +27,11 @@ import {
 
 //#region Focus & Tasks
 
-export const GangFocus = {
+export const GangFocus = Object.freeze({
   RECRUITING: 0,
   MONEY: 1,
   POWER: 2,
-};
+});
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];

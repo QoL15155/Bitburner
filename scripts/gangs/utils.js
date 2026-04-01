@@ -154,6 +154,9 @@ export function findMemberLowestWantedLevel(ns, memberNames) {
  * @param {string[]} memberNames
  * @param {GangTaskStats[]} sortedTasks - List of tasks sorted by focus gain (ascending)
  * @returns {{ member: GangMemberInfo, taskIdx: number }}
+ *    member: The member doing the least productive task.
+ *      Null if all members are doing the most productive task.
+ *    taskIdx: The index of the task in the sortedTasks array.
  */
 export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
   const fname = "findLeastProductiveMember";

@@ -1,8 +1,8 @@
 import {
+  printError,
   printLogInfo,
   printLogWarn,
   printWarn,
-  printError,
 } from "/utils/print.js";
 import {
   readGangTasks,
@@ -310,12 +310,11 @@ function assignEthicalMemberWorkTask(ns) {
   if (relevantTasks.length === 0)
     // Ethical task should never have the highest money/respect gain.
     throw new Error(
-      `Failed to find a relevant task for member '${member.name}' task: ${member.task}`,
+      `Failed to find a relevant task for member '${member.name}' with Ethical task '${member.task}'. Focus: ${myGang.focus}`,
     );
 
-  const lowestWantedTask = relevantTasks.reduce(
-    (prev, current) => (current.baseWanted < prev.baseWanted ? current : prev),
-    // current.difficulty < prev.difficulty ? current : prev,
+  const lowestWantedTask = relevantTasks.reduce((prev, current) =>
+    current.baseWanted < prev.baseWanted ? current : prev,
   );
 
   myGang.assignEthicalMemberToWork(member, lowestWantedTask.name);
