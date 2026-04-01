@@ -1,4 +1,9 @@
-import { printLogInfo, printLogWarn, printWarn } from "/utils/print.js";
+import {
+  printLogInfo,
+  printLogWarn,
+  printWarn,
+  printError,
+} from "/utils/print.js";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,
@@ -22,19 +27,6 @@ import {
 import { normalEthicalMembers } from "./constants.js";
 import { formatGainRate } from "/utils/formatters.js";
 import { MyGang } from "./my_gang.js";
-
-/**
- * Algorithm:
- * 1. Recruit new members until the maximum number of members is reached. Each new member is assigned a training task.
- * 2. Ascend members when they can be ascended.
- * 3. If we can recruit more members, prioritize respect gain to recruit more members.
- *
- * Tasks:
- * - Recruited members: first assign a **Training** task ("Train Hacking")
- * - Low Wanted Level:
- *   - *Training* members exists: Look for task with:
- *      - FOCUS Gain (money or respect) => lower difficulty => lower wanted level.
- */
 
 // Tasks
 // =====================
@@ -111,11 +103,10 @@ function handleWantedLevel(ns) {
  * Strategy:
  * Invoke the following in order until one succeeds:
  * - A member is training? -> Ethical Task
- * - Get the member with the highest wanted level gain among working members
+ * - Get the member with the highest wanted level gain among *working* members
  *    - Few ethical members -> Ethical Task
- *    - Get member a task with lower wanted level gain
- *    - Assign to Ethical Task
- *
+ *    - Assign member a task with lower wanted level gain
+ *    - Assign member to Ethical Task
  */
 function lowerWantedLevel(ns) {
   const fname = "lowerWantedLevel";
@@ -433,7 +424,6 @@ function sortMemberByTask(ns, memberName) {
  *
  * This function should be called either at the first run, or when the focus changed
  * For example: after stopped recruiting
- *
  */
 function handleMembersTaskFocus(ns) {
   myGang.membersWorking.forEach((memberName) => {
