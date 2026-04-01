@@ -1,16 +1,36 @@
 import { printLogInfo } from "/utils/print.js";
+import {
+  GangFocus,
+  getGangEthicalTask,
+  getGangTrainingTask,
+} from "./manage.js";
 
 export class MyGang {
   /** @const {NS} */
   #ns = null;
 
-  /** @type {string} */
+  /**
+   * Determines the gang's focus (hacking vs combat) when done recruiting members.
+   * @const {GangFocus}
+   */
+  #gangType = null;
+  /** @const {string} */
   #defaultTrainingTask = null;
+  /** @const {string} */
+  #defaultEthicalTask = null;
+
+  #focus = GangFocus.RECRUITING;
 
   /** False when maximum number of members has been recruited */
   #isRecruiting = true;
+  /** Don't ascend members while waiting to recruit the next member */
   #shouldWaitAscend = false;
+  /**
+   * True when all members are assigned to the best tasks for the current focus
+   * Saves performance by not trying to optimize task assignments
+   */
   isFocusOptimized = false;
+  checkFocus = true;
 
   // Members
   /** @type {string[]} */
@@ -25,16 +45,36 @@ export class MyGang {
   /**
    * @param {NS} ns
    * @param {string[]} gangMemberNames
-   * @param {string} defaultTrainingTask
+   * @param {boolean} isHackingGang
    */
-  constructor(ns, gangMemberNames, defaultTrainingTask) {
+  constructor(ns, gangMemberNames, isHackingGang) {
     this.#ns = ns;
-    this.#defaultTrainingTask = defaultTrainingTask;
+
+    // Focus
+    this.#gangType = isHackingGang ? GangFocus.HACKING : GangFocus.COMBAT;
+    this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
+    this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
     this.#gangMemberNames = gangMemberNames;
   }
 
   //#region Getters and Setters
+
+  get type() {
+    return this.#gangType;
+  }
+
+  get focus() {
+    return this.#focus;
+  }
+
+  get trainingTask() {
+    return this.#defaultTrainingTask;
+  }
+
+  get ethicalTask() {
+    return this.#defaultEthicalTask;
+  }
 
   get isRecruiting() {
     return this.#isRecruiting;
@@ -57,6 +97,14 @@ export class MyGang {
     }
   }
 
+  #changeFocus(newFocus) {
+    const fname = "changeFocus";
+    if (newFocus === this.#focus) return;
+    this.#focus = newFocus;
+    this.isFocusOptimized = false;
+    this.checkFocus = true;
+  }
+
   stopRecruit() {
     const fname = "stopRecruit";
     if (this.isRecruiting === false) {
@@ -64,6 +112,7 @@ export class MyGang {
     }
     this.isFocusOptimized = false;
     this.#isRecruiting = false;
+    this.#changeFocus(this.#gangType);
     // TODO:
     //   this.#evaluateFocus = true;
 
@@ -75,6 +124,10 @@ export class MyGang {
 
   get memberNames() {
     return [...this.#gangMemberNames];
+  }
+
+  get membersTraining() {
+    return [...this.#membersTraining];
   }
 
   get membersWorking() {
@@ -198,14 +251,16 @@ export class MyGang {
 
   /**
    * Adds a new member to the gang and assigns them the default training task
+   * New member should start with a training task to raise skill
+   *
    * @param {string} memberName - the name of the new member to add
    */
   addNewMember(memberName) {
     const fname = "addNewMember";
     this.#gangMemberNames.push(memberName);
-    this.addMemberToTraining(memberName, this.#defaultTrainingTask);
+    this.addMemberToTraining(memberName, this.trainingTask);
     this.#ns.print(
-      `[${fname}] Recruited '${memberName}' and assigned '${this.#defaultTrainingTask}'. Total members: ${this.memberCount()}.`,
+      `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
     );
   }
 
@@ -214,12 +269,12 @@ export class MyGang {
   //#region Reassign Members
 
   /** @param taskName : Ethical task name */
-  assignFirstTrainingMemberToEthical(taskName) {
+  assignFirstTrainingMemberToEthical() {
     const fname = "assignFirstTrainingMemberToEthical";
 
     const memberName = this.#membersTraining.shift();
-    this.addMemberToEthical(memberName, taskName);
-    this.logMemberReassignTask(fname, memberName, "Training", taskName);
+    this.addMemberToEthical(memberName, this.ethicalTask);
+    this.logMemberReassignTask(fname, memberName, "Training", this.ethicalTask);
   }
 
   assignFirstTrainingMemberToWork(taskName) {
@@ -242,24 +297,25 @@ export class MyGang {
     this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
   }
 
-  assignWorkingMemberToEthical(memberObject, taskName) {
+  /** Assign member to the default ethical task */
+  assignWorkingMemberToEthical(memberObject) {
     const fname = "assignWorkingMemberToEthical";
+    const memberName = memberObject.name;
     const prevTask = memberObject.task;
 
-    this.addMemberToEthical(memberObject.name, taskName);
+    this.addMemberToEthical(memberName, this.ethicalTask);
     this.#membersWorking = this.#membersWorking.filter(
-      (name) => name !== memberObject.name,
+      (name) => name !== memberName,
     );
-    this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
+    this.logMemberReassignTask(fname, memberName, prevTask, this.ethicalTask);
   }
 
   /** Update member task while preserving the member's category (training, ethical, working) */
-  updateMemberTask(memberObject, taskName) {
+  updateMemberTask(memberObject, currentTask, nextTask) {
     const fname = "updateMemberTask";
-    const prevTask = memberObject.task;
-    this.#setMemberTask(memberObject.name, taskName);
+    this.#setMemberTask(memberObject.name, nextTask.name);
 
-    this.logMemberReassignTask(fname, memberObject.name, prevTask, taskName);
+    this.logMemberAssignEx(fname, memberObject.name, currentTask, nextTask);
   }
 
   /**
@@ -271,6 +327,17 @@ export class MyGang {
       this.#ns,
       `[${fname}] Assigned member '${memberName}' task from '${fromTask}' to '${toTask}'.`,
     );
+  }
+
+  /**
+   * @param {GangTaskStats} fromTask
+   * @param {GangTaskStats} toTask
+   */
+  logMemberAssignEx(fname, memberName, fromTask, toTask) {
+    let message = `[${fname}] Assigned member '${memberName}' `;
+    message += `\n\tfrom '${fromTask.name}' (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted}) `;
+    message += `\n\tto '${toTask.name}' (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted}).`;
+    printLogInfo(this.#ns, message);
   }
 
   //#endregion Reassign Members

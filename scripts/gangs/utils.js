@@ -1,16 +1,10 @@
 import { printError, printLogInfo } from "/utils/print.js";
 
-export const memberNamePrefix = "Keves #";
-
-export const scriptHackingGang = "gangs/hacking_gang.js";
-// TODO: not implemented yet
-export const scriptCombatGang = "gang/combat_gang.js";
+//#region Tasks Files
 
 // Task lists
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
-
-//#region Tasks Files
 
 /**
  * Writes gang tasks to a json file for other scripts to use.

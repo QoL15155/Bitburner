@@ -1,4 +1,5 @@
-import { writeGangTasks, scriptHackingGang } from "./utils.js";
+import { writeGangTasks } from "./utils.js";
+import { scriptHackingGang } from "./constants.js";
 import { printInfo, printError, print } from "/utils/print.js";
 
 /**
