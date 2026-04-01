@@ -571,7 +571,7 @@ export async function main(ns) {
     (a, b) => a.baseWanted - b.baseWanted,
   );
   if (tasksByWantedLevel.length === 0) {
-    printError("Failed to read gang tasks.");
+    printError(ns, "Failed to read gang tasks.");
     return;
   }
 

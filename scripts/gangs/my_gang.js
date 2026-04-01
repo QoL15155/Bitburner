@@ -3,7 +3,7 @@ import {
   GangFocus,
   getGangEthicalTask,
   getGangTrainingTask,
-} from "./manage.js";
+} from "/gangs/manage.js";
 
 export class MyGang {
   /** @const {NS} */
