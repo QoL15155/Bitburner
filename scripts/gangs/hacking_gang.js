@@ -25,7 +25,7 @@ import { MyGang } from "./my_gang.js";
 
 /**
  * Algorithm:
- * 1. Recruit new members until the maximum number of members is reached. Each new member is assigned the default task.
+ * 1. Recruit new members until the maximum number of members is reached. Each new member is assigned a training task.
  * 2. Ascend members when they can be ascended.
  * 3. If we can recruit more members, prioritize respect gain to recruit more members.
  *
@@ -147,7 +147,6 @@ function lowerWantedLevel(ns) {
   /** @type {GangTaskStats} */
   const memberTask = getTask(member.task);
 
-  // TODO: enhance performance?
   const relevantTasks = tasksByWantedLevel.filter(
     (task) => task.baseWanted < memberTask.baseWanted,
   );
@@ -170,7 +169,7 @@ function lowerWantedLevel(ns) {
         return current.baseRespect > prev.baseRespect ? current : prev;
       });
       break;
-    case GangFocus.HACKING:
+    case GangFocus.MONEY:
       // Money Focus
       nextTask = relevantTasks.reduce((prev, current) => {
         return current.baseMoney > prev.baseMoney ? current : prev;
@@ -188,10 +187,6 @@ function lowerWantedLevel(ns) {
  */
 function raiseFocusGain(ns) {
   const fname = "raiseFocusGain";
-
-  const focusTasks = myGang.isRecruiting
-    ? tasksWithRespectGain
-    : tasksWithMoneyGain;
 
   // Training -> Working
   if (myGang.isMembersTraining) {
@@ -275,7 +270,7 @@ function findTrainingMemberWorkTask() {
     case GangFocus.RECRUITING:
       focusTasks = tasksWithRespectGain;
       break;
-    case GangFocus.HACKING:
+    case GangFocus.MONEY:
       focusTasks = tasksWithMoneyGain;
       break;
     default:
@@ -304,8 +299,8 @@ function findEthicalMemberWorkTask(ns) {
         (t) => currentTask.baseRespect < t.baseRespect,
       );
       break;
-    case GangFocus.HACKING:
-      relevantTasks = tasksWithRespectGain.filter(
+    case GangFocus.MONEY:
+      relevantTasks = tasksWithMoneyGain.filter(
         (t) => currentTask.baseMoney < t.baseMoney,
       );
       break;
@@ -331,7 +326,7 @@ function tryUpgradeWorkingMember(ns) {
     case GangFocus.RECRUITING:
       sortedTaskList = tasksByWantedLevel.sort(sortTasksByRespect);
       break;
-    case GangFocus.HACKING:
+    case GangFocus.MONEY:
       sortedTaskList = tasksByWantedLevel.sort(sortTasksByMoney);
       break;
     default:
@@ -415,7 +410,7 @@ function sortMemberByTask(ns, memberName) {
   }
 
   if (taskName === territoryTask) {
-    if (myGang.type === GangFocus.HACKING) {
+    if (myGang.type === GangFocus.MONEY) {
       printWarn(ns, getMessage("Territory Warfare", myGang.trainingTask));
       myGang.addMemberToTraining(memberName, myGang.trainingTask);
       return;
@@ -467,7 +462,7 @@ function getMemberBestTaskForWantedLevel(member, memberTask) {
           bestTask = task;
         }
         break;
-      case GangFocus.HACKING:
+      case GangFocus.MONEY:
         if (task.baseMoney > bestTask.baseMoney) {
           bestTask = task;
         }
@@ -494,7 +489,6 @@ async function manageGang(ns) {
     if (myGang.isRecruiting) {
       recruitGangMembers(ns, myGang);
       handleRecruitmentStatus(ns, myGang);
-      // TODO: handle focus change
     }
 
     if (!myGang.shouldWaitAscend) {

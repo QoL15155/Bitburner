@@ -29,8 +29,8 @@ import {
 
 export const GangFocus = {
   RECRUITING: 0,
-  HACKING: 1,
-  COMBAT: 2,
+  MONEY: 1,
+  POWER: 2,
 };
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
@@ -45,13 +45,13 @@ export function isTrainingTask(taskName) {
 }
 
 export const TrainingTasks = {
-  [GangFocus.HACKING]: ["Train Hacking", "Train Charisma"],
-  [GangFocus.COMBAT]: ["Train Combat"],
+  [GangFocus.MONEY]: ["Train Hacking", "Train Charisma"],
+  [GangFocus.POWER]: ["Train Combat"],
 };
 
 export const EthicalTasks = {
-  [GangFocus.HACKING]: ["Ethical Hacking"],
-  [GangFocus.COMBAT]: ["Vigilante Justice"],
+  [GangFocus.MONEY]: ["Ethical Hacking"],
+  [GangFocus.POWER]: ["Vigilante Justice"],
 };
 
 export function getGangTrainingTask(gangFocus) {

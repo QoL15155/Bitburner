@@ -27,8 +27,6 @@ export function startGangManagement(ns, toKill = false) {
   const isHackingGang = gangInformation.isHacking;
   writeGangTasks(ns, isHackingGang);
 
-  // TODO: sort-out members?
-
   if (!isHackingGang) {
     ns.tprint("ERROR Combat gang is not implemented yet!");
     return true;

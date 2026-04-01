@@ -51,7 +51,7 @@ export class MyGang {
     this.#ns = ns;
 
     // Focus
-    this.#gangType = isHackingGang ? GangFocus.HACKING : GangFocus.COMBAT;
+    this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.POWER;
     this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
@@ -98,7 +98,6 @@ export class MyGang {
   }
 
   #changeFocus(newFocus) {
-    const fname = "changeFocus";
     if (newFocus === this.#focus) return;
     this.#focus = newFocus;
     this.isFocusOptimized = false;
@@ -110,11 +109,8 @@ export class MyGang {
     if (this.isRecruiting === false) {
       throw new Error("stopRecruit called but isRecruiting is already false");
     }
-    this.isFocusOptimized = false;
     this.#isRecruiting = false;
     this.#changeFocus(this.#gangType);
-    // TODO:
-    //   this.#evaluateFocus = true;
 
     printLogInfo(
       this.#ns,
