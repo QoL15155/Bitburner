@@ -1,11 +1,4 @@
-import {
-  printError,
-  printInfo,
-  print,
-  printLogInfo,
-  printLogWarn,
-  printWarn,
-} from "/utils/print.js";
+import { printLogInfo, printLogWarn, printWarn } from "/utils/print.js";
 import {
   readGangTasks,
   findMemberHighestHackingLevel,
