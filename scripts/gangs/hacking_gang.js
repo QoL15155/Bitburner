@@ -268,10 +268,15 @@ function findTrainingMemberWorkTask() {
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
 
+  // result task may either be a work or ethical task
   const easiestTask = focusTasks.reduce((prev, current) =>
     current.difficulty < prev.difficulty ? current : prev,
   );
-  myGang.assignFirstTrainingMemberToWork(easiestTask.name);
+  if (isEthicalTask(easiestTask.name)) {
+    myGang.assignFirstTrainingMemberToEthical(easiestTask.name);
+  } else {
+    myGang.assignFirstTrainingMemberToWork(easiestTask.name);
+  }
 }
 
 /**
@@ -432,7 +437,14 @@ function handleMembersTaskFocus(ns) {
 
     const bestTask = getMemberBestTaskForWantedLevel(currentTask);
 
-    if (currentTask.name !== bestTask.name) {
+    if (currentTask.name === bestTask.name) {
+      return;
+    }
+
+    // Resulted task may either be Ethical or Working.
+    if (isEthicalTask(bestTask.name)) {
+      assignWorkingMemberToEthical(member);
+    } else {
       myGang.updateMemberTask(member, currentTask, bestTask);
     }
   });
