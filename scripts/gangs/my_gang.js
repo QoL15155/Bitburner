@@ -264,7 +264,7 @@ export class MyGang {
 
   //#region Reassign Members
 
-  /** @param taskName : Ethical task name */
+  /** Assigns the first training member to the gang's focus ethical task */
   assignFirstTrainingMemberToEthical() {
     const fname = "assignFirstTrainingMemberToEthical";
 
@@ -273,6 +273,8 @@ export class MyGang {
     this.logMemberReassignTask(fname, memberName, "Training", this.ethicalTask);
   }
 
+  /** Assigns the first training member to work task
+   * @param {string} taskName : Work task to assign */
   assignFirstTrainingMemberToWork(taskName) {
     const fname = "assignFirstTrainingMemberToWork";
 

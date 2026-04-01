@@ -274,7 +274,7 @@ function findTrainingMemberWorkTask() {
       focusTasks = tasksWithMoneyGain;
       break;
     default:
-      throw new Error(`Unspported gang focus ${myGang.focus}`);
+      throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
 
   const easiestTask = focusTasks.reduce((prev, current) =>
@@ -307,7 +307,7 @@ function findEthicalMemberWorkTask(ns) {
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
-  if (relevantTasks.length == 0)
+  if (relevantTasks.length === 0)
     throw new Error(
       `Failed to find a relevant task for member '${member.name}' task: ${member.task}`,
     );
@@ -324,10 +324,10 @@ function tryUpgradeWorkingMember(ns) {
   let sortedTaskList = null;
   switch (myGang.focus) {
     case GangFocus.RECRUITING:
-      sortedTaskList = tasksByWantedLevel.sort(sortTasksByRespect);
+      sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByRespect);
       break;
     case GangFocus.MONEY:
-      sortedTaskList = tasksByWantedLevel.sort(sortTasksByMoney);
+      sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByMoney);
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
