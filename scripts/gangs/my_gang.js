@@ -348,6 +348,8 @@ export class MyGang {
   }
 
   /**
+   * @param {string} fname - calling function name for logging
+   * @param {string} memberName
    * @param {string} fromTask
    * @param {string} toTask
    */
@@ -359,6 +361,8 @@ export class MyGang {
   }
 
   /**
+   * @param {string} fname - calling function name for logging
+   * @param {string} memberName
    * @param {GangTaskStats} fromTask
    * @param {GangTaskStats} toTask
    */

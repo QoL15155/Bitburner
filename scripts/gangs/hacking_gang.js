@@ -451,7 +451,7 @@ function handleMembersTaskFocus(ns) {
 
     // Resulted task may either be Ethical or Working.
     if (isEthicalTask(bestTask.name)) {
-      myGang.assignWorkingMemberToEthical(member);
+      myGang.assignWorkingMemberToEthicalTask(member, currentTask, bestTask);
     } else {
       myGang.updateMemberTask(member, currentTask, bestTask);
     }
