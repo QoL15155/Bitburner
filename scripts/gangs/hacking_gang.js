@@ -426,19 +426,21 @@ function sortMemberByTask(ns, memberName) {
 }
 
 /**
- * Go over working members and for each member make sure there isn't a task with the same
- * or lower wanted level but better focus gain.
+ * For each working member, check whether there is a task with the same or lower
+ * *wanted level* but better focus gain
+ *
+ * NOTE: Since the gang type hasn't changed, we only need to check the working members
+ *
+ * This function should be called either at the first run, or when the focus changed
+ * For example: after stopped recruiting
+ *
  */
-function membersCheckFocus(ns) {
-  const fname = "membersCheckFocus";
-
-  // NOTE: Since the gang type hasn't changed, we only need to check the working members
-  // See if there is a task with lower <= wanted level gain but better focus gain
+function handleMembersTaskFocus(ns) {
   myGang.membersWorking.forEach((memberName) => {
     const member = ns.gang.getMemberInformation(memberName);
     const currentTask = getTask(member.task);
 
-    const bestTask = getMemberBestTaskForWantedLevel(member, currentTask);
+    const bestTask = getMemberBestTaskForWantedLevel(currentTask);
 
     if (currentTask.name !== bestTask.name) {
       myGang.updateMemberTask(member, currentTask, bestTask);
@@ -448,9 +450,12 @@ function membersCheckFocus(ns) {
 
 /** Searches for the best task with the highest focus gain for a working member
  * that is less or equal to the current task wanted level gain.
+ *
+ * @param {string} memberTask - Currennt member's task
  */
-function getMemberBestTaskForWantedLevel(member, memberTask) {
+function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
+
   for (const task of tasksByWantedLevel) {
     if (task.baseWanted > memberTask.baseWanted) {
       return bestTask;
@@ -497,7 +502,7 @@ async function manageGang(ns) {
 
     if (myGang.checkFocus) {
       // Happens on either when first starting or on focus change
-      membersCheckFocus(ns);
+      handleMembersTaskFocus(ns);
       myGang.checkFocus = false;
     }
 
