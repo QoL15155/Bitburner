@@ -451,7 +451,7 @@ function handleMembersTaskFocus(ns) {
 /** Searches for the best task with the highest focus gain for a working member
  * that is less or equal to the current task wanted level gain.
  *
- * @param {string} memberTask - Currennt member's task
+ * @param {GangTaskStats} memberTask - Current member's task
  */
 function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
