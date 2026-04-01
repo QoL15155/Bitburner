@@ -318,10 +318,10 @@ export class MyGang {
    * @param {GangTaskStats} nextTask
    * */
   assignWorkingMemberToEthicalTask(memberObject, currentTask, nextTask) {
+    const fname = "assignWorkingMemberToEthicalTask";
     const memberName = memberObject.name;
-    const taskName = currentTask.name;
 
-    this.addMemberToEthical(memberName, taskName);
+    this.addMemberToEthical(memberName, nextTask.name);
     this.#membersWorking = this.#membersWorking.filter(
       (name) => name !== memberName,
     );
