@@ -4,6 +4,12 @@
  * These constants are suitable for both Hacking and Combat gangs.
  */
 
+export const memberNamePrefix = "Keves #";
+
+export const scriptHackingGang = "gangs/hacking_gang.js";
+// TODO: not implemented yet
+export const scriptCombatGang = "gangs/combat_gang.js";
+
 export const recruitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
 
 /**

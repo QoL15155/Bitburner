@@ -11,7 +11,7 @@ import {
   formatTimeSeconds,
   formatGainRate,
 } from "/utils/formatters.js";
-import { memberNamePrefix } from "./utils.js";
+import { memberNamePrefix } from "./constants.js";
 import {
   recruitmentMaxWaitTimeSeconds,
   wantedGainSafeThreshold,
@@ -24,6 +24,45 @@ import {
  *
  * Suitable for both Hacking and Combat gangs.
  */
+
+//#region Focus & Tasks
+
+export const GangFocus = Object.freeze({
+  RECRUITING: 0,
+  MONEY: 1,
+  POWER: 2,
+});
+
+const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
+const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
+
+export function isEthicalTask(taskName) {
+  return allEthicalTasks.includes(taskName);
+}
+
+export function isTrainingTask(taskName) {
+  return allTrainingTasks.includes(taskName);
+}
+
+export const TrainingTasks = {
+  [GangFocus.MONEY]: ["Train Hacking", "Train Charisma"],
+  [GangFocus.POWER]: ["Train Combat"],
+};
+
+export const EthicalTasks = {
+  [GangFocus.MONEY]: ["Ethical Hacking"],
+  [GangFocus.POWER]: ["Vigilante Justice"],
+};
+
+export function getGangTrainingTask(gangFocus) {
+  return TrainingTasks[gangFocus][0];
+}
+
+export function getGangEthicalTask(gangFocus) {
+  return EthicalTasks[gangFocus][0];
+}
+
+//#endregion Focus & Tasks
 
 //#region Recruitment
 

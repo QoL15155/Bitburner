@@ -1,16 +1,10 @@
-import { printError, printLogInfo } from "/utils/print.js";
+import { printError } from "/utils/print.js";
 
-export const memberNamePrefix = "Keves #";
-
-export const scriptHackingGang = "gangs/hacking_gang.js";
-// TODO: not implemented yet
-export const scriptCombatGang = "gang/combat_gang.js";
+//#region Tasks Files
 
 // Task lists
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
-
-//#region Tasks Files
 
 /**
  * Writes gang tasks to a json file for other scripts to use.
@@ -160,6 +154,9 @@ export function findMemberLowestWantedLevel(ns, memberNames) {
  * @param {string[]} memberNames
  * @param {GangTaskStats[]} sortedTasks - List of tasks sorted by focus gain (ascending)
  * @returns {{ member: GangMemberInfo, taskIdx: number }}
+ *    member: The member doing the least productive task.
+ *      Null if all members are doing the most productive task.
+ *    taskIdx: The index of the task in the sortedTasks array.
  */
 export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
   const fname = "findLeastProductiveMember";

@@ -1,4 +1,5 @@
-import { writeGangTasks, scriptHackingGang } from "./utils.js";
+import { writeGangTasks } from "./utils.js";
+import { scriptHackingGang } from "./constants.js";
 import { printInfo, printError, print } from "/utils/print.js";
 
 /**
@@ -25,8 +26,6 @@ export function startGangManagement(ns, toKill = false) {
   const gangInformation = ns.gang.getGangInformation();
   const isHackingGang = gangInformation.isHacking;
   writeGangTasks(ns, isHackingGang);
-
-  // TODO: sort-out members?
 
   if (!isHackingGang) {
     ns.tprint("ERROR Combat gang is not implemented yet!");
