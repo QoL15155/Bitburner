@@ -1,5 +1,4 @@
 import { printError, printWarn } from "/utils/print.js";
-import { formatMoney } from "/utils/formatters.js";
 import { AttackAction } from "/hack/attack_action.js";
 
 /**
