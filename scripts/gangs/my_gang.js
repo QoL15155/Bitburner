@@ -314,6 +314,7 @@ export class MyGang {
   }
 
   /** Assign member to the provided Ethical task
+   * @param {GangMemberInfo} memberObject
    * @param {GangTaskStats} currentTask
    * @param {GangTaskStats} nextTask
    * */

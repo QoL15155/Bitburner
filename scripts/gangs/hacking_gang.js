@@ -170,7 +170,7 @@ function lowerWantedLevel(ns) {
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
 
-  if (isEthicalTask(nextTask)) {
+  if (isEthicalTask(nextTask.name)) {
     myGang.assignWorkingMemberToEthicalTask(member, memberTask, nextTask);
   } else {
     myGang.updateMemberTask(member, memberTask, nextTask);
