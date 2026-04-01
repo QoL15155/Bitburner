@@ -185,18 +185,18 @@ function raiseFocusGain(ns) {
 
   // Training -> Working
   if (myGang.isMembersTraining) {
-    findTrainingMemberWorkTask();
+    assignTrainingMemberWorkTask();
     return;
   }
 
   if (myGang.ethicalMembersCount() > normalEthicalMembers) {
     // More than 2 members are doing ethical hacking, we can assign one of them to a money task.
-    findEthicalMemberWorkTask(ns);
+    assignEthicalMemberWorkTask(ns);
     return;
   }
 
   // Search among working members if someone can be assigned to a better money task.
-  if (tryUpgradeWorkingMember(ns)) {
+  if (tryUpdateWorkingMemberTask(ns)) {
     return;
   }
 
@@ -230,7 +230,7 @@ function raiseFocusGain(ns) {
 
   // Ethical -> Working
   // There is no working member with lower hacking level than ethical members. Remove Ethical member
-  findEthicalMemberWorkTask(ns);
+  assignEthicalMemberWorkTask(ns);
 }
 
 //#endregion Wanted Level
@@ -259,7 +259,7 @@ function getTask(taskName) {
  *
  * FIXME: take training member with best experience?
  **/
-function findTrainingMemberWorkTask() {
+function assignTrainingMemberWorkTask() {
   let focusTasks = null;
   switch (myGang.focus) {
     case GangFocus.RECRUITING:
@@ -287,7 +287,7 @@ function findTrainingMemberWorkTask() {
  * Assign a member from ethical to the less 'wanted' working task
  * The 'ethical' member with the least wanted level gain is chosen to minimize the wanted level gain increase.
  */
-function findEthicalMemberWorkTask(ns) {
+function assignEthicalMemberWorkTask(ns) {
   const member = findMemberLowestWantedLevel(ns, myGang.membersEthical);
   const currentTask = getTask(member.task);
 
@@ -320,7 +320,11 @@ function findEthicalMemberWorkTask(ns) {
   myGang.assignEthicalMemberToWork(member, lowestWantedTask.name);
 }
 
-function tryUpgradeWorkingMember(ns) {
+/** Try to find member another work task with better focus gain
+ * @returns {bool} false - when all working members have the optimal task
+ *    for focus gain
+ */
+function tryUpdateWorkingMemberTask(ns) {
   let sortedTaskList = null;
   switch (myGang.focus) {
     case GangFocus.RECRUITING:
@@ -447,7 +451,7 @@ function handleMembersTaskFocus(ns) {
 
     // Resulted task may either be Ethical or Working.
     if (isEthicalTask(bestTask.name)) {
-      assignWorkingMemberToEthical(member);
+      myGang.assignWorkingMemberToEthical(member);
     } else {
       myGang.updateMemberTask(member, currentTask, bestTask);
     }
