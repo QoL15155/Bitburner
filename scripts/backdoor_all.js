@@ -1,11 +1,11 @@
-import {
-  hackServer,
-  runTerminalCommand,
-  importServersData,
-  writeServersData,
-} from "/utils/servers.js";
 import { connectToServer } from "/connect.js";
 import { printInfo } from "/utils/print.js";
+import {
+  hackServer,
+  importServersData,
+  runTerminalCommand,
+  writeServersData,
+} from "/utils/servers.js";
 
 //#region Backdoor
 

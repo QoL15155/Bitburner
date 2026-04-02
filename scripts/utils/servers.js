@@ -1,5 +1,3 @@
-import { printError } from "/utils/print.js";
-
 const serverDataFile = "data/servers_data.json";
 
 //#region Host Scanning
@@ -9,7 +7,7 @@ const serverDataFile = "data/servers_data.json";
  * @param {NS} ns
  * @param {string} serverName
  * @param {string} parentName Parent of the current server
- * @return {array} list of child hosts
+ * @return {Array<string>} list of child hosts
  */
 export function scanHost(ns, serverName, parentName = "") {
   const fname = "scanHost";
@@ -36,7 +34,7 @@ export function scanHost(ns, serverName, parentName = "") {
  * Recursively scans all hosts in the network
  *
  * @param {NS} ns
- * @return list of servers in the network
+ * @return {Array<string>} list of servers in the network
  */
 export function listServers(ns) {
   /* Scans for children of the current host */
@@ -71,6 +69,9 @@ export function writeServersData(ns, serversData) {
   ns.write(serverDataFile, JSON.stringify(serversData), "w");
 }
 
+/** Export server data to a JSON file
+ * The data is saved as a JSON array of `MyServer` objects.
+ */
 export function exportServersData(ns) {
   function getServerData(serverName) {
     const serverObject = ns.getServer(serverName);
@@ -105,7 +106,7 @@ export function exportServersData(ns) {
  * Imports server data from the JSON file
  *
  * @param {NS} ns
- * @return {array} list of server data
+ * @return {Array<MyServer>} list of server data
  * @throws if servers data file doesn't exist
  */
 export function importServersData(ns) {

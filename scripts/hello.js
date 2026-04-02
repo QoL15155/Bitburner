@@ -1,6 +1,6 @@
-import { printInfo, printError } from "/utils/print.js";
-import { exportServersData, runTerminalCommand } from "/utils/servers.js";
 import { startGangManagement } from "/gangs/start.js";
+import { printError, printInfo } from "/utils/print.js";
+import { exportServersData, runTerminalCommand } from "/utils/servers.js";
 
 const backdoorScript = "backdoor_all.js";
 
@@ -51,5 +51,7 @@ export async function main(ns) {
   }
 
   ns.tprint("Running backdoor script");
-  ns.run(backdoorScript);
+  if (!ns.run(backdoorScript)) {
+    ns.tprint(`ERROR Running ${backdoorScript}`);
+  }
 }
