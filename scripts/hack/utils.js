@@ -14,7 +14,7 @@ function wasServerHacked(server) {
 /** Returns a list of servers that can attack other servers.
  *
  * @param {Array<MyServer>} serverList - list of all servers in the game
- * @returns {Array<MyServer>} list of servers that can be used to run attack scripts, sorted by max RAM (secondary cpu cores), descending.
+ * @returns {Array<MyServer>} list of servers that can be used to run attack scripts
  */
 export function getAttackingServers(serverList) {
   return serverList.filter((server) => {
@@ -44,7 +44,7 @@ export function getTargetServers(ns, serverList) {
       (s) =>
         s.maxMoney > 0 &&
         wasServerHacked(s) &&
-        s.requiredHackingLevel < maxHackingLevel,
+        s.requiredHackingLevel <= maxHackingLevel,
     )
     .sort((a, b) => b.maxMoney - a.maxMoney);
   return targetServers;

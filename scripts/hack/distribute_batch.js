@@ -24,6 +24,7 @@ const controllerScript = "/hack/controller_batch.js";
  */
 function handleAttackingServers(ns, allServers) {
   const attackingServers = getAttackingServers(allServers);
+
   attackingServers.forEach((server) =>
     distributeScriptsToServer(ns, server.name),
   );
