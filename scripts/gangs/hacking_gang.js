@@ -6,6 +6,7 @@ import {
   findMemberHighestWantedLevel,
   findMemberLowestHackingLevel,
   findMemberLowestWantedLevel,
+  readGangEquipment,
   readGangTasks,
 } from "./utils.js";
 import {
@@ -592,7 +593,7 @@ export async function main(ns) {
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
 
   // Equipment
-  equipmentByType = writeGangEquipment(ns);
+  equipmentByType = readGangEquipment(ns);
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);

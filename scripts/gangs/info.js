@@ -73,7 +73,7 @@ function printGangEquipment(ns) {
   ns.tprint("");
 }
 
-//#region Equipment
+//#endregion Equipment
 
 function printGangMembers(ns) {
   const gangMembers = ns.gang.getMemberNames();
