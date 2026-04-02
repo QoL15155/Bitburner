@@ -1,9 +1,5 @@
+import { formatGainRate } from "/utils/formatters.js";
 import { toGreen } from "/utils/print.js";
-import {
-  doConversion,
-  formatGainRate,
-  formatMoney,
-} from "/utils/formatters.js";
 
 function printTasks(ns) {
   for (const taskName of ns.gang.getTaskNames()) {
@@ -28,30 +24,28 @@ function printGangInformation(ns) {
   const nextRecruit =
     gangInformation.respectForNextRecruit === Infinity
       ? "N/A"
-      : doConversion(gangInformation.respectForNextRecruit);
+      : ns.formatNumber(gangInformation.respectForNextRecruit);
 
   // Wanted
   const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
 
-  // Territory
-  const territoryControlled = (gangInformation.territory * 100).toFixed(2);
-
   const prettyGangInformation = {
-    moneyGainRate: `${formatMoney(gangInformation.moneyGainRate * 5)}/sec`,
-    power: gangInformation.power,
+    members: ns.gang.getMemberNames().length,
+    moneyGainRate: `$${formatGainRate(gangInformation.moneyGainRate)}`,
+    power: ns.formatNumber(gangInformation.power),
     respect: {
-      current: doConversion(gangInformation.respect),
+      current: ns.formatNumber(gangInformation.respect),
       nextRecruit: nextRecruit,
       gainRate: respectPerSecond,
     },
     wanted: {
-      level: doConversion(gangInformation.wantedLevel.toFixed(3)),
+      level: ns.formatNumber(gangInformation.wantedLevel),
       gainRate: wantedGainRate,
       penalty: gangInformation.wantedPenalty,
     },
     territory: {
-      percentControlled: `${territoryControlled} %%`,
-      clashChance: gangInformation.territoryClashChance,
+      percentControlled: ns.formatPercent(gangInformation.territory),
+      clashChance: ns.formatPercent(gangInformation.territoryClashChance),
       warfareEngaged: gangInformation.territoryWarfareEngaged,
     },
   };
@@ -91,8 +85,9 @@ export async function main(ns) {
     ns.tprint("Assumes that you have already created a gang.");
     ns.tprint("");
     ns.tprint("Options:");
-    ns.tprint("  --tasks    - Print information about gang tasks");
-    ns.tprint("  --members  - Print information about gang members");
+    ns.tprint("  --help, -h     - Show this help message");
+    ns.tprint("  --tasks        - Print information about gang tasks");
+    ns.tprint("  --members      - Print information about gang members");
     return;
   }
 

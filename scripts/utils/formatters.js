@@ -35,7 +35,7 @@ export function doConversion(value) {
     return `${(value / thousand).toFixed(3)}k`;
   }
 
-  return value.toString();
+  return value.toFixed(3).toString();
 }
 
 /**
@@ -98,5 +98,6 @@ export function formatMoney(money) {
 
 /** Gain rates are per game cycle (200 ms) */
 export function formatGainRate(gainRate) {
-  return `${(gainRate * 5).toFixed(3)}/sec`;
+  const gainPerSecond = doConversion(gainRate * 5);
+  return `${gainPerSecond}/sec`;
 }
