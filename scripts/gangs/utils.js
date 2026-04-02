@@ -1,10 +1,27 @@
 import { printError } from "/utils/print.js";
 
-//#region Tasks Files
-
 // Task lists
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
+
+// Gang equipment lists
+const equipmentJsonHackingFilename = "data/gang_equipment_hacking.json";
+const equipmentJsonCombatFilename = "data/gang_equipment_combat.json";
+
+function checkFileExists(ns, fname, type, filename) {
+  if (ns.fileExists(filename)) {
+    return true;
+  }
+
+  printError(
+    ns,
+    `[${fname}] ${type} file ${filename} does not exist. Please run the gangs/start.js script to generate the ${type} file.`,
+  );
+
+  return false;
+}
+
+//#region Tasks
 
 /**
  * Writes gang tasks to a json file for other scripts to use.
@@ -15,12 +32,13 @@ const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
  */
 export function writeGangTasks(ns, isHackingGang = true) {
   const fname = "writeGangTasks";
-  const tasks = ns.gang.getTaskNames().map((taskName) => {
-    return ns.gang.getTaskStats(taskName);
-  });
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
+
+  const tasks = ns.gang.getTaskNames().map((taskName) => {
+    return ns.gang.getTaskStats(taskName);
+  });
 
   ns.write(filename, JSON.stringify(tasks, null, 2), "w");
   ns.printf(
@@ -41,11 +59,8 @@ export function readGangTasks(ns, isHackingGang = true) {
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
-  if (!ns.fileExists(filename)) {
-    printError(
-      ns,
-      `[${fname}] Tasks file ${filename} does not exist. Please run the gangs/start.js script to generate the tasks file.`,
-    );
+
+  if (!checkFileExists(ns, fname, "Tasks", filename)) {
     return [];
   }
 
@@ -57,7 +72,88 @@ export function readGangTasks(ns, isHackingGang = true) {
   return tasks;
 }
 
-//#endregion Tasks Files
+//#endregion Tasks
+
+//#region Equipment
+
+/**
+ * Creates an object containing information about all gang equipment.
+ * To be used to write gang equipment to a json file and for gang information script.
+ */
+export function getGangEquipmentInformation(ns) {
+  let augmentations = { hacking: [], combat: [] };
+  let regular = { hacking: [], combat: [] };
+  for (const equipmentName of ns.gang.getEquipmentNames()) {
+    const type = ns.gang.getEquipmentType(equipmentName);
+    const equipmentStats = ns.gang.getEquipmentStats(equipmentName);
+    const cost = ns.gang.getEquipmentCost(equipmentName);
+    const equipmentInfo = {
+      name: equipmentName,
+      type: type,
+      cost: cost,
+      stats: equipmentStats,
+    };
+    if (type === "Augmentation") {
+      if (equipmentStats.hack) {
+        augmentations.hacking.push(equipmentInfo);
+      } else {
+        augmentations.combat.push(equipmentInfo);
+      }
+    } else {
+      if (equipmentStats.hack) {
+        regular.hacking.push(equipmentInfo);
+      } else {
+        regular.combat.push(equipmentInfo);
+      }
+    }
+  }
+  const equipment = {
+    augmentations: augmentations,
+    regular: regular,
+  };
+  return equipment;
+}
+
+/**
+ * Writes gang equipment to a json file for other scripts to use.
+ * Assumes player has already created a gang and equipment is available.
+ *
+ * FIXME: is the gang type actually matter?
+ * @param {NS} ns
+ * @param {boolean} isHackingGang : Hacking / Combat gang
+ */
+export function writeGangEquipment(ns, isHackingGang = true) {
+  const fname = "writeGangEquipment";
+  const filename = isHackingGang
+    ? equipmentJsonHackingFilename
+    : equipmentJsonCombatFilename;
+
+  const equipment = getGangEquipmentInformation(ns);
+  ns.write(filename, JSON.stringify(equipment, null, 2), "w");
+  ns.printf(
+    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} equipment written to ${filename}`,
+  );
+}
+
+export function readGangEquipment(ns, isHackingGang = true) {
+  const fname = "readGangEquipment";
+  const filename = isHackingGang
+    ? equipmentJsonHackingFilename
+    : equipmentJsonCombatFilename;
+
+  if (!checkFileExists(ns, fname, "Equipment", filename)) {
+    return [];
+  }
+
+  const equipmentJson = ns.read(filename);
+  const equipment = JSON.parse(equipmentJson);
+  ns.printf(
+    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} equipment read from ${filename}`,
+  );
+  return equipment;
+}
+
+//#endregion Equipment
 
 //#region Member Finder
 

@@ -1,10 +1,39 @@
+import { getGangEquipmentInformation } from "./utils";
 import { formatGainRate } from "/utils/formatters.js";
-import { toGreen } from "/utils/print.js";
+import { printInfo, toGreen } from "/utils/print.js";
 
-function printTasks(ns) {
-  for (const taskName of ns.gang.getTaskNames()) {
-    const task = ns.gang.getTaskStats(taskName);
-    ns.tprint(JSON.stringify(task, null, 2));
+function printGangEquipment(ns) {
+  const equipment = getGangEquipmentInformation(ns);
+  ns.tprint(`Gang equipment (${equipment.length})`);
+  const augmentations = equipment.augmentations;
+  const regular = equipment.regular;
+  const totalEquipment = augmentations.length + regular.length;
+
+  printInfo(
+    ns,
+    `Augmentations (${augmentations.hacking.length + augmentations.combat.length})`,
+  );
+  printInfo(ns, `Hacking Augmentations: (${augmentations.hacking.length})`);
+  printEquipment(augmentations.hacking);
+  printInfo(ns, `Combat Augmentations: (${augmentations.combat.length})`);
+  printEquipment(augmentations.combat);
+
+  ns.tprint("");
+  printInfo(
+    ns,
+    `Regular Equipment (${regular.hacking.length + regular.combat.length})`,
+  );
+  printInfo(ns, `Hacking Regular Equipment: (${regular.hacking.length})`);
+  printEquipment(regular.hacking);
+  printInfo(ns, `Combat Regular Equipment: (${regular.combat.length})`);
+  printEquipment(regular.combat);
+
+  function printEquipment(items) {
+    for (const item of items) {
+      ns.tprint(
+        `\t\t${item.name} (${item.type}) - Cost: ${ns.formatNumber(item.cost)}, Stats: ${JSON.stringify(item.stats)}`,
+      );
+    }
   }
 }
 
@@ -17,6 +46,14 @@ function printGangMembers(ns) {
   }
 }
 
+function printTasks(ns) {
+  for (const taskName of ns.gang.getTaskNames()) {
+    const task = ns.gang.getTaskStats(taskName);
+    ns.tprint(JSON.stringify(task, null, 2));
+  }
+}
+
+//#region Gang Info
 function printGangInformation(ns) {
   const gangInformation = ns.gang.getGangInformation();
 
@@ -55,6 +92,8 @@ function printGangInformation(ns) {
   ns.tprint(JSON.stringify(prettyGangInformation, null, 2));
 }
 
+//#endregion Gang Info
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -62,7 +101,7 @@ function printGangInformation(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--tasks", "--members"];
+  const options = ["--equipment", "--members", "--tasks"];
 
   return [...defaultOptions, ...options];
 }
@@ -74,6 +113,7 @@ export async function main(ns) {
     ["h", false],
     ["tasks", false],
     ["members", false],
+    ["equipment", false],
   ]);
 
   if (args.help || args.h) {
@@ -86,17 +126,22 @@ export async function main(ns) {
     ns.tprint("");
     ns.tprint("Options:");
     ns.tprint("  --help, -h     - Show this help message");
-    ns.tprint("  --tasks        - Print information about gang tasks");
+    ns.tprint("  --equipment    - Print information about gang equipment");
     ns.tprint("  --members      - Print information about gang members");
+    ns.tprint("  --tasks        - Print information about gang tasks");
     return;
   }
 
-  if (args.tasks) {
-    printTasks(ns);
+  if (args.equipment) {
+    printGangEquipment(ns);
   }
 
   if (args.members) {
     printGangMembers(ns);
+  }
+
+  if (args.tasks) {
+    printTasks(ns);
   }
 
   printGangInformation(ns);
