@@ -142,7 +142,7 @@ export function readGangEquipment(ns, isHackingGang = true) {
     : equipmentJsonCombatFilename;
 
   if (!checkFileExists(ns, fname, "Equipment", filename)) {
-    return [];
+    return null;
   }
 
   const equipmentJson = ns.read(filename);
