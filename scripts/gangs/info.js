@@ -1,4 +1,4 @@
-import { getGangEquipmentInformation } from "./utils";
+import { getGangEquipmentInformation } from "./utils.js";
 import { formatGainRate } from "/utils/formatters.js";
 import { printInfo, toGreen } from "/utils/print.js";
 

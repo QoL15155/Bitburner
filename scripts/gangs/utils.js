@@ -118,7 +118,7 @@ export function getGangEquipmentInformation(ns) {
  * Writes gang equipment to a json file for other scripts to use.
  * Assumes player has already created a gang and equipment is available.
  *
- * FIXME: is the gang type actually matter?
+ * FIXME: does the gang type actually matter?
  * @param {NS} ns
  * @param {boolean} isHackingGang : Hacking / Combat gang
  */
