@@ -1,5 +1,3 @@
-import { printError } from "/utils/print.js";
-
 const serverDataFile = "data/servers_data.json";
 
 //#region Host Scanning
@@ -36,7 +34,7 @@ export function scanHost(ns, serverName, parentName = "") {
  * Recursively scans all hosts in the network
  *
  * @param {NS} ns
- * @return list of servers in the network
+ * @return {Array} list of servers in the network
  */
 export function listServers(ns) {
   /* Scans for children of the current host */

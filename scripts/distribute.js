@@ -1,7 +1,7 @@
-import { getRootAccess, listServers } from "./utils/servers.js";
-import { getMoneyServer } from "./money_info.js";
-import { printError, printInfo } from "/utils/print.js";
+import { getRootAccess, importServersData } from "./utils/servers.js";
+import { getAttackingServers, getTargetServers } from "/hack/utils.js";
 import { formatMoney } from "/utils/formatters.js";
+import { printError, printInfo } from "/utils/print.js";
 
 // Script names to distribute to servers.
 const scriptsToDistribute = {
@@ -92,33 +92,32 @@ export async function main(ns) {
 
   disableLogs(ns);
 
-  const serverList = listServers(ns);
-  const myServers = ns.getPurchasedServers();
+  const serverList = importServersData(ns);
+  const myServers = serverList.filter((server) => server.purchasedByPlayer);
 
-  let targetServerName = args._[0];
-  if (!targetServerName) {
-    targetServerName = getMoneyServer(ns, serverList, false);
+  ns.tprint(
+    `All servers: ${serverList.length}, Purchased servers: ${myServers.length}`,
+  );
+
+  const targetServer = getTargetServer(ns, serverList, args._[0]);
+  if (!targetServer) {
+    return;
   }
 
   // Amount of free memory to leave at home server.
   const memoryFree = args.free_memory;
 
-  const targetServer = {
-    name: targetServerName,
-    maxMoney: ns.getServerMaxMoney(targetServerName),
-    minSecurity: ns.getServerMinSecurityLevel(targetServerName),
-  };
   printInfo(
     ns,
-    `[${fname}] Target: ${targetServerName}(Max Money: ${formatMoney(targetServer.maxMoney)}, Min Security: ${targetServer.minSecurity}). Servers: ${serverList.length}`,
+    `[${fname}] Target: ${targetServer.name}(Max Money: ${formatMoney(targetServer.maxMoney)}, Min Security: ${targetServer.minSecurity}).`,
   );
 
   // Maps of server and number of threads
-  const distributedServers = findServersToDistribute(serverList);
+  const attackingServers = handleAttackingServers(serverList);
 
   printInfo(
     ns,
-    `[${fname}] Distributed scripts to ${Object.keys(distributedServers).length}/${serverList.length} hosts`,
+    `[${fname}] Distributed scripts to ${Object.keys(attackingServers).length}/${serverList.length} hosts`,
   );
 
   // Home - calculate number of threads
@@ -128,10 +127,10 @@ export async function main(ns) {
       `[${fname}] Not enough memory to run script on home. Max Ram: ${ns.getServerMaxRam("home")}, Used RAM: ${ns.getServerUsedRam("home")}`,
     );
   } else {
-    distributedServers["home"] = threads;
+    attackingServers["home"] = threads;
   }
 
-  runScriptsOnServers(distributedServers);
+  runScriptsOnServers(attackingServers);
 
   /**
    * @param {string} serverName Name of the server to run the script on
@@ -165,6 +164,9 @@ export async function main(ns) {
 
   //#region Run scripts
 
+  /** Run scripts on attacking servers
+   * @param {Object} serverList Map of server name and number of threads that can be run on the server.
+   */
   function runScriptsOnServers(serverList) {
     const fname = "runScriptsOnServers";
 
@@ -264,8 +266,14 @@ export async function main(ns) {
       return 0;
     }
 
-    const threads = Math.min(serverThreads, maxThreads);
-    const ppid = ns.exec(scriptName, serverName, threads, targetServerName);
+    const threadNumber = Math.min(serverThreads, maxThreads);
+    const ppid = ns.exec(
+      scriptName,
+      serverName,
+      { threads: threadNumber },
+      targetServer.name,
+    );
+
     if (ppid) {
       ns.printf(`[${fname}] PID: ${ppid}`);
     } else {
@@ -274,9 +282,9 @@ export async function main(ns) {
       return 0;
     }
 
-    serverData[1] -= threads;
+    serverData[1] -= threadNumber;
 
-    return threads;
+    return threadNumber;
   }
 
   /**
@@ -290,7 +298,7 @@ export async function main(ns) {
    * @returns { Object } Object with number of threads for each script type(hack, weaken, grow)
    */
   function distributionAlgorithm(ns, totalThreads) {
-    const fname = "distributionAlgorithm1";
+    const fname = "distributionAlgorithm";
 
     // For now lets do a stupid algorithm
     const percentageHackingThreads = 0.01;
@@ -340,16 +348,18 @@ export async function main(ns) {
    * Finds servers to distribute scripts to and distributes them.
    *
    * @param {NS} ns
-   * @param {string[]} serverList - list of servers to distribute scripts to
+   * @param {Array<MyServer>} serverList - list of servers to distribute scripts to
    * @returns {Object} Map of server name and number of threads that can be run on the server.
    *  (for script with max ram)
    */
-  function findServersToDistribute(serverList) {
-    const fname = "findServersToDistribute";
+  function handleAttackingServers(serverList) {
+    const fname = "handleAttackingServers";
+    const attackingServers = getAttackingServers(serverList);
 
     let validServers = {};
 
-    for (const serverName of serverList) {
+    for (const server of attackingServers) {
+      const serverName = server.name;
       ns.printf("=> [%s] Server: %s", fname, serverName);
 
       const runnableThreads = distributeScriptsToServer(serverName);
@@ -433,3 +443,38 @@ export async function main(ns) {
 }
 
 //#endregion Distribute
+
+//#region Utils
+
+function getTargetServer(ns, allServers, targetServerName) {
+  let targetServer;
+
+  if (targetServerName) {
+    // Get server object from argument
+    targetServer = allServers.find(
+      (server) => server.name === targetServerName,
+    );
+
+    if (!targetServer) {
+      ns.tprint(
+        `ERROR: Target server ${targetServerName} not found in server list! Exiting...`,
+      );
+      return null;
+    }
+  } else {
+    const targetServers = getTargetServers(ns, allServers);
+    if (targetServers == null || targetServers.length === 0) {
+      ns.tprint("ERROR: No target servers found! Exiting...");
+      return null;
+    }
+    targetServer = targetServers[0];
+  }
+
+  return {
+    name: targetServer.name,
+    maxMoney: targetServer.maxMoney,
+    minSecurity: targetServer.minDifficulty,
+  };
+}
+
+//#endregion Utils

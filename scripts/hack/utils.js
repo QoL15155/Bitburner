@@ -1,5 +1,56 @@
-import { printError, printWarn } from "/utils/print.js";
 import { AttackAction } from "/hack/attack_action.js";
+import { printError, printWarn } from "/utils/print.js";
+
+//#region Servers
+
+/**
+ * @param {MyServer} server
+ * @returns {boolean} true if server was hacked
+ */
+function wasServerHacked(server) {
+  return server.hasAdminRights || server.backdoorInstalled;
+}
+
+/** Returns a list of servers that can attack other servers.
+ *
+ * @param {Array<MyServer>} serverList - list of all servers in the game
+ * @returns {Array<MyServer>} list of servers that can be used to run attack scripts, sorted by max RAM (secondary cpu cores), descending.
+ */
+export function getAttackingServers(serverList) {
+  return serverList.filter((server) => {
+    return (
+      server.maxRam > 0 && (server.purchasedByPlayer || wasServerHacked(server))
+    );
+  });
+}
+
+/**
+ * Returns a list of servers that can be targeted for hacking.
+ *
+ * @param {NS} ns
+ * @param {Array<MyServer>} serverList - list of all servers in the game
+ * @returns {Array<MyServer>} list of servers that can be targeted for hacking.
+ *    sorted by max money, descending.
+ */
+export function getTargetServers(ns, serverList) {
+  let maxHackingLevel = ns.getHackingLevel();
+  if (maxHackingLevel > 1) {
+    maxHackingLevel /= 2;
+  }
+
+  // Servers that can be hacked
+  const targetServers = serverList
+    .filter(
+      (s) =>
+        s.maxMoney > 0 &&
+        wasServerHacked(s) &&
+        s.requiredHackingLevel < maxHackingLevel,
+    )
+    .sort((a, b) => b.maxMoney - a.maxMoney);
+  return targetServers;
+}
+
+//#endregion Servers
 
 /**
  * Calculates the server execution times

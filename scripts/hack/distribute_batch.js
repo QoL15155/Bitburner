@@ -1,4 +1,5 @@
-import { printError, printLogError, Color } from "/utils/print.js";
+import { getAttackingServers, getTargetServers } from "/hack/utils.js";
+import { Color, printError, printLogError } from "/utils/print.js";
 import { importServersData } from "/utils/servers.js";
 
 /* Scripts  */
@@ -12,26 +13,17 @@ const controllerScript = "/hack/controller_batch.js";
 
 /* Utils */
 
-function wasServerHacked(server) {
-  return server.hasAdminRights || server.backdoorInstalled;
-}
-
 //#region Distribution
 
 /**
  * Get servers that can run scripts and distribute the scripts to them.
  *
  * @param {NS} ns
- * @param {Array} allServers - list of all servers in the game
- * @returns {Array} servers that can run scripts, sorted by max RAM (secondary cpu cores), descending.
+ * @param {Array<MyServer>} allServers - list of all servers in the game
+ * @returns {Array<MyServer>} servers that can run scripts, sorted by max RAM (secondary cpu cores), descending.
  */
 function handleAttackingServers(ns, allServers) {
-  const attackingServers = allServers.filter((server) => {
-    return (
-      server.maxRam > 0 && (server.purchasedByPlayer || wasServerHacked(server))
-    );
-  });
-
+  const attackingServers = getAttackingServers(allServers);
   attackingServers.forEach((server) =>
     distributeScriptsToServer(ns, server.name),
   );
@@ -181,9 +173,7 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
       return false;
     }
 
-    const len = runningScripts.length;
-
-    displayWaitingScripts(ns, runningScripts, len, attempts);
+    displayWaitingScripts(ns, runningScripts, runningScripts.length, attempts);
     await ns.sleep(1000);
     attempts--;
   }
@@ -217,21 +207,10 @@ async function smartDistribution(ns, useFormulas) {
   const allServers = importServersData(ns);
 
   // Distribute scripts and return list of the servers.
-  // Arrange by max RAM. Home should be first(?)
+  // Arrange by max RAM. Home should be first (?)
   const attackingServers = handleAttackingServers(ns, allServers);
 
-  let maxHackingLevel = ns.getHackingLevel();
-  if (maxHackingLevel > 1) maxHackingLevel /= 2;
-
-  // Servers that can be hacked
-  const targetServers = allServers
-    .filter(
-      (s) =>
-        s.maxMoney > 0 &&
-        wasServerHacked(s) &&
-        s.requiredHackingLevel < maxHackingLevel,
-    )
-    .sort((a, b) => b.maxMoney - a.maxMoney);
+  const targetServers = getTargetServers(ns, allServers);
 
   const distributionSummary = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
   ns.tprint(distributionSummary);
