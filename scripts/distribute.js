@@ -89,13 +89,6 @@ export async function main(ns) {
 
   /** @type {MyServer[]} */
   const serverList = importServersData(ns);
-  const myServers = serverList
-    .filter((server) => server.purchasedByPlayer)
-    .map((s) => s.name);
-
-  ns.tprint(
-    `Total servers: ${serverList.length}, Purchased: ${myServers.length}`,
-  );
 
   const targetServer = getTargetServer(ns, serverList, args._[0]);
   if (!targetServer) {
