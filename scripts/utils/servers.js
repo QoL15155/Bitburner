@@ -70,7 +70,7 @@ export function writeServersData(ns, serversData) {
 }
 
 /** Export server data to a JSON file
- * The data is saved in @type {MyServer[]} format
+ * The data is saved as a JSON array of `MyServer` objects.
  */
 export function exportServersData(ns) {
   function getServerData(serverName) {

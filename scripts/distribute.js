@@ -118,16 +118,6 @@ export async function main(ns) {
     `[${fname}] Distributed scripts to ${Object.keys(attackingServers).length}/${serverList.length} hosts`,
   );
 
-  // Home - calculate number of threads
-  const threads = distributeScriptsToServer("home");
-  if (threads === 0) {
-    ns.tprint(
-      `[${fname}] Not enough memory to run script on home. Max Ram: ${ns.getServerMaxRam("home")}, Used RAM: ${ns.getServerUsedRam("home")}`,
-    );
-  } else {
-    attackingServers["home"] = threads;
-  }
-
   runScriptsOnServers(attackingServers);
 
   /**
@@ -300,6 +290,12 @@ export async function main(ns) {
   function distributionAlgorithm(ns, totalThreads) {
     const fname = "distributionAlgorithm";
 
+    if (totalThreads <= 3) {
+      throw new Error(
+        `[${fname}] Not enough threads to run all scripts. Total threads: ${totalThreads}`,
+      );
+    }
+
     // For now lets do a stupid algorithm
     const percentageHackingThreads = 0.01;
     const percentageWeakenThreads = 0.05;
@@ -381,6 +377,11 @@ export async function main(ns) {
       const runnableThreads = distributeScriptsToServer(serverName);
       if (runnableThreads === 0) {
         // Failed to distribute script to the server. Skip it.
+        if (serverName === "home") {
+          ns.tprint(
+            `[${fname}] Not enough memory to run script on home. Max Ram: ${server.maxRam}, Used RAM: ${ns.getServerUsedRam("home")}`,
+          );
+        }
         continue;
       }
       ns.printf(
