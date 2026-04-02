@@ -1,37 +1,62 @@
 import { getGangEquipmentInformation } from "./utils.js";
 import { formatGainRate } from "/utils/formatters.js";
-import { printInfo, toGreen } from "/utils/print.js";
+import { Color, printInfo, toGreen } from "/utils/print.js";
 
 function printGangEquipment(ns) {
   const equipment = getGangEquipmentInformation(ns);
-  ns.tprint(`Gang equipment (${equipment.length})`);
   const augmentations = equipment.augmentations;
   const regular = equipment.regular;
-  const totalEquipment = augmentations.length + regular.length;
 
+  // Total Equipment
+  const totalEquipment =
+    augmentations.hacking.length +
+    augmentations.combat.length +
+    regular.hacking.length +
+    regular.combat.length;
+  ns.tprint(`Gang equipment : ${totalEquipment}`);
+
+  // Augmentations
   printInfo(
     ns,
-    `Augmentations (${augmentations.hacking.length + augmentations.combat.length})`,
+    `${Color.FgBlueBright}Augmentations (${augmentations.hacking.length + augmentations.combat.length})${Color.Reset}`,
   );
-  printInfo(ns, `Hacking Augmentations: (${augmentations.hacking.length})`);
+  printInfo(
+    ns,
+    `${Color.FgBlue}Hacking Augmentations: (${augmentations.hacking.length})${Color.Reset}`,
+  );
   printEquipment(augmentations.hacking);
-  printInfo(ns, `Combat Augmentations: (${augmentations.combat.length})`);
+  printInfo(
+    ns,
+    `${Color.FgBlue}Combat Augmentations: (${augmentations.combat.length})${Color.Reset}`,
+  );
   printEquipment(augmentations.combat);
 
   ns.tprint("");
+
+  // Regular Equipment
   printInfo(
     ns,
-    `Regular Equipment (${regular.hacking.length + regular.combat.length})`,
+    `${Color.FgMagentaBright}Regular Equipment (${regular.hacking.length + regular.combat.length})${Color.Reset}`,
   );
-  printInfo(ns, `Hacking Regular Equipment: (${regular.hacking.length})`);
+  printInfo(
+    ns,
+    `${Color.FgMagenta}Hacking Regular Equipment: (${regular.hacking.length})${Color.Reset}`,
+  );
   printEquipment(regular.hacking);
-  printInfo(ns, `Combat Regular Equipment: (${regular.combat.length})`);
+  printInfo(
+    ns,
+    `${Color.FgMagenta}Combat Regular Equipment: (${regular.combat.length})${Color.Reset}`,
+  );
   printEquipment(regular.combat);
+
+  ns.tprint("");
+  ns.tprint("");
 
   function printEquipment(items) {
     for (const item of items) {
+      const name = toGreen(item.name);
       ns.tprint(
-        `\t\t${item.name} (${item.type}) - Cost: ${ns.formatNumber(item.cost)}, Stats: ${JSON.stringify(item.stats)}`,
+        `\t\t${name} (${item.type}) - Cost: ${ns.formatNumber(item.cost)}, Stats: ${JSON.stringify(item.stats)}`,
       );
     }
   }
