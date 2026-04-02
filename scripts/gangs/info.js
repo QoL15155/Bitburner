@@ -15,28 +15,35 @@ function printEquipmentItems(ns, items) {
 
 function printGangEquipmentType(ns, name, colorMain, colorSub, equipment) {
   const totalItems = equipment.hacking.length + equipment.combat.length;
+  const playerMoney = ns.getPlayer().money;
+  // Costs
   const hackingCost = equipment.hacking.reduce(
     (sum, item) => sum + item.cost,
     0,
   );
   const combatCost = equipment.combat.reduce((sum, item) => sum + item.cost, 0);
   const totalCost = hackingCost + combatCost;
+  // Percentages
+  const hackingCostPercent = ns.formatPercent(hackingCost / playerMoney);
+  const combatCostPercent = ns.formatPercent(combatCost / playerMoney);
+  const totalCostPercent = ns.formatPercent(totalCost / playerMoney);
+
   printInfo(
     ns,
-    `${colorMain}${name} (${totalItems}) - Total Cost: ${ns.formatNumber(totalCost)}${Color.Reset}`,
+    `${colorMain}${name} (${totalItems}) - Total Cost: ${ns.formatNumber(totalCost)}. (${totalCostPercent})${Color.Reset}`,
   );
 
   // Hacking
   printInfo(
     ns,
-    `${colorSub}Hacking ${name}: (${equipment.hacking.length}) - Total Cost: ${ns.formatNumber(hackingCost)}${Color.Reset}`,
+    `${colorSub}Hacking ${name}: (${equipment.hacking.length}) - Total Cost: ${ns.formatNumber(hackingCost)} (${hackingCostPercent})${Color.Reset}`,
   );
   printEquipmentItems(ns, equipment.hacking);
 
   // Combat
   printInfo(
     ns,
-    `${colorSub}Combat ${name}: (${equipment.combat.length}) - Total Cost: ${ns.formatNumber(combatCost)}${Color.Reset}`,
+    `${colorSub}Combat ${name}: (${equipment.combat.length}) - Total Cost: ${ns.formatNumber(combatCost)} (${combatCostPercent})${Color.Reset}`,
   );
   printEquipmentItems(ns, equipment.combat);
 }
