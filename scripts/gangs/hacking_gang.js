@@ -1,32 +1,32 @@
+import { normalEthicalMembers } from "./constants.js";
+import { MyGang } from "./my_gang.js";
+import {
+  findLeastProductiveMember,
+  findMemberHighestHackingLevel,
+  findMemberHighestWantedLevel,
+  findMemberLowestHackingLevel,
+  findMemberLowestWantedLevel,
+  readGangTasks,
+} from "./utils.js";
+import {
+  ascendGangMembers,
+  EthicalTasks,
+  GangFocus,
+  getWantedLevelStatus,
+  handleRecruitmentStatus,
+  isEthicalTask,
+  isTrainingTask,
+  recruitGangMembers,
+  TrainingTasks,
+  WantedLevelStatus,
+} from "/gangs/manage.js";
+import { formatGainRate } from "/utils/formatters.js";
 import {
   printError,
   printLogInfo,
   printLogWarn,
   printWarn,
 } from "/utils/print.js";
-import {
-  readGangTasks,
-  findMemberHighestHackingLevel,
-  findMemberLowestHackingLevel,
-  findMemberHighestWantedLevel,
-  findMemberLowestWantedLevel,
-  findLeastProductiveMember,
-} from "./utils.js";
-import {
-  recruitGangMembers,
-  handleRecruitmentStatus,
-  ascendGangMembers,
-  getWantedLevelStatus,
-  WantedLevelStatus,
-  isEthicalTask,
-  isTrainingTask,
-  GangFocus,
-  TrainingTasks,
-  EthicalTasks,
-} from "/gangs/manage.js";
-import { normalEthicalMembers } from "./constants.js";
-import { formatGainRate } from "/utils/formatters.js";
-import { MyGang } from "./my_gang.js";
 
 // Tasks
 // =====================
@@ -48,6 +48,8 @@ let tasksByWantedLevel = null;
 let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
+
+let equipmentByType = null;
 
 /** @type {MyGang} */
 let myGang = null;
@@ -588,6 +590,9 @@ export async function main(ns) {
     (task) => task.baseRespect > 0,
   );
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
+
+  // Equipment
+  equipmentByType = writeGangEquipment(ns);
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);

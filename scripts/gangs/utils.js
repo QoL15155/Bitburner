@@ -4,9 +4,8 @@ import { printError } from "/utils/print.js";
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
 
-// Gang equipment lists
-const equipmentJsonHackingFilename = "data/gang_equipment_hacking.json";
-const equipmentJsonCombatFilename = "data/gang_equipment_combat.json";
+// Gang equipment mapping
+const equipmentJsonFilename = "data/gang_equipment.json";
 
 function checkFileExists(ns, fname, type, filename) {
   if (ns.fileExists(filename)) {
@@ -118,28 +117,20 @@ export function getGangEquipmentInformation(ns) {
  * Writes gang equipment to a json file for other scripts to use.
  * Assumes player has already created a gang and equipment is available.
  *
- * FIXME: does the gang type actually matter?
  * @param {NS} ns
- * @param {boolean} isHackingGang : Hacking / Combat gang
  */
-export function writeGangEquipment(ns, isHackingGang = true) {
+export function writeGangEquipment(ns) {
   const fname = "writeGangEquipment";
-  const filename = isHackingGang
-    ? equipmentJsonHackingFilename
-    : equipmentJsonCombatFilename;
+  const filename = equipmentJsonFilename;
 
   const equipment = getGangEquipmentInformation(ns);
   ns.write(filename, JSON.stringify(equipment, null, 2), "w");
-  ns.printf(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} equipment written to ${filename}`,
-  );
+  ns.printf(`[${fname}] Equipment object written to ${filename}`);
 }
 
-export function readGangEquipment(ns, isHackingGang = true) {
+export function readGangEquipment(ns) {
   const fname = "readGangEquipment";
-  const filename = isHackingGang
-    ? equipmentJsonHackingFilename
-    : equipmentJsonCombatFilename;
+  const filename = equipmentJsonFilename;
 
   if (!checkFileExists(ns, fname, "Equipment", filename)) {
     return null;
@@ -147,9 +138,7 @@ export function readGangEquipment(ns, isHackingGang = true) {
 
   const equipmentJson = ns.read(filename);
   const equipment = JSON.parse(equipmentJson);
-  ns.printf(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} equipment read from ${filename}`,
-  );
+  ns.printf(`[${fname}] Equipment read from ${filename}`);
   return equipment;
 }
 

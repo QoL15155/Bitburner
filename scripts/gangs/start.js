@@ -1,6 +1,6 @@
-import { writeGangTasks } from "./utils.js";
 import { scriptHackingGang } from "./constants.js";
-import { printInfo, printError, print } from "/utils/print.js";
+import { writeGangEquipment, writeGangTasks } from "./utils.js";
+import { print, printError, printInfo } from "/utils/print.js";
 
 /**
  * Handles joining a new gang, or starting gang management after restart
@@ -26,6 +26,7 @@ export function startGangManagement(ns, toKill = false) {
   const gangInformation = ns.gang.getGangInformation();
   const isHackingGang = gangInformation.isHacking;
   writeGangTasks(ns, isHackingGang);
+  writeGangEquipment(ns);
 
   if (!isHackingGang) {
     ns.tprint("ERROR Combat gang is not implemented yet!");
