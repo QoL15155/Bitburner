@@ -1,8 +1,8 @@
-import { startGangManagement } from "/gangs/start.js";
 import { printError, printInfo } from "/utils/print.js";
 import { exportServersData, runTerminalCommand } from "/utils/servers.js";
 
 const backdoorScript = "backdoor_all.js";
+const gangManagementScript = "/gangs/start.js";
 
 /**
  * This script is intended to be run right after machine reset.
@@ -44,8 +44,8 @@ export async function main(ns) {
 
   if (ns.gang.inGang()) {
     ns.tprint("Running gang management script");
-    if (!startGangManagement(ns)) {
-      printError(ns, "Failed to run gang management script");
+    if (!ns.run(gangManagementScript)) {
+      ns.tprint(`ERROR Running ${gangManagementScript}`);
       ns.ui.openTail();
     }
   }
@@ -53,5 +53,6 @@ export async function main(ns) {
   ns.tprint("Running backdoor script");
   if (!ns.run(backdoorScript)) {
     ns.tprint(`ERROR Running ${backdoorScript}`);
+    ns.ui.openTail();
   }
 }
