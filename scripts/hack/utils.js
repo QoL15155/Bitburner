@@ -152,7 +152,10 @@ export function processHack(ns, targetObject) {
  */
 export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
   const moneyMax = targetObject.moneyMax;
-  if (moneyMax === 0 || targetObject.moneyAvailable === moneyMax) {
+  if (moneyMax === 0) {
+    throw new Error("Target server has no money to grow.");
+  }
+  if (targetObject.moneyAvailable === moneyMax) {
     return 0;
   }
 
