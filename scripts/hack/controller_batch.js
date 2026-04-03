@@ -1,15 +1,21 @@
-import { FileLogger } from "/utils/logger.js";
-import { AttackMeasurements } from "/hack/attack_measurements.js";
-import { formatRam, formatMoney } from "/utils/formatters.js";
+import {
+  AttackFailReason,
+  AttackFailure,
+  AttackResult,
+  AttackSuccess,
+} from "./attack_result";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
+import { AttackMeasurements } from "/hack/attack_measurements.js";
 import {
   calculateServerExecutionTimes,
   distributionScripts,
   processGrow,
-  processWeaken,
   processHack,
+  processWeaken,
   runAttackAction,
 } from "/hack/utils.js";
+import { formatMoney, formatRam } from "/utils/formatters.js";
+import { FileLogger } from "/utils/logger.js";
 
 /**
  * Controller script for batch attacking with sleep.
@@ -214,22 +220,13 @@ function testScriptsNotRunning(ns, attackBatch, errorMessages) {
 
 //#region Attack
 
-class AttackResult {
-  constructor(success, delayTime, threads = 0, errorMessages = []) {
-    this.success = success;
-    this.duration = delayTime;
-    this.threads = threads;
-    /** @type {Array<string>} */
-    this.errorMessages = errorMessages;
-  }
-}
-
 /**
  * Performs an attack on the target server (@see attackBatch.targetName)
  *
  * @param {NS} ns : NS object
  * @param {Array<string>} attackingServers : list of servers to attack from
  * @param {AttackBatch} attackBatch : attack parameters
+ * @return {AttackResult} the result of the attack attempt,
  */
 function performAttack(ns, attackingServers, attackBatch) {
   const fname = "performAttack";
@@ -239,14 +236,13 @@ function performAttack(ns, attackingServers, attackBatch) {
   if (timeToWait < 0)
     throw new Error(`[${fname}] Invalid attack delay: ${timeToWait} < 0`);
   if (timeToWait > 0) {
-    return new AttackResult(false, timeToWait);
+    return new AttackFailure(AttackFailReason.SCRIPT_RUNNING, timeToWait);
   }
 
   /** @type {Array<string>} */
   let errorMessages = [];
   if (!doSanityTests(ns, attackBatch, errorMessages)) {
-    return new AttackResult(false, 0, 0, errorMessages);
-    // throw new Error("Unexpected state before attack");
+    return new AttackFailure(AttackFailReason.SANITY_FAIL, 0, errorMessages);
   }
 
   attackBatch.reset();
@@ -281,8 +277,7 @@ function performAttack(ns, attackingServers, attackBatch) {
       .forEach((action) => runAttackAction(ns, serverName, targetName, action));
 
     attackBatch.setEndTime();
-    return new AttackResult(
-      true,
+    return new AttackSuccess(
       attackBatch.getAttackDuration(),
       attackBatch.getTotalThreads(),
     );
@@ -292,7 +287,7 @@ function performAttack(ns, attackingServers, attackBatch) {
   logger.error(fname, message);
   errorMessages.push(message);
 
-  return new AttackResult(false, 0, 0, errorMessages);
+  return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
 }
 
 //#endregion Attack
@@ -315,11 +310,12 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   // (For a fully functional batcher, you don't need to do that division)
 
   // Initialize attack batch for each target server
-  let attackList = [];
+  let targetList = [];
   targetServers.forEach((targetName) => {
     const attackBatch = new AttackBatch(targetName, distributionScripts);
-    attackList.push(attackBatch);
+    targetList.push(attackBatch);
   });
+  targetList.reverse();
 
   const measurements = new AttackMeasurements(useFormulas);
   while (true) {
@@ -330,7 +326,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     let errorMessages = [];
 
     // Perform attack on each target server.
-    attackList.forEach((attackBatch) => {
+    for (const attackBatch of targetList) {
       /** @type {AttackResult} */
       const attackResult = performAttack(ns, attackingServers, attackBatch);
       if (attackResult.duration < 0) {
@@ -347,8 +343,12 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       if (attackResult.success) {
         attackedServers += 1;
         totalThreads += attackResult.threads;
+      } else {
+        if (attackResult.reason === AttackFailReason.NOT_ENOUGH_RAM) {
+          break;
+        }
       }
-    });
+    }
 
     // Log results and wait for the next attack round
     // We haven't updated measurements.rounds yet
