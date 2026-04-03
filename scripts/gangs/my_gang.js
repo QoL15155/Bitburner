@@ -1,9 +1,10 @@
+import { readGangEquipment } from "./utils.js";
 import {
   GangFocus,
   getGangEthicalTask,
   getGangTrainingTask,
 } from "/gangs/manage.js";
-import { printLogInfo } from "/utils/print.js";
+import { printLogError, printLogInfo } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -46,6 +47,8 @@ export class MyGang {
   // Equipment
   #buyAugmentations = false;
   #buyEquipment = false;
+  #augmentations = null;
+  #equipment = null;
 
   /**
    * @param {NS} ns
@@ -70,13 +73,29 @@ export class MyGang {
 
     this.#gangMemberNames = gangMemberNames;
 
+    // Equipment
     if (buyEquipment && !buyAugmentations) {
       throw new TypeError(
         "Buy equipment is set while buy augmentations is not set.",
       );
     }
+
     this.#buyAugmentations = buyAugmentations;
     this.#buyEquipment = buyEquipment;
+    if (buyEquipment || buyAugmentations) {
+      const equipmentByType = readGangEquipment(ns);
+      if (isHackingGang) {
+        this.#augmentations = equipmentByType.augmentations.hacking;
+        this.#equipment = equipmentByType.regular.hacking;
+      } else {
+        this.#augmentations = equipmentByType.augmentations.combat;
+        this.#equipment = equipmentByType.regular.combat;
+      }
+
+      for (const memberName of gangMemberNames) {
+        this.buyAugmentationsForMember(memberName);
+      }
+    }
   }
 
   //#region Getters and Setters
@@ -277,6 +296,9 @@ export class MyGang {
     const fname = "addNewMember";
     this.#gangMemberNames.push(memberName);
     this.addMemberToTraining(memberName, this.trainingTask);
+
+    this.buyAugmentationsForMember(memberName);
+
     this.#ns.print(
       `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
     );
@@ -395,4 +417,41 @@ export class MyGang {
   }
 
   //#endregion Reassign Members
+
+  //#region Equipment
+
+  buyAugmentationsForMember(memberName) {
+    const fname = "buyAugmentationsForMember";
+    if (!this.#buyAugmentations) {
+      return;
+    }
+
+    const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+    const augmentationsToBuy = this.#augmentations.filter(
+      (augmentation) =>
+        memberInfo.augmentations.includes(augmentation.name) === false,
+    );
+
+    let newAugmentations = [];
+    for (const augmentation of augmentationsToBuy) {
+      const name = augmentation.name;
+      const result = this.#ns.gang.purchaseEquipment(memberName, name);
+      if (!result) {
+        printLogError(
+          this.#ns,
+          `[${fname}] Failed to purchase augmentation '${name}' for member '${memberName}'.`,
+        );
+      } else {
+        newAugmentations.push(name);
+      }
+    }
+    if (newAugmentations.length > 0) {
+      printLogInfo(
+        this.#ns,
+        `[${fname}] Member '${memberName}' purchased augmentations '${newAugmentations.join(", ")}'.`,
+      );
+    }
+  }
+
+  //#endregion Equipment
 }

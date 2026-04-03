@@ -708,6 +708,7 @@ export async function main(ns) {
   }
 
   ns.disableLog("gang.setMemberTask");
+  ns.disableLog("gang.purchaseEquipment");
 
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
