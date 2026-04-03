@@ -1,3 +1,5 @@
+import { Color, toGreen } from "/utils/print.js";
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -5,9 +7,8 @@
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--prefix"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions];
 }
 
 /**
@@ -20,11 +21,13 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
-    ["prefix", ""],
   ]);
 
   if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} [--prefix /folder/]`);
+    const usage = toGreen(`run ${ns.getScriptName()}`);
+    const options = `${Color.Italic}folder${Color.Reset}`;
+
+    ns.tprint(`Usage: ${usage} [<${options}>]`);
     ns.tprint("");
     ns.tprint("Upload File");
     ns.tprint("=====================");
@@ -36,14 +39,19 @@ export async function main(ns) {
     ns.tprint("");
     ns.tprint("Options:");
     ns.tprint(
-      "  --prefix path  Prefix to prepend to extracted file paths (default: none)",
+      `  <${options}>       Folder to delete files from (default: home)`,
     );
     ns.tprint("");
     ns.tprint("Example:");
     ns.tprint(`> run ${ns.getScriptName()}`);
-    ns.tprint(`> run ${ns.getScriptName()} --prefix /scripts/`);
+    ns.tprint(`> run ${ns.getScriptName()} /hack/`);
     return;
   }
+  let prefix = args._[0];
+  ns.tprint(`Using prefix: '${prefix}'`);
+  if (prefix && !prefix.startsWith("/")) prefix = `/${prefix}`;
+  if (prefix && !prefix.endsWith("/")) prefix = `${prefix}/`;
+  ns.tprint(`Using prefix: '${prefix}'`);
 
   const doc = globalThis["document"];
 
@@ -56,10 +64,6 @@ export async function main(ns) {
   }
 
   ns.tprint(`Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
-
-  let prefix = args.prefix;
-  if (prefix && !prefix.startsWith("/")) prefix = `/${prefix}`;
-  if (prefix && !prefix.endsWith("/")) prefix = `${prefix}/`;
 
   const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
 
