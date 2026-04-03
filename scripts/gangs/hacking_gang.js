@@ -1,4 +1,10 @@
-import { normalEthicalMembers } from "./constants.js";
+import {
+  maxAugmentationsCostPercent,
+  maxEquipmentCostPercent,
+  minAugmentationsCostPercent,
+  minEquipmentCostPercent,
+  normalEthicalMembers,
+} from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
   findLeastProductiveMember,
@@ -24,6 +30,7 @@ import {
 import { formatGainRate } from "/utils/formatters.js";
 import {
   printError,
+  printInfo,
   printLogInfo,
   printLogWarn,
   printWarn,
@@ -529,6 +536,126 @@ async function manageGang(ns) {
 
 //#endregion Manage
 
+//#region Initialize
+
+function initializeTasks(ns) {
+  tasksByWantedLevel = readGangTasks(ns, true).sort(
+    (a, b) => a.baseWanted - b.baseWanted,
+  );
+  if (tasksByWantedLevel.length === 0) {
+    printError(ns, "Failed to read gang tasks.");
+    return;
+  }
+
+  tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
+  tasksWithRespectGain = tasksByWantedLevel.filter(
+    (task) => task.baseRespect > 0,
+  );
+  tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
+}
+
+function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
+  const augmentationCost = isHackingGang
+    ? equipmentByType.augmentationsCosts.hacking
+    : equipmentByType.augmentationsCosts.combat;
+  const augmentationCostPercent = augmentationCost / playerMoney;
+
+  if (buyArgument) {
+    if (augmentationCostPercent < maxAugmentationsCostPercent) return true;
+    const formattedCostPercent = ns.formatPercent(augmentationCostPercent);
+    const formattedThreshold = ns.formatPercent(maxAugmentationsCostPercent);
+    // TODO: prompt the user
+    printWarn(
+      ns,
+      `Augmentations cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying augmentations for gang members.`,
+    );
+    return false;
+  }
+
+  // User didn't ask for augmentation
+  if (augmentationCostPercent < minAugmentationsCostPercent) {
+    const formattedCostPercent = ns.formatPercent(augmentationCostPercent, 5);
+    const formattedThreshold = ns.formatPercent(minAugmentationsCostPercent);
+    printInfo(
+      ns,
+      `Augmentations cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying augmentations for gang members.`,
+    );
+    return true;
+  }
+
+  return false;
+}
+
+function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
+  const regularCost = isHackingGang
+    ? equipmentByType.regularCosts.hacking
+    : equipmentByType.regularCosts.combat;
+  const regularCostPercent = regularCost / playerMoney;
+
+  if (buyArgument) {
+    if (regularCostPercent < maxEquipmentCostPercent) {
+      return true;
+    }
+    const formattedCostPercent = ns.formatPercent(regularCostPercent);
+    const formattedThreshold = ns.formatPercent(maxEquipmentCostPercent);
+    // TODO: prompt the user
+    printWarn(
+      ns,
+      `Equipment cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying equipment for gang members.`,
+    );
+    return false;
+  }
+
+  // User didn't ask for equipment
+  if (regularCostPercent < minEquipmentCostPercent) {
+    const formattedCostPercent = ns.formatPercent(regularCostPercent, 5);
+    const formattedThreshold = ns.formatPercent(minEquipmentCostPercent);
+    // TODO: prompt user?
+    printInfo(
+      ns,
+      `Equipment cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying equipment for gang members.`,
+    );
+    return true;
+  }
+}
+
+function initializeGang(
+  ns,
+  isHackingGang,
+  gangMemberNames,
+  buyAugmentations,
+  buyEquipment,
+) {
+  const playerMoney = ns.getPlayer().money;
+
+  // Equipment
+  buyAugmentations = shouldBuyAugmentation(
+    ns,
+    isHackingGang,
+    buyAugmentations,
+    playerMoney,
+  );
+  buyEquipment = shouldBuyEquipment(
+    ns,
+    isHackingGang,
+    buyEquipment,
+    playerMoney,
+  );
+
+  myGang = new MyGang(
+    ns,
+    isHackingGang,
+    gangMemberNames,
+    buyAugmentations,
+    buyEquipment,
+  );
+  myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
+
+  ns.print(myGang.toString());
+}
+
+//#endregion Initialize
+
 //#region Main
 
 function printUsage(ns) {
@@ -546,6 +673,11 @@ function printUsage(ns) {
   ns.tprint(
     "  MEMBER_NAMES: JSON stringified array of current gang member names.",
   );
+  ns.tprint("Options:");
+  ns.tprint("  --buy-augmentations    - Buy augmentations for gang members. ");
+  ns.tprint(
+    "  --buy-equipment        - Buy equipment (and augmentations) for gang members.",
+  );
   ns.tprint("");
   ns.tprint("Should be run by 'gangs/start.js' script");
 }
@@ -557,8 +689,9 @@ function printUsage(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
+  const options = ["--buy-augmentations", "--buy-equipment"];
 
-  return [...defaultOptions];
+  return [...defaultOptions, ...options];
 }
 
 /** @param {NS} ns */
@@ -566,6 +699,8 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
+    ["buy-augmentations", false],
+    ["buy-equipment", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
     printUsage(ns);
@@ -577,29 +712,19 @@ export async function main(ns) {
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
 
-  // Tasks
-  tasksByWantedLevel = readGangTasks(ns, true).sort(
-    (a, b) => a.baseWanted - b.baseWanted,
-  );
-  if (tasksByWantedLevel.length === 0) {
-    printError(ns, "Failed to read gang tasks.");
-    return;
-  }
-
-  tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
-  tasksWithRespectGain = tasksByWantedLevel.filter(
-    (task) => task.baseRespect > 0,
-  );
-  tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
-
-  // Equipment
+  initializeTasks(ns);
   equipmentByType = readGangEquipment(ns);
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
-  myGang = new MyGang(ns, gangMemberNames, true);
-  myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
-  ns.print(myGang.toString());
+  const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
+  initializeGang(
+    ns,
+    true,
+    gangMemberNames,
+    buyAugmentations,
+    args["buy-equipment"],
+  );
 
   await manageGang(ns);
 }

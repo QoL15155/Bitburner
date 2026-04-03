@@ -106,9 +106,36 @@ export function getGangEquipmentInformation(ns) {
       }
     }
   }
+
+  // Costs
+  const augmentationsHackingCost = augmentations.hacking.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const augmentationsCombatCost = augmentations.combat.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const regularHackingCost = regular.hacking.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const regularCombatCost = regular.combat.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+
   const equipment = {
     augmentations: augmentations,
     regular: regular,
+    augmentationsCosts: {
+      hacking: augmentationsHackingCost,
+      combat: augmentationsCombatCost,
+    },
+    regularCosts: {
+      hacking: regularHackingCost,
+      combat: regularCombatCost,
+    },
   };
   return equipment;
 }

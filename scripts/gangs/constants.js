@@ -33,3 +33,14 @@ export const wantedPenaltyMax = 0.9;
 // When the wanted level is under these thresholds, we can focus on raising respect and money gain
 export const wantedGainSafeThreshold = 1;
 export const wantedPenaltySafeThreshold = 0.1;
+
+// Gang Equipment
+// =====================
+// Unless the user stated otherwise, equipment would only be bought if their cost
+// is under this percentage of the player's money.
+export const minAugmentationsCostPercent = 0.01;
+export const minEquipmentCostPercent = 0.0001;
+// Above this percentage, we will prompt the user to confirm the purchase, even
+// if they stated they want to buy the equipment.
+export const maxAugmentationsCostPercent = 0.1;
+export const maxEquipmentCostPercent = 0.001;

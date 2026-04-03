@@ -53,14 +53,6 @@ function printGangEquipment(ns) {
   const augmentations = equipment.augmentations;
   const regular = equipment.regular;
 
-  // Total Equipment
-  const totalEquipment =
-    augmentations.hacking.length +
-    augmentations.combat.length +
-    regular.hacking.length +
-    regular.combat.length;
-  ns.tprint(`Gang equipment : ${totalEquipment}`);
-
   printGangEquipmentType(
     ns,
     "Augmentations",

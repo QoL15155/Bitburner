@@ -1,9 +1,9 @@
-import { printLogInfo } from "/utils/print.js";
 import {
   GangFocus,
   getGangEthicalTask,
   getGangTrainingTask,
 } from "/gangs/manage.js";
+import { printLogInfo } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -43,12 +43,24 @@ export class MyGang {
   /** @type {string[]} */
   #membersWorking = [];
 
+  // Equipment
+  #buyAugmentations = false;
+  #buyEquipment = false;
+
   /**
    * @param {NS} ns
-   * @param {string[]} gangMemberNames
-   * @param {boolean} isHackingGang
+   * @param {boolean} isHackingGang - Whether the gang is focused on hacking (money) or combat (power).
+   * @param {string[]} gangMemberNames - Names of the gang members.
+   * @param {boolean} buyAugmentations - whether to buy augmentations for gang members when they are available.
+   * @param {boolean} buyEquipment - whether to buy equipment for gang members when it is available.
    */
-  constructor(ns, gangMemberNames, isHackingGang) {
+  constructor(
+    ns,
+    isHackingGang,
+    gangMemberNames,
+    buyAugmentations,
+    buyEquipment,
+  ) {
     this.#ns = ns;
 
     // Focus
@@ -57,6 +69,14 @@ export class MyGang {
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
     this.#gangMemberNames = gangMemberNames;
+
+    if (buyEquipment && !buyAugmentations) {
+      throw new TypeError(
+        "Buy equipment is set while buy augmentations is not set.",
+      );
+    }
+    this.#buyAugmentations = buyAugmentations;
+    this.#buyEquipment = buyEquipment;
   }
 
   //#region Getters and Setters
@@ -174,6 +194,7 @@ export class MyGang {
   toString() {
     let message = `Gang Status: `;
     message += `Recruiting? ${this.isRecruiting}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
+    message += `Buy Augmentations? ${this.#buyAugmentations}, Buy Equipment? ${this.#buyEquipment}\n`;
     message += this.#membersString();
     return message;
   }
