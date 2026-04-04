@@ -3,7 +3,7 @@ import {
   AttackFailure,
   AttackResult,
   AttackSuccess,
-} from "./attack_result";
+} from "./attack_result.js";
 import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import { AttackMeasurements } from "/hack/attack_measurements.js";
 import {
@@ -62,7 +62,7 @@ function performHackAttack(
   // TODO: remove
   logger.info(
     fname,
-    `Attacking servers: ${attackingServers.join(", ")}, required threads: ${hackAction.threadsRequired}`,
+    `Attacking servers: ${attackingServers.join(", ")}, required threads: ${hackAction.threads}`,
   );
 
   for (const serverName of attackingServers) {

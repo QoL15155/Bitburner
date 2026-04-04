@@ -1,4 +1,4 @@
-import { formatRam } from "/utils/formatters";
+import { formatRam } from "/utils/formatters.js";
 
 /**
  * Handles an attack action: Grow/Hack/Weaken
