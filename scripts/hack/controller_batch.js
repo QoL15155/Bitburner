@@ -355,6 +355,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const attackBatch = new AttackBatch(targetName, distributionScripts);
     targetList.push(attackBatch);
   });
+  targetList.reverse();
 
   logger.info(fname, `Attacking Servers: ${attackingServers.join(", ")}`);
   logger.info(fname, `Target Servers: ${targetServers.join(", ")}`);

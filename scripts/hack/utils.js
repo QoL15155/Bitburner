@@ -124,8 +124,8 @@ export function processHack(ns, targetObject, isFirstTime = false) {
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
+    printWarn(ns, `[${fname}] ${message}`);
     if (!isFirstTime) {
-      printWarn(ns, `[${fname}] ${message}`);
       throw new Error(message);
     }
   }
