@@ -117,15 +117,16 @@ export function getHackSecurityIncrease(threads) {
   return threads * serverFortifyAmount;
 }
 
-export function processHack(ns, targetObject, isFirstTime = false) {
+export function processHack(ns, targetObject, isFirstRun) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
+    // TODO: logger
     printWarn(ns, `[${fname}] ${message}`);
-    if (!isFirstTime) {
+    if (!isFirstRun) {
       throw new Error(message);
     }
   }
