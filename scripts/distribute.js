@@ -482,15 +482,15 @@ function getTargetServer(ns, allServers, targetServerName) {
     }
   } else {
     const targetServers = getTargetServers(ns, allServers);
-    if (targetServers == null || targetServers.length === 0) {
+    if (targetServers.length === 0) {
       printError(ns, `[${fname}] No target servers found! Exiting.`);
       return null;
     }
 
-    // Find best target server based on maxMoney / minSecurity heuristic
+    // Find best target server based on maxMoney / minDifficulty heuristic
     targetServers.sort((a, b) => {
-      const aScore = a.maxMoney / a.minSecurity;
-      const bScore = b.maxMoney / b.minSecurity;
+      const aScore = a.maxMoney / a.minDifficulty;
+      const bScore = b.maxMoney / b.minDifficulty;
       return bScore - aScore;
     });
 
