@@ -1,3 +1,5 @@
+import { Color, toGreen } from "/utils/print.js";
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -5,9 +7,8 @@
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--prefix"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions];
 }
 
 /**
@@ -20,11 +21,13 @@ export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
-    ["prefix", ""],
   ]);
 
   if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()} [--prefix /folder/]`);
+    const usage = toGreen(`run ${ns.getScriptName()}`);
+    const options = `${Color.Italic}folder${Color.Reset}`;
+
+    ns.tprint(`Usage: ${usage} [<${options}>]`);
     ns.tprint("");
     ns.tprint("Upload File");
     ns.tprint("=====================");
@@ -35,14 +38,17 @@ export async function main(ns) {
     ns.tprint("then writes/extracts the file(s) into the home directory.");
     ns.tprint("");
     ns.tprint("Options:");
-    ns.tprint(
-      "  --prefix path  Prefix to prepend to extracted file paths (default: none)",
-    );
+    ns.tprint(`  <${options}>       Folder to upload files to (default: home)`);
     ns.tprint("");
     ns.tprint("Example:");
     ns.tprint(`> run ${ns.getScriptName()}`);
-    ns.tprint(`> run ${ns.getScriptName()} --prefix /scripts/`);
+    ns.tprint(`> run ${ns.getScriptName()} /hack/`);
     return;
+  }
+  let destinationDir = args._[0];
+  if (destinationDir) {
+    if (!destinationDir.startsWith("/")) destinationDir = `/${destinationDir}`;
+    if (!destinationDir.endsWith("/")) destinationDir = `${destinationDir}/`;
   }
 
   const doc = globalThis["document"];
@@ -57,16 +63,14 @@ export async function main(ns) {
 
   ns.tprint(`Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
 
-  let prefix = args.prefix;
-  if (prefix && !prefix.startsWith("/")) prefix = `/${prefix}`;
-  if (prefix && !prefix.endsWith("/")) prefix = `${prefix}/`;
-
   const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
 
   if (ext === ".js" || ext === ".ts") {
     // Single script file upload
     const content = await file.text();
-    let targetPath = prefix ? `${prefix}${file.name}` : `/${file.name}`;
+    let targetPath = destinationDir
+      ? `${destinationDir}${file.name}`
+      : `/${file.name}`;
     await ns.write(targetPath, content, "w");
     ns.tprint(`  Uploaded: ${targetPath}`);
     ns.tprint("Done. Uploaded 1 file to home.");
@@ -109,8 +113,8 @@ export async function main(ns) {
     if (!targetPath.startsWith("/")) targetPath = `/${targetPath}`;
 
     // Prepend prefix if provided
-    if (prefix) {
-      targetPath = `${prefix}${targetPath.substring(1)}`;
+    if (destinationDir) {
+      targetPath = `${destinationDir}${targetPath.substring(1)}`;
     }
 
     await ns.write(targetPath, content, "w");
