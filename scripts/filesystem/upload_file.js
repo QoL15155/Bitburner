@@ -73,7 +73,7 @@ export async function main(ns) {
       : `/${file.name}`;
     await ns.write(targetPath, content, "w");
     ns.tprint(`  Uploaded: ${targetPath}`);
-    ns.tprint("Done. Uploaded 1 file to home.");
+    ns.tprint(`Done. Uploaded 1 file to ${destinationDir || "home"}.`);
     return;
   }
   // Zip file: load JSZip if needed, then extract
@@ -122,7 +122,9 @@ export async function main(ns) {
     uploaded++;
   }
 
-  ns.tprint(`Done. Extracted ${uploaded} file(s) to home.`);
+  ns.tprint(
+    `Done. Extracted ${uploaded} file(s) to ${destinationDir || "home"}.`,
+  );
 }
 
 /**
