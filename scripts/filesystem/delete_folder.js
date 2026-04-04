@@ -43,7 +43,7 @@ export async function main(ns) {
     return;
   }
 
-  const destinationDir = args._[0] || args.folder;
+  const destinationDir = args._[0] || defaultFolder;
   const destinationFiles = ns.ls("home", destinationDir);
 
   for (const file of destinationFiles) {
