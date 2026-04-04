@@ -1,13 +1,6 @@
 import { AttackAction } from "/hack/attack_action.js";
 import { formatTime } from "/utils/formatters.js";
 
-// TODO: turn into IsInitialState
-export const BatchState = {
-  INIT: 0,
-  PREP_PARAMS: 1,
-  ATTACK_PARAMS: 2,
-};
-
 // The necessary delay between script execution times may range between 20ms and 200ms
 // Depends on the computer's performance
 export const delayIncrease = 200;
@@ -33,8 +26,9 @@ export class AttackBatch {
    * @type {number} */
   #endTime = 0;
 
-  /** @type {BatchState} */
-  #state = BatchState.INIT;
+  /** First run of the batch (turns true once it is executed for the first time)
+   * @type {boolean} */
+  #isFirstRun = true;
 
   /**
    * @param {string} targetName : server to attack
@@ -42,6 +36,8 @@ export class AttackBatch {
    */
   constructor(targetName, distributionScripts) {
     this.targetName = targetName;
+
+    this.#isFirstRun = true;
 
     this.#hackAction = new AttackAction(
       distributionScripts.hackScript.targetScript,
@@ -55,6 +51,10 @@ export class AttackBatch {
       distributionScripts.weakenScript.targetScript,
       distributionScripts.weakenScript.ram,
     );
+  }
+
+  get isFirstRun() {
+    return this.#isFirstRun;
   }
 
   setAttackDuration(threads, duration) {
@@ -109,10 +109,6 @@ export class AttackBatch {
     return description;
   }
 
-  getState() {
-    return this.#state;
-  }
-
   /** @returns {Array<AttackAction>} */
   getActions() {
     let result = [];
@@ -125,13 +121,7 @@ export class AttackBatch {
 
   setEndTime() {
     this.#endTime = Date.now() + this.#attackDuration;
-
-    // Advance state
-    if (this.#state === BatchState.INIT) {
-      this.#state = BatchState.PREP_PARAMS;
-    } else if (this.#state === BatchState.PREP_PARAMS) {
-      this.#state = BatchState.ATTACK_PARAMS;
-    }
+    this.#isFirstRun = false;
   }
 
   getAttackDuration() {

@@ -4,7 +4,7 @@ import {
   AttackResult,
   AttackSuccess,
 } from "./attack_result.js";
-import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
+import { AttackBatch, delayIncrease } from "/hack/attack_batch.js";
 import { AttackMeasurements } from "/hack/attack_measurements.js";
 import {
   calculateServerExecutionTimes,
@@ -46,8 +46,7 @@ function performHackAttack(
   executionTime,
 ) {
   const fname = "performHackAttack";
-  const isFirstTime = attackBatch.getState() === BatchState.INIT;
-  const hackingThreads = processHack(ns, targetObject, isFirstTime);
+  const hackingThreads = processHack(ns, targetObject, attackBatch.isFirstRun);
   if (hackingThreads === 0) {
     return true;
   }
@@ -163,7 +162,7 @@ function performWeakenAttack(
 //#region Sanity Checks
 
 function doSanityTests(ns, attackBatch, errorMessages) {
-  if (attackBatch.getState() === BatchState.INIT) return true;
+  if (attackBatch.isFirstRun) return true;
 
   const result = testScriptsNotRunning(ns, attackBatch, errorMessages);
   if (!result) return false;
