@@ -142,71 +142,6 @@ export function processHack(ns, targetObject, isFirstTime = false) {
 }
 
 /**
- * Calculates the number of required threads to maximize money on target server.
- * Updates the server's object accordingly.
- * Can use Formulas or not, based on the 'useFormulas' flag.
- *
- * @param {NS} ns
- * @param {number} cpuCores
- * @param {Server} targetObject - the server object to grow
- * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
- * @returns {number} - number of threads
- */
-export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
-  const moneyMax = targetObject.moneyMax;
-  if (moneyMax === 0) {
-    throw new Error("Target server has no money to grow.");
-  }
-  if (targetObject.moneyAvailable === moneyMax) {
-    return 0;
-  }
-
-  let threads = 0;
-  if (useFormulas) {
-    threads = processGrowFormulas(ns, cpuCores, targetObject);
-  } else {
-    threads = processGrowClean(ns, cpuCores, targetObject);
-  }
-
-  threads = Math.ceil(threads);
-  if (threads <= 0) {
-    return 0;
-  }
-
-  targetObject.moneyAvailable = moneyMax;
-  targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
-  return threads;
-}
-
-export function getGrowThreads(
-  ns,
-  cpuCores,
-  targetObject,
-  useFormulas = false,
-) {
-  const moneyMax = targetObject.moneyMax;
-  if (moneyMax === 0) {
-    throw new Error("Target server has no money to grow.");
-  }
-  if (targetObject.moneyAvailable === moneyMax) {
-    return 0;
-  }
-
-  let threads = 0;
-  if (useFormulas) {
-    threads = processGrowFormulas(ns, cpuCores, targetObject);
-  } else {
-    threads = processGrowClean(ns, cpuCores, targetObject);
-  }
-
-  threads = Math.ceil(threads);
-  if (threads <= 0) {
-    return 0;
-  }
-  return threads;
-}
-
-/**
  * Uses Formulas to calculate the number of required threads to maximize money on target server.
  *
  * @param {NS} ns - NS object
@@ -214,7 +149,7 @@ export function getGrowThreads(
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-function processGrowFormulas(ns, cpuCores, targetObject) {
+function getGrowThreadsFormulas(ns, cpuCores, targetObject) {
   const player = ns.getPlayer();
 
   const threads = ns.formulas.hacking.growThreads(
@@ -235,7 +170,7 @@ function processGrowFormulas(ns, cpuCores, targetObject) {
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-function processGrowClean(ns, cpuCores, targetObject) {
+function getGrowThreadsClean(ns, cpuCores, targetObject) {
   let moneyMax = targetObject.moneyMax;
   const moneyAvailable = targetObject.moneyAvailable;
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
@@ -263,6 +198,52 @@ function processGrowClean(ns, cpuCores, targetObject) {
   return threads;
 }
 
+/**
+ * Calculates the number of required threads to maximize money on target server.
+ * Can use Formulas or not, based on the 'useFormulas' flag.
+ *
+ * @param {NS} ns
+ * @param {number} cpuCores
+ * @param {Server} targetObject - the server object to grow
+ * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
+ * @returns {number} - number of threads
+ */
+export function getGrowThreads(
+  ns,
+  cpuCores,
+  targetObject,
+  useFormulas = false,
+) {
+  const moneyMax = targetObject.moneyMax;
+  if (moneyMax === 0) {
+    throw new Error("Target server has no money to grow.");
+  }
+  if (targetObject.moneyAvailable === moneyMax) {
+    return 0;
+  }
+
+  let threads = 0;
+  if (useFormulas) {
+    threads = getGrowThreadsFormulas(ns, cpuCores, targetObject);
+  } else {
+    threads = getGrowThreadsClean(ns, cpuCores, targetObject);
+  }
+
+  threads = Math.ceil(threads);
+  if (threads <= 0) {
+    return 0;
+  }
+  return threads;
+}
+
+/**
+ * Calculates number of threads needed to weaken the server back to minimum difficulty.
+ *
+ * @param {NS} ns - NS object
+ * @param {number} cpuCores - number of CPU cores of the attacking machine
+ * @param {Server} targetObject - the server object to weaken
+ * @returns {number} - number of threads required for the action
+ */
 export function getWeakenThreads(cpuCores, targetObject) {
   // Amount by which server's security decreases when weakened
   const serverWeakenAmount = 0.05;
@@ -281,7 +262,6 @@ export function getWeakenThreads(cpuCores, targetObject) {
 
 /**
  * Calculates number of threads needed to weaken the server back to minimum difficulty.
- * Updates the target object accordingly.
  * Does sanity checks on the received thread count.
  *
  * @param {NS} ns - NS object
@@ -289,8 +269,8 @@ export function getWeakenThreads(cpuCores, targetObject) {
  * @param {Server} targetObject - the server object to weaken
  * @returns {number} - number of threads required for the action
  */
-export function processWeakenSanity(ns, cpuCores, targetObject) {
-  const fname = "processWeakenSanity";
+export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
+  const fname = "getWeakenThreadsSanity";
   const threads = getWeakenThreads(cpuCores, targetObject);
 
   // Sanity check
@@ -306,22 +286,6 @@ export function processWeakenSanity(ns, cpuCores, targetObject) {
     throw new Error(msg);
   }
 
-  targetObject.hackDifficulty = targetObject.minDifficulty;
-  return threads;
-}
-
-/**
- * Calculates number of threads needed to weaken the server back to minimum difficulty.
- * Updates the target object accordingly.
- *
- * @param {NS} ns - NS object
- * @param {number} cpuCores - number of CPU cores of the attacking machine
- * @param {Server} targetObject - the server object to weaken
- * @returns {number} - number of threads required for the action
- */
-export function processWeaken(ns, cpuCores, targetObject) {
-  const threads = getWeakenThreads(cpuCores, targetObject);
-  targetObject.hackDifficulty = targetObject.minDifficulty;
   return threads;
 }
 

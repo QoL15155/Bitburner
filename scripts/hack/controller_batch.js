@@ -57,19 +57,7 @@ function performHackAttack(
     executionTime,
   );
 
-  // TODO: remove
-  logger.info(
-    fname,
-    `Attacking servers: ${attackingServers.join(", ")}, required threads: ${hackAction.threads}`,
-  );
-
   for (const serverName of attackingServers) {
-    // TODO: remove
-    logger.info(
-      fname,
-      `Trying to run hack on ${serverName} with ${hackAction.threads} threads`,
-    );
-
     const serverObject = ns.getServer(serverName);
     if (!canAttackFromServer(serverObject, hackAction)) {
       continue;
@@ -100,22 +88,11 @@ function performGrowAttack(
     if (cpuCores !== serverObject.cpuCores) {
       // Only calculate threads if cpu cores changed.
       cpuCores = serverObject.cpuCores;
-      logger.info(
-        fname,
-        `Calculating processGrow with cpuCores: ${cpuCores}. Server ${serverName}`,
-      );
-      // FIXME: reset values before second call?
       growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
       if (growThreads === 0) {
         return true;
       }
     }
-
-    // TODO: remove
-    logger.info(
-      fname,
-      `Trying to run grow on ${serverName} with ${growThreads} threads, cores: ${cpuCores}`,
-    );
 
     growAction = attackBatch.updateGrowAction(
       growThreads,
@@ -156,22 +133,11 @@ function performWeakenAttack(
     if (cpuCores !== serverObject.cpuCores) {
       // Only calculate threads if cpu cores changed.
       cpuCores = serverObject.cpuCores;
-      logger.info(
-        fname,
-        `Calculating processWeaken with cpuCores: ${cpuCores}. Server ${serverName}`,
-      );
-      // FIXME: reset values before second call?
       weakenThreads = getWeakenThreads(cpuCores, targetObject);
       if (weakenThreads === 0) {
         return true;
       }
     }
-
-    // TODO: remove
-    logger.info(
-      fname,
-      `Trying to run weaken on ${serverName} with ${weakenThreads} threads, cores: ${cpuCores}`,
-    );
 
     weakenAction = attackBatch.updateWeakenAction(
       weakenThreads,
