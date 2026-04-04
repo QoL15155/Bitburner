@@ -239,7 +239,6 @@ export function getGrowThreads(
 /**
  * Calculates number of threads needed to weaken the server back to minimum difficulty.
  *
- * @param {NS} ns - NS object
  * @param {number} cpuCores - number of CPU cores of the attacking machine
  * @param {Server} targetObject - the server object to weaken
  * @returns {number} - number of threads required for the action
