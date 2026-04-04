@@ -1,6 +1,7 @@
 import { AttackAction } from "/hack/attack_action.js";
 import { formatTime } from "/utils/formatters.js";
 
+// TODO: turn into IsInitialState
 export const BatchState = {
   INIT: 0,
   PREP_PARAMS: 1,
@@ -36,18 +37,6 @@ export class AttackBatch {
   #state = BatchState.INIT;
 
   /**
-   * CPU cores available on the attacking server
-   * @type {number}
-   */
-  cpuCores = 0;
-
-  /**
-   * Required RAM to run the batch scripts
-   * @type {number}
-   */
-  #requiredRam = 0;
-
-  /**
    * @param {string} targetName : server to attack
    * @param {Object} distributionScripts : RAM and script name for the attack scripts
    */
@@ -68,96 +57,63 @@ export class AttackBatch {
     );
   }
 
+  setAttackDuration(threads, duration) {
+    if (threads === 0) return;
+
+    if (this.#attackDuration < duration) {
+      this.#attackDuration = duration;
+    }
+  }
+
   reset() {
     this.#endTime = 0;
     this.#attackDuration = 0;
-    this.#requiredRam = 0;
-    this.cpuCores = 0;
 
     this.#hackAction.reset();
     this.#growAction.reset();
     this.#weakenAction.reset();
   }
 
-  setPrepActions(cpuCores, growThreads, weakenThreads, executionTimes) {
-    if (this.#state !== BatchState.INIT) {
-      throw new Error("Attack Batch is already initialized.");
-    }
+  //#region Update Action
 
-    this.cpuCores = cpuCores;
-
-    this.#hackAction.threads = 0;
-    this.#growAction.threads = growThreads;
-    this.#weakenAction.threads = weakenThreads;
-
-    this.#hackAction.time = 0;
-    this.#growAction.time = executionTimes.growTime;
-    this.#weakenAction.time = executionTimes.weakenTime;
-
-    this.#attackDuration = executionTimes.weakenTime;
-
-    this.#setRequiredRam();
-    this.#endTime = 0;
+  updateHackAction(threads, time) {
+    this.#hackAction.initAction(threads, time);
+    this.setAttackDuration(threads, time);
+    return this.#hackAction;
   }
 
-  setAttackActions(
-    cpuCores,
-    hackThreads,
-    growThreads,
-    weakenThreads,
-    executionTimes,
-  ) {
-    this.cpuCores = cpuCores;
-
-    this.#hackAction.threads = hackThreads;
-    this.#growAction.threads = growThreads;
-    this.#weakenAction.threads = weakenThreads;
-
-    this.#hackAction.time = executionTimes.hackTime;
-    this.#growAction.time = executionTimes.growTime;
-    this.#weakenAction.time = executionTimes.weakenTime;
-
-    this.#attackDuration = executionTimes.weakenTime;
-
-    this.#setRequiredRam();
-    this.#endTime = 0;
+  updateGrowAction(threads, time, cpuCores) {
+    this.#growAction.initAction(threads, time, cpuCores);
+    this.setAttackDuration(threads, time);
+    return this.#growAction;
   }
+
+  updateWeakenAction(threads, time, cpuCores) {
+    this.#weakenAction.initAction(threads, time, cpuCores);
+    this.setAttackDuration(threads, time);
+    return this.#weakenAction;
+  }
+
+  //#endregion Update Action
 
   toString() {
-    let description = `Attack Batch. Target Server: ${this.targetName}, cores:${this.cpuCores}, duration: ${formatTime(this.#attackDuration)}\n\t`;
+    let description = `Attack Batch. Target Server: ${this.targetName}, duration: ${formatTime(this.#attackDuration)}`;
 
     if (this.#hackAction.threads !== 0)
-      description += `Hacking: ${this.#hackAction.threads} threads. `;
+      description += `\n\t${this.#hackAction.toString()}`;
     if (this.#growAction.threads !== 0)
-      description += `Grow: ${this.#growAction.threads} threads. `;
+      description += `\n\t${this.#growAction.toString()}`;
     if (this.#weakenAction.threads !== 0)
-      description += `Weaken: ${this.#weakenAction.threads} threads.`;
+      description += `\n\t${this.#weakenAction.toString()}`;
 
     return description;
-  }
-
-  #setRequiredRam() {
-    this.#requiredRam = 0;
-
-    this.#requiredRam += this.#hackAction.getRequiredRam();
-    this.#requiredRam += this.#growAction.getRequiredRam();
-    this.#requiredRam += this.#weakenAction.getRequiredRam();
-  }
-
-  getRequiredRam() {
-    const fname = "getRequiredRam";
-    if (this.#requiredRam <= 0) {
-      throw new Error(
-        `[${fname}] Required RAM is set to ${this.#requiredRam}. Check if the attack actions have been properly initialized.`,
-      );
-    }
-    return this.#requiredRam;
   }
 
   getState() {
     return this.#state;
   }
 
+  /** @returns {Array<AttackAction>} */
   getActions() {
     let result = [];
     if (this.#weakenAction.threads > 0) result.push(this.#weakenAction);

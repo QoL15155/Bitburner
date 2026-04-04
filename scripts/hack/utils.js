@@ -117,15 +117,17 @@ export function getHackSecurityIncrease(threads) {
   return threads * serverFortifyAmount;
 }
 
-export function processHack(ns, targetObject) {
+export function processHack(ns, targetObject, isFirstTime = false) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
-    printWarn(ns, `[${fname}] ${message}`);
-    throw new Error(message);
+    if (!isFirstTime) {
+      printWarn(ns, `[${fname}] ${message}`);
+      throw new Error(message);
+    }
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
@@ -301,50 +303,28 @@ export function processWeaken(ns, cpuCores, targetObject) {
 //#region Run Actions
 
 /**
- *
- * @param {NS} ns
- * @param {string} serverName
- * @param {number} threads : Number of threads to run
- * @param {number} scriptRam required for one thread
+ * @param {Server} serverObject : server to run the attack from
+ * @param {AttackAction} attackAction : parameters for the attack
  */
-function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
-  const serverObject = ns.getServer(serverName);
+export function canAttackFromServer(serverObject, attackAction) {
   const availableRam = serverObject.maxRam - serverObject.ramUsed;
-
-  const requiredRam = threads * scriptRam;
-  return requiredRam <= availableRam;
+  return attackAction.getRequiredRam() <= availableRam;
 }
 
 /**
- * Runs one attack action
+ * Runs one attack action.
+ *
+ * Assumes that there is enough RAM to run the action, and more than 1 thread is required.
  *
  * @param {NS} ns
  * @param {string} hostname : where the script will be running
  * @param {string} targetName : Name of server to attack
  * @param {AttackAction} attackAction : parameters for the attack
- * @throws {Error} if attackAction.threads is not set or less than 1
- * @throws {Error} if there is not enough RAM to run the attack action on the specified hostname
- *  Both of these cases should be prevented by the calling function
  * @throws {Error} if ns.exec fails to run the script for any reason
+ *    (e.g. not enough RAM, thread count is 0, etc.)
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
-
-  if (attackAction.threads <= 0) {
-    throw new Error(`[${fname}] called without threads to run.`);
-  }
-
-  const availableRam = checkServerAvailableRam(
-    ns,
-    hostname,
-    attackAction.threads,
-    attackAction.scriptRam,
-  );
-
-  if (!availableRam) {
-    const message = `[${fname}] Not enough RAM to run ${attackAction.scriptName} on ${hostname} with ${attackAction.threads} threads.`;
-    throw new Error(message);
-  }
 
   const pid = ns.exec(
     attackAction.scriptName,
@@ -358,8 +338,7 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
       `[${fname}] Failed to run on ${hostname}. ${attackAction.toString()}`,
     );
   }
-  attackAction.pid = pid;
-  attackAction.hostname = hostname;
+  attackAction.setAction(hostname, pid);
 }
 
 //#endregion Run Actions
