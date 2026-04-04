@@ -178,6 +178,34 @@ export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
   return threads;
 }
 
+export function getGrowThreads(
+  ns,
+  cpuCores,
+  targetObject,
+  useFormulas = false,
+) {
+  const moneyMax = targetObject.moneyMax;
+  if (moneyMax === 0) {
+    throw new Error("Target server has no money to grow.");
+  }
+  if (targetObject.moneyAvailable === moneyMax) {
+    return 0;
+  }
+
+  let threads = 0;
+  if (useFormulas) {
+    threads = processGrowFormulas(ns, cpuCores, targetObject);
+  } else {
+    threads = processGrowClean(ns, cpuCores, targetObject);
+  }
+
+  threads = Math.ceil(threads);
+  if (threads <= 0) {
+    return 0;
+  }
+  return threads;
+}
+
 /**
  * Uses Formulas to calculate the number of required threads to maximize money on target server.
  *
@@ -235,8 +263,7 @@ function processGrowClean(ns, cpuCores, targetObject) {
   return threads;
 }
 
-function getWeakenThreads(cpuCores, targetObject) {
-  const fname = "getWeakenThreads";
+export function getWeakenThreads(cpuCores, targetObject) {
   // Amount by which server's security decreases when weakened
   const serverWeakenAmount = 0.05;
 

@@ -10,9 +10,10 @@ import {
   calculateServerExecutionTimes,
   canAttackFromServer,
   distributionScripts,
-  processGrow,
+  getGrowSecurityIncrease,
+  getGrowThreads,
+  getWeakenThreads,
   processHack,
-  processWeaken,
   runAttackAction,
 } from "/hack/utils.js";
 import { formatMoney } from "/utils/formatters.js";
@@ -33,11 +34,8 @@ let ns = null;
 
 //#region Perform Attack
 
-function performAttackActionFail(fname, targetName, attackAction) {
-  logger.warn(
-    fname,
-    `Failed to attack ${targetName}. Action: ${attackAction.toString()}`,
-  );
+function getStrAttackFail(targetName, attackAction) {
+  return `Failed to attack ${targetName}. ${attackAction.toString()}`;
 }
 
 //TODO: docstring
@@ -80,11 +78,7 @@ function performHackAttack(
     return true;
   }
 
-  performAttackActionFail(
-    "performHackAttack",
-    targetObject.hostname,
-    hackAction,
-  );
+  logger.warn(fname, getStrAttackFail(targetObject.hostname, hackAction));
   return false;
 }
 
@@ -96,9 +90,9 @@ function performGrowAttack(
 ) {
   const fname = "performGrowAttack";
 
-  let growAction = null;
   let cpuCores = -1;
   let growThreads = null;
+  let growAction = null;
   for (const serverName of attackingServers) {
     const serverObject = ns.getServer(serverName);
 
@@ -106,7 +100,12 @@ function performGrowAttack(
     if (cpuCores !== serverObject.cpuCores) {
       // Only calculate threads if cpu cores changed.
       cpuCores = serverObject.cpuCores;
-      growThreads = processGrow(ns, cpuCores, targetObject, useFormulas);
+      logger.info(
+        fname,
+        `Calculating processGrow with cpuCores: ${cpuCores}. Server ${serverName}`,
+      );
+      // FIXME: reset values before second call?
+      growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
       if (growThreads === 0) {
         return true;
       }
@@ -125,13 +124,16 @@ function performGrowAttack(
     );
 
     if (!canAttackFromServer(serverObject, growAction)) {
+      logger.info(fname, `Cannot attack from server ${serverName}`);
       continue;
     }
     runAttackAction(ns, serverName, targetObject.hostname, growAction);
+    targetObject.moneyAvailable = targetObject.moneyMax;
+    targetObject.hackDifficulty += getGrowSecurityIncrease(growThreads);
     return true;
   }
 
-  performAttackActionFail(fname, targetObject.hostname, growAction);
+  logger.warn(fname, getStrAttackFail(targetObject.hostname, growAction));
   return false;
 }
 
@@ -154,7 +156,12 @@ function performWeakenAttack(
     if (cpuCores !== serverObject.cpuCores) {
       // Only calculate threads if cpu cores changed.
       cpuCores = serverObject.cpuCores;
-      weakenThreads = processWeaken(ns, cpuCores, targetObject);
+      logger.info(
+        fname,
+        `Calculating processWeaken with cpuCores: ${cpuCores}. Server ${serverName}`,
+      );
+      // FIXME: reset values before second call?
+      weakenThreads = getWeakenThreads(cpuCores, targetObject);
       if (weakenThreads === 0) {
         return true;
       }
@@ -173,13 +180,15 @@ function performWeakenAttack(
     );
 
     if (!canAttackFromServer(serverObject, weakenAction)) {
+      logger.info(fname, `Cannot attack from server ${serverName}`);
       continue;
     }
     runAttackAction(ns, serverName, targetObject.hostname, weakenAction);
+    targetObject.hackDifficulty = targetObject.minDifficulty;
     return true;
   }
 
-  performAttackActionFail(fname, targetObject.hostname, weakenAction);
+  logger.warn(fname, getStrAttackFail(targetObject.hostname, weakenAction));
   return false;
 }
 
@@ -427,11 +436,11 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const currentRound = measurements.rounds + 1;
 
     if (currentRound === 1 && attackedServers === 0) {
-      logger.warn(
-        fname,
-        `No servers were attacked in the first round. ` +
+      ns.tprint(
+        `ERROR: No servers were attacked in the first round. ` +
           `This may indicate insufficient RAM on attacking servers.`,
       );
+      ns.ui.closeTail();
       return;
     }
     const roundLabel = `Attack-Round ${currentRound}`;
