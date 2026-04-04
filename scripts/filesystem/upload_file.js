@@ -38,20 +38,18 @@ export async function main(ns) {
     ns.tprint("then writes/extracts the file(s) into the home directory.");
     ns.tprint("");
     ns.tprint("Options:");
-    ns.tprint(
-      `  <${options}>       Folder to delete files from (default: home)`,
-    );
+    ns.tprint(`  <${options}>       Folder to upload files to (default: home)`);
     ns.tprint("");
     ns.tprint("Example:");
     ns.tprint(`> run ${ns.getScriptName()}`);
     ns.tprint(`> run ${ns.getScriptName()} /hack/`);
     return;
   }
-  let prefix = args._[0];
-  ns.tprint(`Using prefix: '${prefix}'`);
-  if (prefix && !prefix.startsWith("/")) prefix = `/${prefix}`;
-  if (prefix && !prefix.endsWith("/")) prefix = `${prefix}/`;
-  ns.tprint(`Using prefix: '${prefix}'`);
+  let destinationDir = args._[0];
+  if (destinationDir) {
+    if (!destinationDir.startsWith("/")) destinationDir = `/${destinationDir}`;
+    if (!destinationDir.endsWith("/")) destinationDir = `${destinationDir}/`;
+  }
 
   const doc = globalThis["document"];
 
@@ -70,7 +68,9 @@ export async function main(ns) {
   if (ext === ".js" || ext === ".ts") {
     // Single script file upload
     const content = await file.text();
-    let targetPath = prefix ? `${prefix}${file.name}` : `/${file.name}`;
+    let targetPath = destinationDir
+      ? `${destinationDir}${file.name}`
+      : `/${file.name}`;
     await ns.write(targetPath, content, "w");
     ns.tprint(`  Uploaded: ${targetPath}`);
     ns.tprint("Done. Uploaded 1 file to home.");
@@ -113,8 +113,8 @@ export async function main(ns) {
     if (!targetPath.startsWith("/")) targetPath = `/${targetPath}`;
 
     // Prepend prefix if provided
-    if (prefix) {
-      targetPath = `${prefix}${targetPath.substring(1)}`;
+    if (destinationDir) {
+      targetPath = `${destinationDir}${targetPath.substring(1)}`;
     }
 
     await ns.write(targetPath, content, "w");

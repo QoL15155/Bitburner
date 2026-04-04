@@ -43,7 +43,10 @@ export async function main(ns) {
     return;
   }
 
-  const destinationDir = args._[0] || defaultFolder;
+  let destinationDir = args._[0] || defaultFolder;
+  if (!destinationDir.startsWith("/")) destinationDir = `/${destinationDir}`;
+  if (!destinationDir.endsWith("/")) destinationDir = `${destinationDir}/`;
+
   const destinationFiles = ns.ls("home", destinationDir);
 
   for (const file of destinationFiles) {
