@@ -1,4 +1,3 @@
-import { AttackResult } from "./attack_result.js";
 import { AttackAction } from "/hack/attack_action.js";
 import {
   calculateServerExecutionTimes,
@@ -96,7 +95,7 @@ export class AttackBatch {
     return this.#isFirstRun;
   }
 
-  setAttackDuration(threads, duration) {
+  #setAttackDuration(threads, duration) {
     if (threads === 0) return;
 
     if (this.#attackDuration < duration) {
@@ -169,7 +168,9 @@ export class AttackBatch {
 
   //#region Attack
 
-  /** @returns {AttackResult} */
+  /** Performs Hack, Grow and Weaken actions for the batch.
+   * @returns {boolean} true if attack was successful
+   * */
   doAttack() {
     const fname = "AttackBatch.doAttack";
 
@@ -183,22 +184,22 @@ export class AttackBatch {
       this.targetName,
     );
 
-    if (!this.doHackAttack(targetObject, executionTimes.hackTime)) {
+    if (!this.#doHackAttack(targetObject, executionTimes.hackTime)) {
       return false;
     }
 
-    if (!this.doGrowAttack(targetObject, executionTimes.growTime)) {
+    if (!this.#doGrowAttack(targetObject, executionTimes.growTime)) {
       return false;
     }
 
-    if (!this.doWeakenAttack(targetObject, executionTimes.weakenTime)) {
+    if (!this.#doWeakenAttack(targetObject, executionTimes.weakenTime)) {
       return false;
     }
 
     return true;
   }
 
-  doHackAttack(targetObject, executionTime) {
+  #doHackAttack(targetObject, executionTime) {
     const fname = "AttackBatch.doHackAttack";
     if (this.isFirstRun) {
       // Prep phase - make sure the server is at min difficulty before the first hack attack.
@@ -211,13 +212,14 @@ export class AttackBatch {
     }
 
     this.#hackAction.initAction(hackingThreads, executionTime);
-    this.setAttackDuration(hackingThreads, executionTime);
+    this.#setAttackDuration(hackingThreads, executionTime);
 
     for (const serverName of this.attackingServers) {
       const serverObject = this.ns.getServer(serverName);
       if (!canAttackFromServer(serverObject, this.#hackAction)) {
         continue;
       }
+
       runAttackAction(this.ns, serverName, this.targetName, this.#hackAction);
       return true;
     }
@@ -228,7 +230,7 @@ export class AttackBatch {
     return false;
   }
 
-  doGrowAttack(targetObject, executionTime) {
+  #doGrowAttack(targetObject, executionTime) {
     const fname = "AttackBatch.doGrowAttack";
 
     let cpuCores = -1;
@@ -253,11 +255,12 @@ export class AttackBatch {
 
       // Update the action
       this.#growAction.initAction(threads, executionTime, cpuCores);
-      this.setAttackDuration(threads, executionTime);
+      this.#setAttackDuration(threads, executionTime);
 
       if (!canAttackFromServer(serverObject, this.#growAction)) {
         continue;
       }
+
       runAttackAction(this.ns, serverName, this.targetName, this.#growAction);
       targetObject.moneyAvailable = targetObject.moneyMax;
       targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
@@ -270,7 +273,7 @@ export class AttackBatch {
     return false;
   }
 
-  doWeakenAttack(targetObject, executionTime) {
+  #doWeakenAttack(targetObject, executionTime) {
     const fname = "AttackBatch.doWeakenAttack";
 
     let cpuCores = -1;
@@ -290,11 +293,12 @@ export class AttackBatch {
 
       // Update the action
       this.#weakenAction.initAction(threads, executionTime, cpuCores);
-      this.setAttackDuration(threads, executionTime);
+      this.#setAttackDuration(threads, executionTime);
 
       if (!canAttackFromServer(serverObject, this.#weakenAction)) {
         continue;
       }
+
       runAttackAction(this.ns, serverName, this.targetName, this.#weakenAction);
       targetObject.hackDifficulty = targetObject.minDifficulty;
       return true;

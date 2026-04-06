@@ -163,6 +163,7 @@ function performAttack(ns, attackingServers, attackBatch) {
   return new AttackSuccess(
     attackBatch.getAttackDuration(),
     attackBatch.getTotalThreads(),
+    attackBatch.errorMessages,
   );
 }
 
