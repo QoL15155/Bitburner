@@ -42,7 +42,7 @@ function removeItemFromArray(array, item) {
 //#region Perform Attack
 
 function getStrAttackFail(targetName, attackAction) {
-  return `Failed to attack ${targetName}. ${attackAction.toString()}`;
+  return `Failed to find server to attack ${targetName}. ${attackAction.toString()}`;
 }
 
 //TODO: docstring
@@ -51,6 +51,7 @@ function performHackAttack(
   targetObject,
   attackBatch,
   executionTime,
+  errorMessages,
 ) {
   const fname = "performHackAttack";
   if (attackBatch.isFirstRun) {
@@ -76,7 +77,9 @@ function performHackAttack(
     return true;
   }
 
-  logger.warn(fname, getStrAttackFail(targetObject.hostname, hackAction));
+  const errorMessage = getStrAttackFail(targetObject.hostname, hackAction);
+  errorMessages.push(errorMessage);
+  logger.error(fname, errorMessage);
   return false;
 }
 
@@ -85,6 +88,7 @@ function performGrowAttack(
   targetObject,
   attackBatch,
   executionTime,
+  errorMessages,
 ) {
   const fname = "performGrowAttack";
 
@@ -119,7 +123,9 @@ function performGrowAttack(
     return true;
   }
 
-  logger.warn(fname, getStrAttackFail(targetObject.hostname, growAction));
+  const errorMessage = getStrAttackFail(targetObject.hostname, growAction);
+  errorMessages.push(errorMessage);
+  logger.error(fname, errorMessage);
   return false;
 }
 
@@ -128,6 +134,7 @@ function performWeakenAttack(
   targetObject,
   attackBatch,
   executionTime,
+  errorMessages,
 ) {
   const fname = "performWeakenAttack";
 
@@ -161,7 +168,9 @@ function performWeakenAttack(
     return true;
   }
 
-  logger.warn(fname, getStrAttackFail(targetObject.hostname, weakenAction));
+  const errorMessage = getStrAttackFail(targetObject.hostname, weakenAction);
+  errorMessages.push(errorMessage);
+  logger.error(fname, errorMessage);
   return false;
 }
 
@@ -299,13 +308,9 @@ function performAttack(ns, attackingServers, attackBatch) {
     targetObject,
     attackBatch,
     executionTimes.hackTime,
-    // TODO: error Messages
+    errorMessages,
   );
   if (!result) {
-    const message = `Failed to find server to run hack attack on ${targetName}`;
-    logger.error(fname, message);
-    errorMessages.push(message);
-
     return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
   }
 
@@ -314,11 +319,9 @@ function performAttack(ns, attackingServers, attackBatch) {
     targetObject,
     attackBatch,
     executionTimes.growTime,
+    errorMessages,
   );
   if (!result) {
-    const message = `Failed to find server to run grow attack on ${targetName}`;
-    logger.error(fname, message);
-    errorMessages.push(message);
     return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
   }
 
@@ -327,11 +330,9 @@ function performAttack(ns, attackingServers, attackBatch) {
     targetObject,
     attackBatch,
     executionTimes.weakenTime,
+    errorMessages,
   );
   if (!result) {
-    const message = `Failed to find server to run weaken attack on ${targetName}`;
-    logger.error(fname, message);
-    errorMessages.push(message);
     return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
   }
 
