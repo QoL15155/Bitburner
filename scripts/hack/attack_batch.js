@@ -26,7 +26,7 @@ export class AttackBatch {
    * @type {number} */
   #endTime = 0;
 
-  /** First run of the batch (turns true once it is executed for the first time)
+  /** First run of the batch (turns false once it is executed for the first time)
    * @type {boolean} */
   #isFirstRun = true;
 

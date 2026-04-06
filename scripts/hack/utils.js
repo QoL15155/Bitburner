@@ -117,7 +117,7 @@ export function getHackSecurityIncrease(threads) {
   return threads * serverFortifyAmount;
 }
 
-export function processHack(ns, targetObject, isFirstRun) {
+export function processHack(ns, targetObject) {
   const fname = "processHack";
   const targetName = targetObject.hostname;
 
@@ -126,9 +126,7 @@ export function processHack(ns, targetObject, isFirstRun) {
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
     // TODO: logger
     printWarn(ns, `[${fname}] ${message}`);
-    if (!isFirstRun) {
-      throw new Error(message);
-    }
+    throw new Error(message);
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);

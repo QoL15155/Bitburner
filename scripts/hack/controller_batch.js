@@ -32,6 +32,13 @@ let useFormulas = false;
 /** @type {NS} */
 let ns = null;
 
+function removeItemFromArray(array, item) {
+  const index = array.indexOf(item);
+  if (index > -1) {
+    array.splice(index, 1);
+  }
+}
+
 //#region Perform Attack
 
 function getStrAttackFail(targetName, attackAction) {
@@ -46,7 +53,11 @@ function performHackAttack(
   executionTime,
 ) {
   const fname = "performHackAttack";
-  const hackingThreads = processHack(ns, targetObject, attackBatch.isFirstRun);
+  if (attackBatch.isFirstRun) {
+    // Prep phase - make sure the server is at min difficulty before the first hack attack.
+    return true;
+  }
+  const hackingThreads = processHack(ns, targetObject);
   if (hackingThreads === 0) {
     return true;
   }
@@ -100,7 +111,6 @@ function performGrowAttack(
     );
 
     if (!canAttackFromServer(serverObject, growAction)) {
-      logger.info(fname, `Cannot attack from server ${serverName}`);
       continue;
     }
     runAttackAction(ns, serverName, targetObject.hostname, growAction);
@@ -120,11 +130,10 @@ function performWeakenAttack(
   executionTime,
 ) {
   const fname = "performWeakenAttack";
+
   let cpuCores = -1;
   let weakenThreads = null;
-
   let weakenAction = null;
-
   for (const serverName of attackingServers) {
     const serverObject = ns.getServer(serverName);
 
@@ -145,7 +154,6 @@ function performWeakenAttack(
     );
 
     if (!canAttackFromServer(serverObject, weakenAction)) {
-      logger.info(fname, `Cannot attack from server ${serverName}`);
       continue;
     }
     runAttackAction(ns, serverName, targetObject.hostname, weakenAction);
@@ -355,7 +363,6 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     const attackBatch = new AttackBatch(targetName, distributionScripts);
     targetList.push(attackBatch);
   });
-  targetList.reverse();
 
   logger.info(fname, `Attacking Servers: ${attackingServers.join(", ")}`);
   logger.info(fname, `Target Servers: ${targetServers.join(", ")}`);
@@ -392,7 +399,8 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
         totalThreads += attackResult.threads;
       } else {
         if (attackResult.reason === AttackFailReason.NOT_ENOUGH_RAM) {
-          break;
+          // Not enough RAM to attack server
+          removeItemFromArray(targetList, attackBatch);
         }
       }
     }
@@ -401,14 +409,12 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     // We haven't updated measurements.rounds yet
     const currentRound = measurements.rounds + 1;
 
-    if (currentRound === 1 && attackedServers === 0) {
-      ns.tprint(
-        `ERROR: No servers were attacked in the first round. ` +
-          `This may indicate insufficient RAM on attacking servers.`,
-      );
+    if (targetList.length === 0) {
+      ns.tprint("ERROR: Insufficient RAM to perform any attacks. Exiting.");
       ns.ui.closeTail();
       return;
     }
+
     const roundLabel = `Attack-Round ${currentRound}`;
     if (attackedServers > 0) {
       logger.info(
