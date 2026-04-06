@@ -52,7 +52,7 @@ export class AttackBatch {
    * @param {NS} ns
    * @param {FileLogger} logger
    * @param {Object} distributionScripts : RAM and script name for the attack scripts
-   * @param {Array<MyServer>} attackingServers : servers that can be used to run attack scripts
+   * @param {Array<string>} attackingServers : names of servers that can be used to run attack scripts
    * @param {boolean} useFormulas : whether to use formulas for calculations
    * @param {string} targetName : server to attack
    */

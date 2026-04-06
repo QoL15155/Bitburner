@@ -208,6 +208,10 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
     let totalThreads = 0;
     /** @type {Array<string>} */
     let errorMessages = [];
+    /** Servers to remove due to insufficient RAM
+     * @type {Array<AttackBatch>}
+     */
+    let targetsToRemove = [];
 
     // Perform attack on each target server.
     for (const attackBatch of targetList) {
@@ -230,9 +234,14 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       } else {
         if (attackResult.reason === AttackFailReason.NOT_ENOUGH_RAM) {
           // Not enough RAM to attack server
-          removeItemFromArray(targetList, attackBatch);
+          targetsToRemove.push(attackBatch);
         }
       }
+    }
+
+    // Remove batches that couldn't be executed due to insufficient RAM
+    for (const targetBatch of targetsToRemove) {
+      removeItemFromArray(targetList, targetBatch);
     }
 
     // Log results and wait for the next attack round
