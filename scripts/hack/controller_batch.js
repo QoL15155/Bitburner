@@ -6,16 +6,7 @@ import {
 } from "./attack_result.js";
 import { AttackBatch, delayIncrease } from "/hack/attack_batch.js";
 import { AttackMeasurements } from "/hack/attack_measurements.js";
-import {
-  calculateServerExecutionTimes,
-  canAttackFromServer,
-  distributionScripts,
-  getGrowSecurityIncrease,
-  getGrowThreads,
-  getWeakenThreads,
-  processHack,
-  runAttackAction,
-} from "/hack/utils.js";
+import { distributionScripts } from "/hack/utils.js";
 import { formatMoney } from "/utils/formatters.js";
 import { FileLogger } from "/utils/logger.js";
 
@@ -38,143 +29,6 @@ function removeItemFromArray(array, item) {
     array.splice(index, 1);
   }
 }
-
-//#region Perform Attack
-
-function getStrAttackFail(targetName, attackAction) {
-  return `Failed to find server to attack ${targetName}. ${attackAction.toString()}`;
-}
-
-//TODO: docstring
-function performHackAttack(
-  attackingServers,
-  targetObject,
-  attackBatch,
-  executionTime,
-  errorMessages,
-) {
-  const fname = "performHackAttack";
-  if (attackBatch.isFirstRun) {
-    // Prep phase - make sure the server is at min difficulty before the first hack attack.
-    return true;
-  }
-  const hackingThreads = processHack(ns, targetObject);
-  if (hackingThreads === 0) {
-    return true;
-  }
-
-  const hackAction = attackBatch.updateHackAction(
-    hackingThreads,
-    executionTime,
-  );
-
-  for (const serverName of attackingServers) {
-    const serverObject = ns.getServer(serverName);
-    if (!canAttackFromServer(serverObject, hackAction)) {
-      continue;
-    }
-    runAttackAction(ns, serverName, targetObject.hostname, hackAction);
-    return true;
-  }
-
-  const errorMessage = getStrAttackFail(targetObject.hostname, hackAction);
-  errorMessages.push(errorMessage);
-  logger.error(fname, errorMessage);
-  return false;
-}
-
-function performGrowAttack(
-  attackingServers,
-  targetObject,
-  attackBatch,
-  executionTime,
-  errorMessages,
-) {
-  const fname = "performGrowAttack";
-
-  let cpuCores = -1;
-  let growThreads = null;
-  let growAction = null;
-  for (const serverName of attackingServers) {
-    const serverObject = ns.getServer(serverName);
-
-    // CPU cores
-    if (cpuCores !== serverObject.cpuCores) {
-      // Only calculate threads if cpu cores changed.
-      cpuCores = serverObject.cpuCores;
-      growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
-      if (growThreads === 0) {
-        return true;
-      }
-    }
-
-    growAction = attackBatch.updateGrowAction(
-      growThreads,
-      executionTime,
-      cpuCores,
-    );
-
-    if (!canAttackFromServer(serverObject, growAction)) {
-      continue;
-    }
-    runAttackAction(ns, serverName, targetObject.hostname, growAction);
-    targetObject.moneyAvailable = targetObject.moneyMax;
-    targetObject.hackDifficulty += getGrowSecurityIncrease(growThreads);
-    return true;
-  }
-
-  const errorMessage = getStrAttackFail(targetObject.hostname, growAction);
-  errorMessages.push(errorMessage);
-  logger.error(fname, errorMessage);
-  return false;
-}
-
-function performWeakenAttack(
-  attackingServers,
-  targetObject,
-  attackBatch,
-  executionTime,
-  errorMessages,
-) {
-  const fname = "performWeakenAttack";
-
-  let cpuCores = -1;
-  let weakenThreads = null;
-  let weakenAction = null;
-  for (const serverName of attackingServers) {
-    const serverObject = ns.getServer(serverName);
-
-    // CPU cores
-    if (cpuCores !== serverObject.cpuCores) {
-      // Only calculate threads if cpu cores changed.
-      cpuCores = serverObject.cpuCores;
-      weakenThreads = getWeakenThreads(cpuCores, targetObject);
-      if (weakenThreads === 0) {
-        return true;
-      }
-    }
-
-    weakenAction = attackBatch.updateWeakenAction(
-      weakenThreads,
-      executionTime,
-      cpuCores,
-    );
-
-    if (!canAttackFromServer(serverObject, weakenAction)) {
-      continue;
-    }
-    runAttackAction(ns, serverName, targetObject.hostname, weakenAction);
-    targetObject.hackDifficulty = targetObject.minDifficulty;
-    return true;
-  }
-
-  const errorMessage = getStrAttackFail(targetObject.hostname, weakenAction);
-  errorMessages.push(errorMessage);
-  logger.error(fname, errorMessage);
-  return false;
-}
-
-//#endregion Perform Attack
 
 //#region Sanity Checks
 
@@ -295,45 +149,12 @@ function performAttack(ns, attackingServers, attackBatch) {
 
   attackBatch.reset();
 
-  // Attack
-
-  logger.info(fname, `Attacking ${targetName}`);
-  const targetObject = ns.getServer(targetName);
-  // FIXME: do we need ALL execution times here? we only need weaken
-  const executionTimes = calculateServerExecutionTimes(ns, targetName);
-
-  // Hack
-  let result = performHackAttack(
-    attackingServers,
-    targetObject,
-    attackBatch,
-    executionTimes.hackTime,
-    errorMessages,
-  );
-  if (!result) {
-    return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
-  }
-
-  result = performGrowAttack(
-    attackingServers,
-    targetObject,
-    attackBatch,
-    executionTimes.growTime,
-    errorMessages,
-  );
-  if (!result) {
-    return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
-  }
-
-  result = performWeakenAttack(
-    attackingServers,
-    targetObject,
-    attackBatch,
-    executionTimes.weakenTime,
-    errorMessages,
-  );
-  if (!result) {
-    return new AttackFailure(AttackFailReason.NOT_ENOUGH_RAM, 0, errorMessages);
+  if (!attackBatch.doAttack()) {
+    return new AttackFailure(
+      AttackFailReason.NOT_ENOUGH_RAM,
+      0,
+      attackBatch.errorMessages,
+    );
   }
 
   attackBatch.setEndTime();
@@ -361,7 +182,14 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   // Initialize attack batch for each target server
   let targetList = [];
   targetServers.forEach((targetName) => {
-    const attackBatch = new AttackBatch(targetName, distributionScripts);
+    const attackBatch = new AttackBatch(
+      ns,
+      logger,
+      distributionScripts,
+      attackingServers,
+      useFormulas,
+      targetName,
+    );
     targetList.push(attackBatch);
   });
 
