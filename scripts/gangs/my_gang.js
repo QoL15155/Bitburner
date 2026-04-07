@@ -125,7 +125,7 @@ export class MyGang {
   }
 
   set shouldWaitAscend(value) {
-    const fname = "setShouldWaitAscend";
+    const fname = "MyGang.setShouldWaitAscend";
     if (value === this.#shouldWaitAscend) return;
 
     this.#shouldWaitAscend = value;
@@ -145,7 +145,7 @@ export class MyGang {
   }
 
   stopRecruit() {
-    const fname = "stopRecruit";
+    const fname = "MyGang.stopRecruit";
     if (this.isRecruiting === false) {
       throw new Error("stopRecruit called but isRecruiting is already false");
     }
@@ -231,7 +231,7 @@ export class MyGang {
   }
 
   sanityCheckMembers() {
-    const fname = "sanityCheckMembers";
+    const fname = "MyGang.sanityCheckMembers";
     const memberCount = this.#gangMemberNames.length;
     const totalCategorizedMembers =
       this.#membersTraining.length +
@@ -293,7 +293,7 @@ export class MyGang {
    * @param {string} memberName - the name of the new member to add
    */
   addNewMember(memberName) {
-    const fname = "addNewMember";
+    const fname = "MyGang.addNewMember";
     this.#gangMemberNames.push(memberName);
     this.addMemberToTraining(memberName, this.trainingTask);
 
@@ -313,7 +313,7 @@ export class MyGang {
    *    Defaults to the gang's default Ethical task
    */
   assignFirstTrainingMemberToEthical(ethicalTask = this.ethicalTask) {
-    const fname = "assignFirstTrainingMemberToEthical";
+    const fname = "MyGang.assignFirstTrainingMemberToEthical";
 
     const memberName = this.#membersTraining.shift();
     this.addMemberToEthical(memberName, ethicalTask);
@@ -323,7 +323,7 @@ export class MyGang {
   /** Assigns the first training member to work task
    * @param {string} taskName : Work task to assign */
   assignFirstTrainingMemberToWork(taskName) {
-    const fname = "assignFirstTrainingMemberToWork";
+    const fname = "MyGang.assignFirstTrainingMemberToWork";
 
     const memberName = this.#membersTraining.shift();
     this.addMemberToWorking(memberName, taskName);
@@ -331,7 +331,7 @@ export class MyGang {
   }
 
   assignEthicalMemberToWork(memberObject, taskName) {
-    const fname = "assignEthicalMemberToWork";
+    const fname = "MyGang.assignEthicalMemberToWork";
     const prevTask = memberObject.task;
 
     this.addMemberToWorking(memberObject.name, taskName);
@@ -346,7 +346,7 @@ export class MyGang {
    * @param {GangMemberInfo} memberObject
    */
   assignWorkingMemberToEthical(memberObject) {
-    const fname = "assignWorkingMemberToEthical";
+    const fname = "MyGang.assignWorkingMemberToEthical";
     const memberName = memberObject.name;
     const prevTask = memberObject.task;
 
@@ -363,7 +363,7 @@ export class MyGang {
    * @param {GangTaskStats} nextTask
    * */
   assignWorkingMemberToEthicalTask(memberObject, currentTask, nextTask) {
-    const fname = "assignWorkingMemberToEthicalTask";
+    const fname = "MyGang.assignWorkingMemberToEthicalTask";
     const memberName = memberObject.name;
 
     this.addMemberToEthical(memberName, nextTask.name);
@@ -379,7 +379,7 @@ export class MyGang {
    * @param {GangTaskStats} nextTask
    */
   updateMemberTask(memberObject, currentTask, nextTask) {
-    const fname = "updateMemberTask";
+    const fname = "MyGang.updateMemberTask";
     this.#setMemberTask(memberObject.name, nextTask.name);
 
     this.logMemberReassignTaskEx(
