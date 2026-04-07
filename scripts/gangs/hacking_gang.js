@@ -544,7 +544,7 @@ function initializeTasks(ns) {
   );
   if (tasksByWantedLevel.length === 0) {
     printError(ns, "Failed to read gang tasks.");
-    return;
+    return false;
   }
 
   tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
@@ -552,6 +552,7 @@ function initializeTasks(ns) {
     (task) => task.baseRespect > 0,
   );
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
+  return true;
 }
 
 function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
@@ -713,8 +714,13 @@ export async function main(ns) {
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
 
-  initializeTasks(ns);
+  if (!initializeTasks(ns)) {
+    return;
+  }
   equipmentByType = readGangEquipment(ns);
+  if (equipmentByType == null) {
+    return;
+  }
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
