@@ -555,11 +555,15 @@ function initializeTasks(ns) {
   return true;
 }
 
+/**
+ * Checks if we should buy augmentations.
+ * The calculations here are a rough estimate of whether the players has enough money.
+ */
 function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
   const augmentationCost = isHackingGang
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
-  const augmentationCostPercent = augmentationCost / playerMoney;
+  const augmentationCostPercent = augmentationCost / Math.max(1, playerMoney);
 
   if (buyArgument) {
     if (augmentationCostPercent < maxAugmentationsCostPercent) return true;
@@ -587,11 +591,15 @@ function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
   return false;
 }
 
+/**
+ * Checks if we should buy equipment
+ * The calculations here are a rough estimate of whether the players has enough money.
+ */
 function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
   const regularCost = isHackingGang
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
-  const regularCostPercent = regularCost / playerMoney;
+  const regularCostPercent = regularCost / Math.max(1, playerMoney);
 
   if (buyArgument) {
     if (regularCostPercent < maxEquipmentCostPercent) {
