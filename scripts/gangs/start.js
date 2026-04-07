@@ -3,12 +3,13 @@ import { writeGangEquipment, writeGangTasks } from "./utils.js";
 import { Color, print, printError, toGreen } from "/utils/print.js";
 
 /**
- * Handles joining a new gang, or starting gang management after restart
+ * Arranges the environment for gang management, including:
  *
- * - Tasks :
+ * - Tasks
  *          Write tasks info to a json file.
- *          Can be used by other scripts to assign tasks to gang members.
- * - Gang Members :
+ * - Equipment
+ *         Write equipment info to a json file.
+ * - Gang Members
  *          Calls ongoing script to manage gang members' tasks and wanted level,
  *          and recruit new members when possible.
  */
