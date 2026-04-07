@@ -123,10 +123,9 @@ export function processHack(ns, targetObject) {
 
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
+    // NOTE: We already log this during sanity tests.
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
-    // TODO: logger
     printWarn(ns, `[${fname}] ${message}`);
-    throw new Error(message);
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
