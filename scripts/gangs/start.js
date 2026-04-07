@@ -1,14 +1,15 @@
-import { writeGangTasks } from "./utils.js";
 import { scriptHackingGang } from "./constants.js";
-import { printInfo, printError, print } from "/utils/print.js";
+import { writeGangEquipment, writeGangTasks } from "./utils.js";
+import { Color, print, printError, toGreen } from "/utils/print.js";
 
 /**
- * Handles joining a new gang, or starting gang management after restart
+ * Arranges the environment for gang management, including:
  *
- * - Tasks :
+ * - Tasks
  *          Write tasks info to a json file.
- *          Can be used by other scripts to assign tasks to gang members.
- * - Gang Members :
+ * - Equipment
+ *         Write equipment info to a json file.
+ * - Gang Members
  *          Calls ongoing script to manage gang members' tasks and wanted level,
  *          and recruit new members when possible.
  */
@@ -21,11 +22,17 @@ import { printInfo, printError, print } from "/utils/print.js";
  * @param {boolean} toKill - whether to kill currently running gang management script. Default: false
  * @return {boolean} False when the script was called with errors
  */
-export function startGangManagement(ns, toKill = false) {
+export function startGangManagement(
+  ns,
+  toKill = false,
+  buyAugmentations = false,
+  buyEquipment = false,
+) {
   // Write tasks info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
   const isHackingGang = gangInformation.isHacking;
   writeGangTasks(ns, isHackingGang);
+  writeGangEquipment(ns);
 
   if (!isHackingGang) {
     ns.tprint("ERROR Combat gang is not implemented yet!");
@@ -39,7 +46,19 @@ export function startGangManagement(ns, toKill = false) {
 
   print(ns, `Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
-  const pid = ns.run(gangManagementScript, { threads: 1 }, gangMembers);
+  const additionalArguments = [];
+  if (buyAugmentations) {
+    additionalArguments.push("--buy-augmentations");
+  }
+  if (buyEquipment) {
+    additionalArguments.push("--buy-equipment");
+  }
+  const pid = ns.run(
+    gangManagementScript,
+    { threads: 1 },
+    gangMembers,
+    ...additionalArguments,
+  );
   return pid !== 0;
 }
 
@@ -82,6 +101,31 @@ function handleRunningScript(ns, scriptName, toKill) {
 
 //#region Main
 
+function printUsage(ns) {
+  const usageMessage = `run ${ns.getScriptName()}`;
+  ns.tprint(
+    `Usage: ${toGreen(usageMessage)} ${Color.Italic}[OPTIONS]${Color.Reset}`,
+  );
+  ns.tprint("");
+  ns.tprint("Initial Gang Management Script");
+  ns.tprint("================================");
+  ns.tprint("Initializes gang management after a gang has been formed.");
+  ns.tprint(
+    "Calls gang management script to manage gang members' tasks and wanted level, and recruit new members when possible.",
+  );
+  ns.tprint("");
+  ns.tprint("Options:");
+  ns.tprint(
+    `  ${toGreen("--buy-augmentations")}  Buy augmentations for gang members.`,
+  );
+  ns.tprint(
+    `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
+  );
+  ns.tprint(
+    `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,
+  );
+}
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -89,53 +133,47 @@ function handleRunningScript(ns, scriptName, toKill) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--faction", "-k", "--kill"];
+  const options = ["-k", "--kill"];
+  const equipmentOptions = ["--buy-equipment", "--buy-augmentations"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions, ...options, ...equipmentOptions];
 }
 
 export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
-    ["faction", "Slum Snakes"],
+    ["buy-augmentations", false],
+    ["buy-equipment", false],
     ["kill", false],
     ["k", false],
   ]);
   if (args.help || args.h) {
-    ns.tprint(`Usage: run ${ns.getScriptName()}`);
-    ns.tprint("");
-    ns.tprint("Initial Gang Recruit Script");
-    ns.tprint("=====================");
-    ns.tprint("");
-    ns.tprint("This script should be run once when you first create a gang.");
-    ns.tprint("- Generates a task-list for the gang.");
+    printUsage(ns);
+    return 0;
+  }
+
+  // Check if member is in gang
+  if (!ns.gang.inGang()) {
     ns.tprint(
-      "- Calls ongoing script to manage gang members' tasks and wanted level, and recruit new members when possible.",
-    );
-    ns.tprint("");
-    ns.tprint("Options:");
-    ns.tprint(
-      "  --faction       - The faction to create the gang with. Default: Slum Snakes",
-    );
-    ns.tprint(
-      "  --kill, -k      - Kill currently running gang management script.",
+      "ERROR You are not in a gang. Join a gang before running this script.",
     );
     return 0;
   }
 
-  const faction = args.faction;
-  if (!ns.gang.createGang(faction)) {
-    print(ns, `Gang already exists.`);
-  } else {
-    printInfo(ns, `Gang for faction ${faction} created successfully.`);
-  }
-
   const toKill = args.kill || args.k;
-  const result = startGangManagement(ns, toKill);
+
+  // Run management script
+  const result = startGangManagement(
+    ns,
+    toKill,
+    args["buy-augmentations"],
+    args["buy-equipment"],
+  );
+
   if (result === false) {
     printError(ns, "Failed to call gang management script");
-    ns.tail();
+    ns.ui.openTail();
   }
 }
 

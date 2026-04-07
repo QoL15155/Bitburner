@@ -1,5 +1,5 @@
+import { formatMoney, formatTime } from "/utils/formatters.js";
 import { printError } from "/utils/print.js";
-import { doConversion, formatTime, formatMoney } from "/utils/formatters.js";
 
 export async function collectServerInfo(
   ns,
@@ -19,7 +19,7 @@ export async function collectServerInfo(
 
   let moneyObject = {
     maximum: formatMoney(maxMoney),
-    available: formatMoney(moneyAvailable.toFixed(3)),
+    available: formatMoney(moneyAvailable),
   };
   let growthObject = {
     // This growth parameter is a number typically between 0 and 100 that represents how quickly the server's money grows.
@@ -28,11 +28,10 @@ export async function collectServerInfo(
   };
 
   if (maxMoney > 0) {
-    const moneyPercent = (moneyAvailable / maxMoney) * 100;
+    const moneyPercent = moneyAvailable / maxMoney;
     const moneyMultiplier = maxMoney / Math.max(moneyAvailable, 1);
-    // moneyPercent: moneyPercent.toFixed(2) + "%",
-    moneyObject["moneyPercent"] = moneyPercent + "%";
-    moneyObject["moneyMultiplier"] = doConversion(moneyMultiplier.toFixed(2));
+    moneyObject["moneyPercent"] = ns.formatPercent(moneyPercent);
+    moneyObject["moneyMultiplier"] = ns.formatNumber(moneyMultiplier);
 
     const growThreads = ns.growthAnalyze(
       targetName,

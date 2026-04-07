@@ -1,23 +1,16 @@
 import {
-  printError,
-  printInfo,
-  print,
-  printLogInfo,
-  printLogWarn,
-  printWarn,
-} from "/utils/print.js";
-import {
-  doConversion,
-  formatTimeSeconds,
-  formatGainRate,
-} from "/utils/formatters.js";
-import { memberNamePrefix } from "./constants.js";
-import {
+  memberNamePrefix,
   recruitmentMaxWaitTimeSeconds,
   wantedGainSafeThreshold,
   wantedPenaltyMax,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
+import {
+  doConversion,
+  formatGainRate,
+  formatTimeSeconds,
+} from "/utils/formatters.js";
+import { printError, printLogWarn } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -67,19 +60,21 @@ export function getGangEthicalTask(gangFocus) {
 //#region Recruitment
 
 function getRespectNeededForNextRecruit(gangInformation) {
-  if (gangInformation.respectForNextRecruit === Infinity) {
+  const respectNeeded = gangInformation["respectForNextRecruit"];
+  if (respectNeeded === Infinity) {
     return Infinity;
   }
 
-  if (gangInformation.respectForNextRecruit <= gangInformation.respect) {
+  if (respectNeeded <= gangInformation.respect) {
     return 0;
   }
 
-  return gangInformation.respectForNextRecruit - gangInformation.respect;
+  return respectNeeded - gangInformation.respect;
 }
 
 function canRecruit(gangInformation) {
-  return gangInformation.respectForNextRecruit <= gangInformation.respect;
+  const respectNeeded = gangInformation["respectForNextRecruit"];
+  return respectNeeded <= gangInformation.respect;
 }
 
 /**
@@ -143,34 +138,13 @@ export function handleRecruitmentStatus(ns, myGang) {
 
 //#region Ascend
 
-/**
- * Ascends gang members if they meet the criteria.
+/** Determines if a gang member should be ascended based on their potential stat gains.
  * Criteria: Ascend if the member will gain at least 2 levels in any stat after ascending.
- *
  * @param {NS} ns - the Netscript environment
- * @param {string[]} memberNames - the list of gang member names to check for ascension
+ * @param {string} memberName - the name of the gang member
+ * @returns {boolean} true if the member should be ascended, false otherwise
  */
-export function ascendGangMembers(ns, memberNames) {
-  const fname = "ascendGangMembers";
-
-  for (const memberName of memberNames) {
-    if (!shouldAscendMember(ns, memberName)) {
-      continue;
-    }
-
-    const ascendResult = ns.gang.ascendMember(memberName);
-    if (ascendResult) {
-      printLogInfo(
-        ns,
-        `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(ascendResult)}`,
-      );
-    } else {
-      printError(ns, `[${fname}] Failed to ascend member ${memberName}`);
-    }
-  }
-}
-
-function shouldAscendMember(ns, memberName) {
+export function shouldAscendMember(ns, memberName) {
   const ascensionResult = ns.gang.getAscensionResult(memberName);
   if (ascensionResult == null) {
     // Member cannot be ascended

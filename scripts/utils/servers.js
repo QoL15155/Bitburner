@@ -198,14 +198,6 @@ export function canHackServer(ns, serverName) {
   return true;
 }
 
-export function canHackServer3(ns, requiredPorts, requiredLevel) {
-  if (!canGetRootAccess(ns, requiredPorts)) {
-    return false;
-  }
-
-  return ns.getHackingLevel() >= requiredLevel;
-}
-
 /**
  * Hacks a server if possible
  *

@@ -1,10 +1,26 @@
 import { printError } from "/utils/print.js";
 
-//#region Tasks Files
-
 // Task lists
 const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
 const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
+
+// Gang equipment mapping
+const equipmentJsonFilename = "data/gang_equipment.json";
+
+function checkFileExists(ns, fname, type, filename) {
+  if (ns.fileExists(filename)) {
+    return true;
+  }
+
+  printError(
+    ns,
+    `[${fname}] ${type} file ${filename} does not exist. Please run the gangs/start.js script to generate the ${type} file.`,
+  );
+
+  return false;
+}
+
+//#region Tasks
 
 /**
  * Writes gang tasks to a json file for other scripts to use.
@@ -15,12 +31,13 @@ const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
  */
 export function writeGangTasks(ns, isHackingGang = true) {
   const fname = "writeGangTasks";
-  const tasks = ns.gang.getTaskNames().map((taskName) => {
-    return ns.gang.getTaskStats(taskName);
-  });
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
+
+  const tasks = ns.gang.getTaskNames().map((taskName) => {
+    return ns.gang.getTaskStats(taskName);
+  });
 
   ns.write(filename, JSON.stringify(tasks, null, 2), "w");
   ns.printf(
@@ -41,11 +58,8 @@ export function readGangTasks(ns, isHackingGang = true) {
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
-  if (!ns.fileExists(filename)) {
-    printError(
-      ns,
-      `[${fname}] Tasks file ${filename} does not exist. Please run the gangs/start.js script to generate the tasks file.`,
-    );
+
+  if (!checkFileExists(ns, fname, "Tasks", filename)) {
     return [];
   }
 
@@ -57,91 +71,139 @@ export function readGangTasks(ns, isHackingGang = true) {
   return tasks;
 }
 
-//#endregion Tasks Files
+//#endregion Tasks
+
+//#region Equipment
+
+/**
+ * Creates an object containing information about all gang equipment.
+ * To be used to write gang equipment to a json file and for gang information script.
+ */
+export function getGangEquipmentInformation(ns) {
+  let augmentations = { hacking: [], combat: [] };
+  let regular = { hacking: [], combat: [] };
+  for (const equipmentName of ns.gang.getEquipmentNames()) {
+    const type = ns.gang.getEquipmentType(equipmentName);
+    const equipmentStats = ns.gang.getEquipmentStats(equipmentName);
+    const cost = ns.gang.getEquipmentCost(equipmentName);
+    const equipmentInfo = {
+      name: equipmentName,
+      type: type,
+      cost: cost,
+      stats: equipmentStats,
+    };
+    if (type === "Augmentation") {
+      if (equipmentStats.hack) {
+        augmentations.hacking.push(equipmentInfo);
+      } else {
+        augmentations.combat.push(equipmentInfo);
+      }
+    } else {
+      if (equipmentStats.hack) {
+        regular.hacking.push(equipmentInfo);
+      } else {
+        regular.combat.push(equipmentInfo);
+      }
+    }
+  }
+
+  // Costs
+  const augmentationsHackingCost = augmentations.hacking.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const augmentationsCombatCost = augmentations.combat.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const regularHackingCost = regular.hacking.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const regularCombatCost = regular.combat.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+
+  const equipment = {
+    augmentations: augmentations,
+    regular: regular,
+    augmentationsCosts: {
+      hacking: augmentationsHackingCost,
+      combat: augmentationsCombatCost,
+    },
+    regularCosts: {
+      hacking: regularHackingCost,
+      combat: regularCombatCost,
+    },
+  };
+  return equipment;
+}
+
+/**
+ * Writes gang equipment to a json file for other scripts to use.
+ * Assumes player has already created a gang and equipment is available.
+ *
+ * @param {NS} ns
+ */
+export function writeGangEquipment(ns) {
+  const fname = "writeGangEquipment";
+  const filename = equipmentJsonFilename;
+
+  const equipment = getGangEquipmentInformation(ns);
+  ns.write(filename, JSON.stringify(equipment, null, 2), "w");
+  ns.printf(`[${fname}] Equipment object written to ${filename}`);
+}
+
+export function readGangEquipment(ns) {
+  const fname = "readGangEquipment";
+  const filename = equipmentJsonFilename;
+
+  if (!checkFileExists(ns, fname, "Equipment", filename)) {
+    return null;
+  }
+
+  const equipmentJson = ns.read(filename);
+  const equipment = JSON.parse(equipmentJson);
+  ns.printf(`[${fname}] Equipment read from ${filename}`);
+  return equipment;
+}
+
+//#endregion Equipment
 
 //#region Member Finder
 
-// Hacking Level
-
 /**
- * Finds the gang member with the *lowest hacking* level.
+ * Finds the gang member with the min or max value of a given stat.
  *
  * @param {NS} ns - Netscript API object
  * @param {string[]} memberNames - Array of gang member names to search through
- * @returns {GangMemberInfo} The member info object with the lowest hack stat
+ * @param {string} stat - Property name on GangMemberInfo (e.g. "hack", "wantedLevelGain")
+ * @param {"min"|"max"} direction - Whether to find the lowest or highest value
+ * @returns {GangMemberInfo} The matching member info object
  * @throws {TypeError} if memberNames is empty
  */
-export function findMemberLowestHackingLevel(ns, memberNames) {
+function findMemberBy(ns, memberNames, stat, direction = "min") {
   /** @type {GangMemberInfo[]} */
-  const members = memberNames.map((memberName) =>
-    ns.gang.getMemberInformation(memberName),
-  );
-
-  const bestMember = members.reduce((prev, current) => {
-    return current.hack < prev.hack ? current : prev;
+  const members = memberNames.map((name) => ns.gang.getMemberInformation(name));
+  return members.reduce((prev, cur) => {
+    const pick =
+      direction === "min" ? cur[stat] < prev[stat] : cur[stat] > prev[stat];
+    return pick ? cur : prev;
   });
-  return bestMember;
 }
 
-/**
- * Finds the gang member with the *highest hacking* level.
- *
- * @param {NS} ns - Netscript API object
- * @param {string[]} memberNames - Array of gang member names to search through
- * @returns {GangMemberInfo} The member info object with the highest hack stat
- * @throws {TypeError} if memberNames is empty
- */
-export function findMemberHighestHackingLevel(ns, memberNames) {
-  /** @type {GangMemberInfo[]} */
-  const members = memberNames.map((memberName) =>
-    ns.gang.getMemberInformation(memberName),
-  );
+export const findMemberMinHackingLevel = (ns, memberNames) =>
+  findMemberBy(ns, memberNames, "hack", "min");
 
-  const bestMember = members.reduce((prev, current) => {
-    return prev.hack < current.hack ? current : prev;
-  });
-  return bestMember;
-}
+export const findMemberMaxHackingLevel = (ns, memberNames) =>
+  findMemberBy(ns, memberNames, "hack", "max");
 
-/**
- * Finds the gang member with the *highest wanted* level gain.
- *
- * @param {NS} ns - Netscript API object
- * @param {string[]} memberNames - Array of gang member names to search through
- * @returns {GangMemberInfo} The member info object with the highest wanted level gain
- * @throws {TypeError} if memberNames is empty
- */
-export function findMemberHighestWantedLevel(ns, memberNames) {
-  /** @type {GangMemberInfo[]} */
-  const members = memberNames.map((memberName) =>
-    ns.gang.getMemberInformation(memberName),
-  );
+export const findMemberMaxWantedLevel = (ns, memberNames) =>
+  findMemberBy(ns, memberNames, "wantedLevelGain", "max");
 
-  const bestMember = members.reduce((prev, current) => {
-    return prev.wantedLevelGain < current.wantedLevelGain ? current : prev;
-  });
-  return bestMember;
-}
-
-/**
- * Finds the gang member with the *lowest wanted* level gain.
- *
- * @param {NS} ns - Netscript API object
- * @param {string[]} memberNames - list of members
- * @returns {GangMemberInfo} The member info object with the lowest wanted level gain
- * @throws {TypeError} if memberNames is empty
- */
-export function findMemberLowestWantedLevel(ns, memberNames) {
-  /** @type {GangMemberInfo[]} */
-  const members = memberNames.map((memberName) =>
-    ns.gang.getMemberInformation(memberName),
-  );
-
-  const bestMember = members.reduce((prev, current) => {
-    return current.wantedLevelGain < prev.wantedLevelGain ? current : prev;
-  });
-  return bestMember;
-}
+export const findMemberMinWantedLevel = (ns, memberNames) =>
+  findMemberBy(ns, memberNames, "wantedLevelGain", "min");
 
 //#endregion Member Finder
 

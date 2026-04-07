@@ -1,16 +1,79 @@
-import { toGreen } from "/utils/print.js";
-import {
-  doConversion,
-  formatGainRate,
-  formatMoney,
-} from "/utils/formatters.js";
+import { getGangEquipmentInformation } from "./utils.js";
+import { formatGainRate } from "/utils/formatters.js";
+import { Color, printInfo, toGreen } from "/utils/print.js";
 
-function printTasks(ns) {
-  for (const taskName of ns.gang.getTaskNames()) {
-    const task = ns.gang.getTaskStats(taskName);
-    ns.tprint(JSON.stringify(task, null, 2));
+//#region Equipment
+
+function printEquipmentItems(ns, items) {
+  for (const item of items) {
+    const name = toGreen(item.name);
+    ns.tprint(
+      `\t\t${name} (${item.type}) - Cost: ${ns.formatNumber(item.cost)}, Stats: ${JSON.stringify(item.stats)}`,
+    );
   }
 }
+
+function printGangEquipmentType(ns, name, colorMain, colorSub, equipment) {
+  const totalItems = equipment.hacking.length + equipment.combat.length;
+  const playerMoney = Math.max(1, ns.getPlayer().money); // Avoid division by zero
+
+  // Costs
+  const hackingCost = equipment.hacking.reduce(
+    (sum, item) => sum + item.cost,
+    0,
+  );
+  const combatCost = equipment.combat.reduce((sum, item) => sum + item.cost, 0);
+  const totalCost = hackingCost + combatCost;
+  // Percentages
+  const hackingCostPercent = ns.formatPercent(hackingCost / playerMoney);
+  const combatCostPercent = ns.formatPercent(combatCost / playerMoney);
+  const totalCostPercent = ns.formatPercent(totalCost / playerMoney);
+
+  printInfo(
+    ns,
+    `${colorMain}${name} (${totalItems}) - Total Cost: ${ns.formatNumber(totalCost)}. (${totalCostPercent})${Color.Reset}`,
+  );
+
+  // Hacking
+  printInfo(
+    ns,
+    `${colorSub}Hacking ${name}: (${equipment.hacking.length}) - Total Cost: ${ns.formatNumber(hackingCost)} (${hackingCostPercent})${Color.Reset}`,
+  );
+  printEquipmentItems(ns, equipment.hacking);
+
+  // Combat
+  printInfo(
+    ns,
+    `${colorSub}Combat ${name}: (${equipment.combat.length}) - Total Cost: ${ns.formatNumber(combatCost)} (${combatCostPercent})${Color.Reset}`,
+  );
+  printEquipmentItems(ns, equipment.combat);
+}
+
+function printGangEquipment(ns) {
+  const equipment = getGangEquipmentInformation(ns);
+  const augmentations = equipment.augmentations;
+  const regular = equipment.regular;
+
+  printGangEquipmentType(
+    ns,
+    "Augmentations",
+    Color.FgBlueBright,
+    Color.FgBlue,
+    augmentations,
+  );
+  printGangEquipmentType(
+    ns,
+    "Regular Equipment",
+    Color.FgMagentaBright,
+    Color.FgMagenta,
+    regular,
+  );
+
+  ns.tprint("");
+  ns.tprint("");
+}
+
+//#endregion Equipment
 
 function printGangMembers(ns) {
   const gangMembers = ns.gang.getMemberNames();
@@ -21,37 +84,42 @@ function printGangMembers(ns) {
   }
 }
 
+function printTasks(ns) {
+  for (const taskName of ns.gang.getTaskNames()) {
+    const task = ns.gang.getTaskStats(taskName);
+    ns.tprint(JSON.stringify(task, null, 2));
+  }
+}
+
+//#region Gang Info
 function printGangInformation(ns) {
   const gangInformation = ns.gang.getGangInformation();
 
   const respectPerSecond = formatGainRate(gangInformation.respectGainRate);
+  const respectNeeded = gangInformation["respectForNextRecruit"];
   const nextRecruit =
-    gangInformation.respectForNextRecruit === Infinity
-      ? "N/A"
-      : doConversion(gangInformation.respectForNextRecruit);
+    respectNeeded === Infinity ? "N/A" : ns.formatNumber(respectNeeded);
 
   // Wanted
   const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
 
-  // Territory
-  const territoryControlled = (gangInformation.territory * 100).toFixed(2);
-
   const prettyGangInformation = {
-    moneyGainRate: `${formatMoney(gangInformation.moneyGainRate * 5)}/sec`,
-    power: gangInformation.power,
+    members: ns.gang.getMemberNames().length,
+    moneyGainRate: `$${formatGainRate(gangInformation.moneyGainRate)}`,
+    power: ns.formatNumber(gangInformation.power),
     respect: {
-      current: doConversion(gangInformation.respect),
+      current: ns.formatNumber(gangInformation.respect),
       nextRecruit: nextRecruit,
       gainRate: respectPerSecond,
     },
     wanted: {
-      level: doConversion(gangInformation.wantedLevel.toFixed(3)),
+      level: ns.formatNumber(gangInformation.wantedLevel),
       gainRate: wantedGainRate,
       penalty: gangInformation.wantedPenalty,
     },
     territory: {
-      percentControlled: `${territoryControlled} %%`,
-      clashChance: gangInformation.territoryClashChance,
+      percentControlled: ns.formatPercent(gangInformation.territory),
+      clashChance: ns.formatPercent(gangInformation.territoryClashChance),
       warfareEngaged: gangInformation.territoryWarfareEngaged,
     },
   };
@@ -61,6 +129,8 @@ function printGangInformation(ns) {
   ns.tprint(JSON.stringify(prettyGangInformation, null, 2));
 }
 
+//#endregion Gang Info
+
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -68,7 +138,7 @@ function printGangInformation(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--tasks", "--members"];
+  const options = ["--equipment", "--members", "--tasks"];
 
   return [...defaultOptions, ...options];
 }
@@ -80,6 +150,7 @@ export async function main(ns) {
     ["h", false],
     ["tasks", false],
     ["members", false],
+    ["equipment", false],
   ]);
 
   if (args.help || args.h) {
@@ -91,17 +162,23 @@ export async function main(ns) {
     ns.tprint("Assumes that you have already created a gang.");
     ns.tprint("");
     ns.tprint("Options:");
-    ns.tprint("  --tasks    - Print information about gang tasks");
-    ns.tprint("  --members  - Print information about gang members");
+    ns.tprint("  --help, -h     - Show this help message");
+    ns.tprint("  --equipment    - Print information about gang equipment");
+    ns.tprint("  --members      - Print information about gang members");
+    ns.tprint("  --tasks        - Print information about gang tasks");
     return;
   }
 
-  if (args.tasks) {
-    printTasks(ns);
+  if (args.equipment) {
+    printGangEquipment(ns);
   }
 
   if (args.members) {
     printGangMembers(ns);
+  }
+
+  if (args.tasks) {
+    printTasks(ns);
   }
 
   printGangInformation(ns);

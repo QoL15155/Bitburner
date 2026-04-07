@@ -1,9 +1,11 @@
-import { printLogInfo } from "/utils/print.js";
+import { readGangEquipment } from "./utils.js";
 import {
   GangFocus,
   getGangEthicalTask,
   getGangTrainingTask,
+  shouldAscendMember,
 } from "/gangs/manage.js";
+import { printLogError, printLogInfo } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -43,12 +45,26 @@ export class MyGang {
   /** @type {string[]} */
   #membersWorking = [];
 
+  // Equipment
+  #buyAugmentations = false;
+  #buyEquipment = false;
+  #augmentations = null;
+  #equipment = null;
+
   /**
    * @param {NS} ns
-   * @param {string[]} gangMemberNames
-   * @param {boolean} isHackingGang
+   * @param {boolean} isHackingGang - Whether the gang is focused on hacking (money) or combat (power).
+   * @param {string[]} gangMemberNames - Names of the gang members.
+   * @param {boolean} buyAugmentations - whether to buy augmentations for gang members when they are available.
+   * @param {boolean} buyEquipment - whether to buy equipment for gang members when it is available.
    */
-  constructor(ns, gangMemberNames, isHackingGang) {
+  constructor(
+    ns,
+    isHackingGang,
+    gangMemberNames,
+    buyAugmentations,
+    buyEquipment,
+  ) {
     this.#ns = ns;
 
     // Focus
@@ -57,6 +73,32 @@ export class MyGang {
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
     this.#gangMemberNames = gangMemberNames;
+
+    // Equipment
+    if (buyEquipment && !buyAugmentations) {
+      throw new TypeError(
+        "Buy equipment is set while buy augmentations is not set.",
+      );
+    }
+
+    this.#buyAugmentations = buyAugmentations;
+    this.#buyEquipment = buyEquipment;
+    if (buyEquipment || buyAugmentations) {
+      const equipmentByType = readGangEquipment(ns);
+      if (isHackingGang) {
+        this.#augmentations = equipmentByType.augmentations.hacking;
+        this.#equipment = equipmentByType.regular.hacking;
+      } else {
+        this.#augmentations = equipmentByType.augmentations.combat;
+        this.#equipment = equipmentByType.regular.combat;
+      }
+
+      for (const memberName of gangMemberNames) {
+        const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+        this.buyAugmentationsForMember(memberInfo);
+        this.buyEquipmentForMember(memberInfo);
+      }
+    }
   }
 
   //#region Getters and Setters
@@ -86,7 +128,7 @@ export class MyGang {
   }
 
   set shouldWaitAscend(value) {
-    const fname = "setShouldWaitAscend";
+    const fname = "MyGang.setShouldWaitAscend";
     if (value === this.#shouldWaitAscend) return;
 
     this.#shouldWaitAscend = value;
@@ -106,7 +148,7 @@ export class MyGang {
   }
 
   stopRecruit() {
-    const fname = "stopRecruit";
+    const fname = "MyGang.stopRecruit";
     if (this.isRecruiting === false) {
       throw new Error("stopRecruit called but isRecruiting is already false");
     }
@@ -174,6 +216,7 @@ export class MyGang {
   toString() {
     let message = `Gang Status: `;
     message += `Recruiting? ${this.isRecruiting}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
+    message += `Buy Augmentations? ${this.#buyAugmentations}, Buy Equipment? ${this.#buyEquipment}\n`;
     message += this.#membersString();
     return message;
   }
@@ -191,7 +234,7 @@ export class MyGang {
   }
 
   sanityCheckMembers() {
-    const fname = "sanityCheckMembers";
+    const fname = "MyGang.sanityCheckMembers";
     const memberCount = this.#gangMemberNames.length;
     const totalCategorizedMembers =
       this.#membersTraining.length +
@@ -202,6 +245,39 @@ export class MyGang {
     let message = `[${fname}] Sanity Check Failed. Total members does not match sum of categorized members: ${totalCategorizedMembers}.\n`;
     message += this.#membersString();
     throw new Error(message);
+  }
+
+  /**
+   * Ascends gang members if they meet the criteria.
+   *
+   * 1. Checks we don't want to wait for recruitment before ascending.
+   * 2. For each member, ascend if the member will gain at least 2 levels in any stat
+   *    after ascending.
+   */
+  ascendMembers() {
+    const fname = "MyGang.ascendMembers";
+
+    if (this.shouldWaitAscend) {
+      return;
+    }
+
+    for (const memberName of this.#gangMemberNames) {
+      if (!shouldAscendMember(this.#ns, memberName)) {
+        continue;
+      }
+
+      const result = this.#ns.gang.ascendMember(memberName);
+      if (!result) {
+        printError(
+          this.#ns,
+          `[${fname}] Failed to ascend member '${memberName}'.`,
+        );
+        continue;
+      }
+
+      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+      this.buyEquipmentForMember(memberInfo);
+    }
   }
 
   //#endregion Members
@@ -253,9 +329,14 @@ export class MyGang {
    * @param {string} memberName - the name of the new member to add
    */
   addNewMember(memberName) {
-    const fname = "addNewMember";
+    const fname = "MyGang.addNewMember";
     this.#gangMemberNames.push(memberName);
     this.addMemberToTraining(memberName, this.trainingTask);
+
+    const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+    this.buyAugmentationsForMember(memberInfo);
+    this.buyEquipmentForMember(memberInfo);
+
     this.#ns.print(
       `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
     );
@@ -270,7 +351,7 @@ export class MyGang {
    *    Defaults to the gang's default Ethical task
    */
   assignFirstTrainingMemberToEthical(ethicalTask = this.ethicalTask) {
-    const fname = "assignFirstTrainingMemberToEthical";
+    const fname = "MyGang.assignFirstTrainingMemberToEthical";
 
     const memberName = this.#membersTraining.shift();
     this.addMemberToEthical(memberName, ethicalTask);
@@ -280,7 +361,7 @@ export class MyGang {
   /** Assigns the first training member to work task
    * @param {string} taskName : Work task to assign */
   assignFirstTrainingMemberToWork(taskName) {
-    const fname = "assignFirstTrainingMemberToWork";
+    const fname = "MyGang.assignFirstTrainingMemberToWork";
 
     const memberName = this.#membersTraining.shift();
     this.addMemberToWorking(memberName, taskName);
@@ -288,7 +369,7 @@ export class MyGang {
   }
 
   assignEthicalMemberToWork(memberObject, taskName) {
-    const fname = "assignEthicalMemberToWork";
+    const fname = "MyGang.assignEthicalMemberToWork";
     const prevTask = memberObject.task;
 
     this.addMemberToWorking(memberObject.name, taskName);
@@ -303,7 +384,7 @@ export class MyGang {
    * @param {GangMemberInfo} memberObject
    */
   assignWorkingMemberToEthical(memberObject) {
-    const fname = "assignWorkingMemberToEthical";
+    const fname = "MyGang.assignWorkingMemberToEthical";
     const memberName = memberObject.name;
     const prevTask = memberObject.task;
 
@@ -320,7 +401,7 @@ export class MyGang {
    * @param {GangTaskStats} nextTask
    * */
   assignWorkingMemberToEthicalTask(memberObject, currentTask, nextTask) {
-    const fname = "assignWorkingMemberToEthicalTask";
+    const fname = "MyGang.assignWorkingMemberToEthicalTask";
     const memberName = memberObject.name;
 
     this.addMemberToEthical(memberName, nextTask.name);
@@ -336,7 +417,7 @@ export class MyGang {
    * @param {GangTaskStats} nextTask
    */
   updateMemberTask(memberObject, currentTask, nextTask) {
-    const fname = "updateMemberTask";
+    const fname = "MyGang.updateMemberTask";
     this.#setMemberTask(memberObject.name, nextTask.name);
 
     this.logMemberReassignTaskEx(
@@ -374,4 +455,79 @@ export class MyGang {
   }
 
   //#endregion Reassign Members
+
+  //#region Equipment
+
+  /** @param {GangMemberInfo} member */
+  buyAugmentationsForMember(member) {
+    const fname = "MyGang.buyAugmentationsForMember";
+    if (!this.#buyAugmentations) {
+      return;
+    }
+
+    const augmentationsToBuy = this.#augmentations.filter(
+      (augmentation) =>
+        member.augmentations.includes(augmentation.name) === false,
+    );
+
+    let newAugmentations = [];
+    for (const augmentation of augmentationsToBuy) {
+      const name = augmentation.name;
+      const result = this.#ns.gang.purchaseEquipment(member.name, name);
+      if (!result) {
+        printLogError(
+          this.#ns,
+          `[${fname}] Failed to purchase augmentation '${name}' for member '${member.name}'.`,
+        );
+      } else {
+        newAugmentations.push(name);
+      }
+    }
+    if (newAugmentations.length > 0) {
+      printLogInfo(
+        this.#ns,
+        `[${fname}] Member '${member.name}' purchased augmentations: '${newAugmentations.join(", ")}'.`,
+      );
+    }
+  }
+
+  /** @param {GangMemberInfo} member */
+  buyEquipmentForMember(member) {
+    const fname = "MyGang.buyEquipmentForMember";
+    if (!this.#buyEquipment) {
+      return;
+    }
+
+    const equipmentToBuy = this.#equipment.filter(
+      (equipment) => member.upgrades.includes(equipment.name) === false,
+    );
+
+    //TODO: consolidate function
+    let newEquipment = [];
+    let totalCost = 0;
+    let items = 0;
+    for (const equipment of equipmentToBuy) {
+      const name = equipment.name;
+      const result = this.#ns.gang.purchaseEquipment(member.name, name);
+      if (!result) {
+        printLogError(
+          this.#ns,
+          `[${fname}] Failed to purchase equipment '${name}' for member '${member.name}'.`,
+        );
+        return;
+      } else {
+        newEquipment.push(name);
+        totalCost += equipment.cost;
+        items++;
+      }
+    }
+    if (newEquipment.length > 0) {
+      printLogInfo(
+        this.#ns,
+        `[${fname}] Member '${member.name}' purchased ${items} items. Total cost: ${totalCost}.`,
+      );
+    }
+  }
+
+  //#endregion Equipment
 }
