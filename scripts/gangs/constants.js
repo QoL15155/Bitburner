@@ -36,11 +36,14 @@ export const wantedPenaltySafeThreshold = 0.1;
 
 // Gang Equipment
 // =====================
-// Unless the user stated otherwise, equipment would only be bought if their cost
-// is under this percentage of the player's money.
+// Limits of the percentage of equipment cost out of the player's money.
+// Note that these don't take into account the current augmentation the gang members have.
+//
+// Buy equipment:
+// User didn't ask to buy equipment, but the percentage is lower than min
 export const minAugmentationsCostPercent = 0.01;
 export const minEquipmentCostPercent = 0.0001;
-// Above this percentage, we will prompt the user to confirm the purchase, even
-// if they stated they want to buy the equipment.
+// Don't buy equipment:
+// User asked to buy equipment, but the percentage is higher than max
 export const maxAugmentationsCostPercent = 0.1;
 export const maxEquipmentCostPercent = 0.001;
