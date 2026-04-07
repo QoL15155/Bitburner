@@ -618,6 +618,8 @@ function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
     );
     return true;
   }
+
+  return false;
 }
 
 function initializeGang(

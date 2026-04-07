@@ -15,7 +15,8 @@ function printEquipmentItems(ns, items) {
 
 function printGangEquipmentType(ns, name, colorMain, colorSub, equipment) {
   const totalItems = equipment.hacking.length + equipment.combat.length;
-  const playerMoney = ns.getPlayer().money;
+  const playerMoney = Math.max(1, ns.getPlayer().money); // Avoid division by zero
+
   // Costs
   const hackingCost = equipment.hacking.reduce(
     (sum, item) => sum + item.cost,

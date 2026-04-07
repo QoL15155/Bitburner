@@ -172,7 +172,7 @@ export async function main(ns) {
 
   if (result === false) {
     printError(ns, "Failed to call gang management script");
-    ns.tail();
+    ns.ui.openTail();
   }
 }
 
