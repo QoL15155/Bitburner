@@ -10,7 +10,7 @@ import {
   formatGainRate,
   formatTimeSeconds,
 } from "/utils/formatters.js";
-import { printError, printLogInfo, printLogWarn } from "/utils/print.js";
+import { printError, printLogWarn } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -136,37 +136,13 @@ export function handleRecruitmentStatus(ns, myGang) {
 
 //#region Ascend
 
-/**
- * Ascends gang members if they meet the criteria.
+/** Determines if a gang member should be ascended based on their potential stat gains.
  * Criteria: Ascend if the member will gain at least 2 levels in any stat after ascending.
- *
  * @param {NS} ns - the Netscript environment
- * @param {string[]} memberNames - the list of gang member names to check for ascension
+ * @param {string} memberName - the name of the gang member
+ * @returns {boolean} true if the member should be ascended, false otherwise
  */
-export function ascendGangMembers(ns, memberNames) {
-  const fname = "ascendGangMembers";
-
-  for (const memberName of memberNames) {
-    if (!shouldAscendMember(ns, memberName)) {
-      continue;
-    }
-
-    const ascendResult = ns.gang.ascendMember(memberName);
-    if (!ascendResult) {
-      printError(ns, `[${fname}] Failed to ascend member ${memberName}`);
-      continue;
-    }
-
-    printLogInfo(
-      ns,
-      `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(ascendResult)}`,
-    );
-
-    myGang.buyEquipmentForMember(ns.gang.getMemberInformation(memberName));
-  }
-}
-
-function shouldAscendMember(ns, memberName) {
+export function shouldAscendMember(ns, memberName) {
   const ascensionResult = ns.gang.getAscensionResult(memberName);
   if (ascensionResult == null) {
     // Member cannot be ascended

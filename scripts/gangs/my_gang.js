@@ -3,6 +3,7 @@ import {
   GangFocus,
   getGangEthicalTask,
   getGangTrainingTask,
+  shouldAscendMember,
 } from "/gangs/manage.js";
 import { printLogError, printLogInfo } from "/utils/print.js";
 
@@ -244,6 +245,39 @@ export class MyGang {
     let message = `[${fname}] Sanity Check Failed. Total members does not match sum of categorized members: ${totalCategorizedMembers}.\n`;
     message += this.#membersString();
     throw new Error(message);
+  }
+
+  /**
+   * Ascends gang members if they meet the criteria.
+   *
+   * 1. Checks we don't want to wait for recruitment before ascending.
+   * 2. For each member, ascend if the member will gain at least 2 levels in any stat
+   *    after ascending.
+   */
+  ascendMembers() {
+    const fname = "MyGang.ascendMembers";
+
+    if (this.shouldWaitAscend) {
+      return;
+    }
+
+    for (const memberName of this.#gangMemberNames) {
+      if (!shouldAscendMember(this.#ns, memberName)) {
+        continue;
+      }
+
+      const result = this.#ns.gang.ascendMember(memberName);
+      if (!result) {
+        printError(
+          this.#ns,
+          `[${fname}] Failed to ascend member '${memberName}'.`,
+        );
+        continue;
+      }
+
+      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+      this.buyEquipmentForMember(memberInfo);
+    }
   }
 
   //#endregion Members

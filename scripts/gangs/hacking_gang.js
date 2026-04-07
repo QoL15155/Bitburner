@@ -16,7 +16,6 @@ import {
   readGangTasks,
 } from "./utils.js";
 import {
-  ascendGangMembers,
   EthicalTasks,
   GangFocus,
   getWantedLevelStatus,
@@ -516,9 +515,7 @@ async function manageGang(ns) {
       handleRecruitmentStatus(ns, myGang);
     }
 
-    if (!myGang.shouldWaitAscend) {
-      ascendGangMembers(ns, myGang.memberNames);
-    }
+    myGang.ascendMembers();
 
     if (myGang.checkFocus) {
       // Happens on either when first starting or on focus change
