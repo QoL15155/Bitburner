@@ -95,8 +95,8 @@ export class MyGang {
 
       for (const memberName of gangMemberNames) {
         const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-        this.buyAugmentationsForMember(memberInfo);
-        this.buyEquipmentForMember(memberInfo);
+        this.#buyAugmentationForMember(memberInfo);
+        this.#buyEquipmentForMember(memberInfo);
       }
     }
   }
@@ -268,15 +268,11 @@ export class MyGang {
 
       const result = this.#ns.gang.ascendMember(memberName);
       if (!result) {
-        printError(
-          this.#ns,
-          `[${fname}] Failed to ascend member '${memberName}'.`,
-        );
-        continue;
+        throw new Error(`Failed to ascend member '${memberName}'.`);
       }
 
       const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-      this.buyEquipmentForMember(memberInfo);
+      this.#buyEquipmentForMember(memberInfo);
     }
   }
 
@@ -334,8 +330,8 @@ export class MyGang {
     this.addMemberToTraining(memberName, this.trainingTask);
 
     const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-    this.buyAugmentationsForMember(memberInfo);
-    this.buyEquipmentForMember(memberInfo);
+    this.#buyAugmentationForMember(memberInfo);
+    this.#buyEquipmentForMember(memberInfo);
 
     this.#ns.print(
       `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
@@ -459,8 +455,7 @@ export class MyGang {
   //#region Equipment
 
   /** @param {GangMemberInfo} member */
-  buyAugmentationsForMember(member) {
-    const fname = "MyGang.buyAugmentationsForMember";
+  #buyAugmentationForMember(member) {
     if (!this.#buyAugmentations) {
       return;
     }
@@ -474,8 +469,7 @@ export class MyGang {
   }
 
   /** @param {GangMemberInfo} member */
-  buyEquipmentForMember(member) {
-    const fname = "MyGang.buyEquipmentForMember";
+  #buyEquipmentForMember(member) {
     if (!this.#buyEquipment) {
       return;
     }
@@ -498,23 +492,27 @@ export class MyGang {
       const name = item.name;
       const result = this.#ns.gang.purchaseEquipment(memberName, name);
       if (!result) {
+        // Probably failed to buy item due to insufficient funds
+        const formattedCost = this.#ns.formatNumber(item.cost);
         printLogError(
           this.#ns,
-          `[${fname}] Failed to purchase ${itemsType} '${name}' for member '${memberName}'.`,
+          `[${fname}] Failed to purchase ${itemsType} for member '${memberName}'.` +
+            ` Item: ${name}, Cost: $${formattedCost}.`,
         );
-        return;
+      } else {
+        newItems.push(name);
+        totalCost += item.cost;
+        itemsCount++;
       }
-      newItems.push(name);
-      totalCost += item.cost;
-      itemsCount++;
+    }
 
-      if (newItems.length > 0) {
-        const formattedCost = this.#ns.formatNumber(totalCost);
-        printLogInfo(
-          this.#ns,
-          `[${fname}] Member '${memberName}' purchased ${itemsCount} items. Total cost: $${formattedCost}.`,
-        );
-      }
+    if (newItems.length > 0) {
+      const formattedCost = this.#ns.formatNumber(totalCost);
+      printLogInfo(
+        this.#ns,
+        `[${fname}] Member '${memberName}' purchased ${itemsCount} items.` +
+          ` Total cost: $${formattedCost}.`,
+      );
     }
   }
 
