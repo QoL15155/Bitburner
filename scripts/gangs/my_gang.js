@@ -482,9 +482,8 @@ export class MyGang {
   }
 
   #buyForMember(memberName, purchaseList, itemsType) {
-    const fname = `MyGang.buy${itemsType}ForMember`;
+    const fname = `MyGang.buyForMember`;
 
-    let newItems = [];
     let totalCost = 0;
     let itemsCount = 0;
 
@@ -500,17 +499,16 @@ export class MyGang {
             ` Item: ${name}, Cost: $${formattedCost}.`,
         );
       } else {
-        newItems.push(name);
         totalCost += item.cost;
         itemsCount++;
       }
     }
 
-    if (newItems.length > 0) {
+    if (itemsCount > 0) {
       const formattedCost = this.#ns.formatNumber(totalCost);
       printLogInfo(
         this.#ns,
-        `[${fname}] Member '${memberName}' purchased ${itemsCount} items.` +
+        `[${fname}] Member '${memberName}' purchased ${itemsCount} items (type ${itemsType}).` +
           ` Total cost: $${formattedCost}.`,
       );
     }
