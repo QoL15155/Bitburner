@@ -407,7 +407,7 @@ function sortMemberByTask(ns, memberName) {
   if (isTrainingTask(taskName)) {
     if (!TrainingTasks[myGang.type].includes(taskName)) {
       // NOTE: we still allow for "Train Charisma" for hacking gang.
-      printWarn(ns, getMessage(taskName, myGang.trainingTask));
+      printWarn(ns, strChangingTasks(taskName, myGang.trainingTask));
       taskName = myGang.trainingTask;
     }
     myGang.addMemberToTraining(memberName, taskName);
@@ -416,7 +416,7 @@ function sortMemberByTask(ns, memberName) {
 
   if (isEthicalTask(taskName)) {
     if (!EthicalTasks[myGang.type].includes(taskName)) {
-      printWarn(ns, getMessage(taskName, myGang.ethicalTask));
+      printWarn(ns, strChangingTasks(taskName, myGang.ethicalTask));
     }
 
     myGang.addMemberToEthical(memberName, myGang.ethicalTask);
@@ -425,7 +425,7 @@ function sortMemberByTask(ns, memberName) {
 
   if (taskName === territoryTask) {
     if (myGang.type === GangFocus.MONEY) {
-      printWarn(ns, getMessage("Territory Warfare", myGang.trainingTask));
+      printWarn(ns, strChangingTasks("Territory Warfare", myGang.trainingTask));
       myGang.addMemberToTraining(memberName, myGang.trainingTask);
       return;
     }
@@ -434,7 +434,7 @@ function sortMemberByTask(ns, memberName) {
 
   myGang.addMemberToWorking(memberName, taskName);
 
-  function getMessage(currentTask, newTask) {
+  function strChangingTasks(currentTask, newTask) {
     return `[${fname}] '${memberName}' is in a **Hacking Gang** but is doing '${currentTask}'. Changing to '${newTask}'.`;
   }
 }
