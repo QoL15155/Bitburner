@@ -1,15 +1,14 @@
-import { FileLogger } from "/utils/logger.js";
-import { AttackMeasurements } from "/hack/attack_measurements.js";
-import { formatRam, formatMoney } from "/utils/formatters.js";
-import { AttackBatch, BatchState, delayIncrease } from "/hack/attack_batch.js";
 import {
-  calculateServerExecutionTimes,
-  distributionScripts,
-  processGrow,
-  processWeaken,
-  processHack,
-  runAttackAction,
-} from "/hack/utils.js";
+  AttackFailReason,
+  AttackFailure,
+  AttackResult,
+  AttackSuccess,
+} from "./attack_result.js";
+import { AttackBatch, delayIncrease } from "/hack/attack_batch.js";
+import { AttackMeasurements } from "/hack/attack_measurements.js";
+import { distributionScripts } from "/hack/utils.js";
+import { formatMoney } from "/utils/formatters.js";
+import { FileLogger } from "/utils/logger.js";
 
 /**
  * Controller script for batch attacking with sleep.
@@ -21,119 +20,20 @@ let logger = null;
 
 let useFormulas = false;
 
-//#region Parameters
+/** @type {NS} */
+let ns = null;
 
-/**
- * Prep the target server for attack.
- * Updates the attack batch with the prep parameters.
- * At the end of the prep phase the target server would have maximum money and minimum security
- *
- * Prep strategy
- * [------ weaken ------]
- * [---- grow ----]
- *
- * @param {NS} ns
- * @param {number} cpuCores - number of CPU cores available on the attacking server
- * @param {AttackBatch} attackBatch - the attack batch to update with the prep parameters
- * @returns {boolean} false when target server is already prepped, true otherwise
- */
-function getPrepParameters(ns, cpuCores, attackBatch) {
-  const fname = "getPrepParameters";
-  const targetName = attackBatch.targetName;
-  const targetObject = ns.getServer(targetName);
-
-  // FIXME: do we need ALL execution times here? we only need weaken
-  const executionTimes = calculateServerExecutionTimes(ns, targetName);
-
-  // Grow must run BEFORE process Weaken. Updates targetObject security level
-  const growThreads = processGrow(ns, cpuCores, targetObject, useFormulas);
-  const weakenThreads = processWeaken(ns, cpuCores, targetObject);
-
-  if (weakenThreads === 0 && growThreads === 0) {
-    logger.info(fname, "Server is already prepped.");
-    return false;
+function removeItemFromArray(array, item) {
+  const index = array.indexOf(item);
+  if (index > -1) {
+    array.splice(index, 1);
   }
-
-  attackBatch.setPrepActions(
-    cpuCores,
-    growThreads,
-    weakenThreads,
-    executionTimes,
-  );
-
-  return true;
 }
-
-/**
- * Gathers attack parameters
- * Updates the attack batch with the attack parameters.
- *
- * HGW strategy
- * [------- weaken -------]
- * [----- grow -----]
- * [- hack -]
- *
- * @param {NS} ns
- * @param {number} cpuCores
- * @param {AttackBatch} attackBatch
- */
-function getAttackParameters(ns, cpuCores, attackBatch) {
-  const targetObject = ns.getServer(attackBatch.targetName);
-  const executionTimes = calculateServerExecutionTimes(
-    ns,
-    targetObject.hostname,
-  );
-
-  const hackingThreads = processHack(ns, targetObject);
-  const growThreads = processGrow(ns, cpuCores, targetObject, useFormulas);
-  const weakenThreads = processWeaken(ns, cpuCores, targetObject);
-
-  attackBatch.setAttackActions(
-    cpuCores,
-    hackingThreads,
-    growThreads,
-    weakenThreads,
-    executionTimes,
-  );
-}
-
-/**
- * Retrieves attack parameters. (either prep or actual hack)
- *
- * @param {NS} ns
- * @param {number} cpuCores - number of CPU cores available on the attacking server
- * @param {AttackBatch} attackBatch - the attack batch to update with the attack parameters
- */
-function handleAttackParameters(ns, cpuCores, attackBatch) {
-  const fname = "handleAttackParameters";
-
-  if (attackBatch.cpuCores === cpuCores) {
-    // Parameters are already set
-    return;
-  }
-
-  if (attackBatch.getState() === BatchState.INIT) {
-    const prepResult = getPrepParameters(ns, cpuCores, attackBatch);
-    if (prepResult) {
-      return;
-    }
-
-    logger.info(
-      fname,
-      "Server is already prepped. Gathering attack parameters",
-    );
-  }
-
-  // Server is already prepped
-  getAttackParameters(ns, cpuCores, attackBatch);
-}
-
-//#endregion Parameters
 
 //#region Sanity Checks
 
 function doSanityTests(ns, attackBatch, errorMessages) {
-  if (attackBatch.getState() === BatchState.INIT) return true;
+  if (attackBatch.isFirstRun) return true;
 
   const result = testScriptsNotRunning(ns, attackBatch, errorMessages);
   if (!result) return false;
@@ -189,12 +89,12 @@ function testScriptsNotRunning(ns, attackBatch, errorMessages) {
   let badScripts = [];
 
   attackBatch.getActions().forEach((action) => {
-    if (action.pid === 0) return;
+    if (!action.isSet()) return;
 
     if (ns.isRunning(action.pid, action.hostname, targetName)) {
       badScripts.push(action.scriptName);
     } else {
-      action.pid = 0;
+      action.reset();
     }
   });
 
@@ -214,85 +114,57 @@ function testScriptsNotRunning(ns, attackBatch, errorMessages) {
 
 //#region Attack
 
-class AttackResult {
-  constructor(success, delayTime, threads = 0, errorMessages = []) {
-    this.success = success;
-    this.duration = delayTime;
-    this.threads = threads;
-    /** @type {Array<string>} */
-    this.errorMessages = errorMessages;
-  }
-}
-
 /**
  * Performs an attack on the target server (@see attackBatch.targetName)
+ *
+ * Updates the attack batch with the attack parameters.
+ *
+ * HGW strategy
+ * [------- weaken -------]
+ * [----- grow -----]
+ * [- hack -]
  *
  * @param {NS} ns : NS object
  * @param {Array<string>} attackingServers : list of servers to attack from
  * @param {AttackBatch} attackBatch : attack parameters
+ * @return {AttackResult} the result of the attack attempt,
  */
 function performAttack(ns, attackingServers, attackBatch) {
   const fname = "performAttack";
   const targetName = attackBatch.targetName;
 
+  // Sanity Tests
   const timeToWait = attackBatch.getDelayForNextAttack();
   if (timeToWait < 0)
     throw new Error(`[${fname}] Invalid attack delay: ${timeToWait} < 0`);
   if (timeToWait > 0) {
-    return new AttackResult(false, timeToWait);
+    return new AttackFailure(AttackFailReason.SCRIPT_RUNNING, timeToWait);
   }
 
   /** @type {Array<string>} */
   let errorMessages = [];
   if (!doSanityTests(ns, attackBatch, errorMessages)) {
-    return new AttackResult(false, 0, 0, errorMessages);
-    // throw new Error("Unexpected state before attack");
+    return new AttackFailure(AttackFailReason.SANITY_FAIL, 0, errorMessages);
   }
 
   attackBatch.reset();
 
-  logger.info(fname, `Attacking ${targetName}`);
-
-  for (const serverName of attackingServers) {
-    const serverObject = ns.getServer(serverName);
-
-    handleAttackParameters(ns, serverObject.cpuCores, attackBatch);
-
-    // Check available RAM
-    const requiredRam = attackBatch.getRequiredRam();
-    const availableRam = serverObject.maxRam - serverObject.ramUsed;
-    let ramString = `RAM(required ${formatRam(requiredRam)}, available ${formatRam(availableRam)})`;
-    if (requiredRam > availableRam) {
-      logger.warn(
-        fname,
-        `Cannot attack from ${serverName} - not enough RAM. ${ramString}`,
-      );
-      continue;
-    }
-
-    logger.info(
-      fname,
-      `Attacking ${targetName} from ${serverName}. ${ramString}. Time: ${Date.now()}`,
-    );
-    logger.info(fname, attackBatch.toString());
-
-    attackBatch
-      .getActions()
-      .forEach((action) => runAttackAction(ns, serverName, targetName, action));
-
-    attackBatch.setEndTime();
-    return new AttackResult(
-      true,
-      attackBatch.getAttackDuration(),
-      attackBatch.getTotalThreads(),
+  if (!attackBatch.doAttack()) {
+    return new AttackFailure(
+      AttackFailReason.NOT_ENOUGH_RAM,
+      0,
+      attackBatch.errorMessages,
     );
   }
 
-  const message = `Failed to find server to run attack on ${targetName}`;
-  logger.error(fname, message);
-  errorMessages.push(message);
+  attackBatch.setEndTime();
+  logger.info(fname, attackBatch.toString());
 
-  return new AttackResult(false, 0, 0, errorMessages);
+  return new AttackSuccess(
+    attackBatch.getAttackDuration(),
+    attackBatch.getTotalThreads(),
+    attackBatch.errorMessages,
+  );
 }
 
 //#endregion Attack
@@ -307,30 +179,42 @@ function performAttack(ns, attackingServers, attackBatch) {
  */
 async function doBatchAttack(ns, attackingServers, targetServers) {
   const fname = "doBatchAttack";
-  // TODO:
-  // Without formulas, a common de facto algorithm for finding the best server to target is to parse the list down
-  // to only servers with a hacking requirement of half your level,
-  // then divide their max money by the minimum security level.
-  // Pick whichever server scores highest.
-  // (For a fully functional batcher, you don't need to do that division)
 
   // Initialize attack batch for each target server
-  let attackList = [];
+  let targetList = [];
   targetServers.forEach((targetName) => {
-    const attackBatch = new AttackBatch(targetName, distributionScripts);
-    attackList.push(attackBatch);
+    const attackBatch = new AttackBatch(
+      ns,
+      logger,
+      distributionScripts,
+      attackingServers,
+      useFormulas,
+      targetName,
+    );
+    targetList.push(attackBatch);
   });
 
+  logger.info(fname, `Attacking Servers: ${attackingServers.join(", ")}`);
+  logger.info(fname, `Target Servers: ${targetServers.join(", ")}`);
+
   const measurements = new AttackMeasurements(useFormulas);
+
   while (true) {
     let delayTime = Infinity;
+    // Variable for measurements
+    //
+    // Count of servers being attacked during this round.
     let attackedServers = 0;
     let totalThreads = 0;
     /** @type {Array<string>} */
     let errorMessages = [];
+    /** Servers to remove due to insufficient RAM
+     * @type {Array<AttackBatch>}
+     */
+    let targetsToRemove = [];
 
     // Perform attack on each target server.
-    attackList.forEach((attackBatch) => {
+    for (const attackBatch of targetList) {
       /** @type {AttackResult} */
       const attackResult = performAttack(ns, attackingServers, attackBatch);
       if (attackResult.duration < 0) {
@@ -347,12 +231,29 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       if (attackResult.success) {
         attackedServers += 1;
         totalThreads += attackResult.threads;
+      } else {
+        if (attackResult.reason === AttackFailReason.NOT_ENOUGH_RAM) {
+          // Not enough RAM to attack server
+          targetsToRemove.push(attackBatch);
+        }
       }
-    });
+    }
+
+    // Remove batches that couldn't be executed due to insufficient RAM
+    for (const targetBatch of targetsToRemove) {
+      removeItemFromArray(targetList, targetBatch);
+    }
 
     // Log results and wait for the next attack round
     // We haven't updated measurements.rounds yet
     const currentRound = measurements.rounds + 1;
+
+    if (targetList.length === 0) {
+      ns.tprint("ERROR: Insufficient RAM to perform any attacks. Exiting.");
+      ns.ui.closeTail();
+      return;
+    }
+
     const roundLabel = `Attack-Round ${currentRound}`;
     if (attackedServers > 0) {
       logger.info(
@@ -384,8 +285,9 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
   }
 }
 
-/** @param {NS} ns */
-export async function main(ns) {
+/** @param {NS} netScript */
+export async function main(netScript) {
+  ns = netScript;
   const args = ns.flags([
     ["help", false],
     ["h", false],

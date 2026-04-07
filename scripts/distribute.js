@@ -450,6 +450,19 @@ function sanityDistributionScripts(ns) {
   return success;
 }
 
+/**
+ * Finds the best server to target based on a simple heuristic.
+ *
+ * A common de facto algorithm for finding the best server to target is to parse the list down
+ * to only servers with a hacking requirement of half your level,
+ * then divide their max money by the minimum security level.
+ * Pick whichever server scores highest.
+ *
+ * @param {NS} ns
+ * @param {MyServer[]} allServers
+ * @param {string} targetServerName
+ * @returns {MyServer|null}
+ */
 function getTargetServer(ns, allServers, targetServerName) {
   const fname = "getTargetServer";
   let targetServer;
@@ -469,10 +482,17 @@ function getTargetServer(ns, allServers, targetServerName) {
     }
   } else {
     const targetServers = getTargetServers(ns, allServers);
-    if (targetServers == null || targetServers.length === 0) {
+    if (targetServers.length === 0) {
       printError(ns, `[${fname}] No target servers found! Exiting.`);
       return null;
     }
+
+    // Find best target server based on maxMoney / minDifficulty heuristic
+    targetServers.sort((a, b) => {
+      const aScore = a.maxMoney / a.minDifficulty;
+      const bScore = b.maxMoney / b.minDifficulty;
+      return bScore - aScore;
+    });
 
     targetServer = targetServers[0];
   }

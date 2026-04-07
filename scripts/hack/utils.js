@@ -123,9 +123,9 @@ export function processHack(ns, targetObject) {
 
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
+    // NOTE: We already log this during sanity tests.
     const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
     printWarn(ns, `[${fname}] ${message}`);
-    throw new Error(message);
   }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
@@ -140,40 +140,6 @@ export function processHack(ns, targetObject) {
 }
 
 /**
- * Calculates the number of required threads to maximize money on target server.
- * Updates the server's object accordingly.
- * Can use Formulas or not, based on the 'useFormulas' flag.
- *
- * @param {NS} ns
- * @param {number} cpuCores
- * @param {Server} targetObject - the server object to grow
- * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
- * @returns {number} - number of threads
- */
-export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
-  const moneyMax = targetObject.moneyMax;
-  if (moneyMax === 0 || targetObject.moneyAvailable === moneyMax) {
-    return 0;
-  }
-
-  let threads = 0;
-  if (useFormulas) {
-    threads = processGrowFormulas(ns, cpuCores, targetObject);
-  } else {
-    threads = processGrowClean(ns, cpuCores, targetObject);
-  }
-
-  threads = Math.ceil(threads);
-  if (threads <= 0) {
-    return 0;
-  }
-
-  targetObject.moneyAvailable = moneyMax;
-  targetObject.hackDifficulty += getGrowSecurityIncrease(threads);
-  return threads;
-}
-
-/**
  * Uses Formulas to calculate the number of required threads to maximize money on target server.
  *
  * @param {NS} ns - NS object
@@ -181,7 +147,7 @@ export function processGrow(ns, cpuCores, targetObject, useFormulas = false) {
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-function processGrowFormulas(ns, cpuCores, targetObject) {
+function getGrowThreadsFormulas(ns, cpuCores, targetObject) {
   const player = ns.getPlayer();
 
   const threads = ns.formulas.hacking.growThreads(
@@ -202,7 +168,7 @@ function processGrowFormulas(ns, cpuCores, targetObject) {
  * @param {Server} targetObject - the server object to grow
  * @returns {number} - number of threads
  */
-function processGrowClean(ns, cpuCores, targetObject) {
+function getGrowThreadsClean(ns, cpuCores, targetObject) {
   let moneyMax = targetObject.moneyMax;
   const moneyAvailable = targetObject.moneyAvailable;
   const moneyMultiplier = moneyMax / Math.max(moneyAvailable, 1);
@@ -230,8 +196,52 @@ function processGrowClean(ns, cpuCores, targetObject) {
   return threads;
 }
 
-function getWeakenThreads(cpuCores, targetObject) {
-  const fname = "getWeakenThreads";
+/**
+ * Calculates the number of required threads to maximize money on target server.
+ * Can use Formulas or not, based on the 'useFormulas' flag.
+ *
+ * @param {NS} ns
+ * @param {number} cpuCores
+ * @param {Server} targetObject - the server object to grow
+ * @param {boolean} useFormulas - whether to use Formulas for the calculation or not
+ * @returns {number} - number of threads
+ */
+export function getGrowThreads(
+  ns,
+  cpuCores,
+  targetObject,
+  useFormulas = false,
+) {
+  const moneyMax = targetObject.moneyMax;
+  if (moneyMax === 0) {
+    throw new Error("Target server has no money to grow.");
+  }
+  if (targetObject.moneyAvailable === moneyMax) {
+    return 0;
+  }
+
+  let threads = 0;
+  if (useFormulas) {
+    threads = getGrowThreadsFormulas(ns, cpuCores, targetObject);
+  } else {
+    threads = getGrowThreadsClean(ns, cpuCores, targetObject);
+  }
+
+  threads = Math.ceil(threads);
+  if (threads <= 0) {
+    return 0;
+  }
+  return threads;
+}
+
+/**
+ * Calculates number of threads needed to weaken the server back to minimum difficulty.
+ *
+ * @param {number} cpuCores - number of CPU cores of the attacking machine
+ * @param {Server} targetObject - the server object to weaken
+ * @returns {number} - number of threads required for the action
+ */
+export function getWeakenThreads(cpuCores, targetObject) {
   // Amount by which server's security decreases when weakened
   const serverWeakenAmount = 0.05;
 
@@ -249,7 +259,6 @@ function getWeakenThreads(cpuCores, targetObject) {
 
 /**
  * Calculates number of threads needed to weaken the server back to minimum difficulty.
- * Updates the target object accordingly.
  * Does sanity checks on the received thread count.
  *
  * @param {NS} ns - NS object
@@ -257,8 +266,8 @@ function getWeakenThreads(cpuCores, targetObject) {
  * @param {Server} targetObject - the server object to weaken
  * @returns {number} - number of threads required for the action
  */
-export function processWeakenSanity(ns, cpuCores, targetObject) {
-  const fname = "processWeakenSanity";
+export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
+  const fname = "getWeakenThreadsSanity";
   const threads = getWeakenThreads(cpuCores, targetObject);
 
   // Sanity check
@@ -274,22 +283,6 @@ export function processWeakenSanity(ns, cpuCores, targetObject) {
     throw new Error(msg);
   }
 
-  targetObject.hackDifficulty = targetObject.minDifficulty;
-  return threads;
-}
-
-/**
- * Calculates number of threads needed to weaken the server back to minimum difficulty.
- * Updates the target object accordingly.
- *
- * @param {NS} ns - NS object
- * @param {number} cpuCores - number of CPU cores of the attacking machine
- * @param {Server} targetObject - the server object to weaken
- * @returns {number} - number of threads required for the action
- */
-export function processWeaken(ns, cpuCores, targetObject) {
-  const threads = getWeakenThreads(cpuCores, targetObject);
-  targetObject.hackDifficulty = targetObject.minDifficulty;
   return threads;
 }
 
@@ -298,50 +291,28 @@ export function processWeaken(ns, cpuCores, targetObject) {
 //#region Run Actions
 
 /**
- *
- * @param {NS} ns
- * @param {string} serverName
- * @param {number} threads : Number of threads to run
- * @param {number} scriptRam required for one thread
+ * @param {Server} serverObject : server to run the attack from
+ * @param {AttackAction} attackAction : parameters for the attack
  */
-function checkServerAvailableRam(ns, serverName, threads, scriptRam) {
-  const serverObject = ns.getServer(serverName);
+export function canAttackFromServer(serverObject, attackAction) {
   const availableRam = serverObject.maxRam - serverObject.ramUsed;
-
-  const requiredRam = threads * scriptRam;
-  return requiredRam <= availableRam;
+  return attackAction.getRequiredRam() <= availableRam;
 }
 
 /**
- * Runs one attack action
+ * Runs one attack action.
+ *
+ * Assumes that there is enough RAM to run the action, and more than 1 thread is required.
  *
  * @param {NS} ns
  * @param {string} hostname : where the script will be running
  * @param {string} targetName : Name of server to attack
  * @param {AttackAction} attackAction : parameters for the attack
- * @throws {Error} if attackAction.threads is not set or less than 1
- * @throws {Error} if there is not enough RAM to run the attack action on the specified hostname
- *  Both of these cases should be prevented by the calling function
  * @throws {Error} if ns.exec fails to run the script for any reason
+ *    (e.g. not enough RAM, thread count is 0, etc.)
  */
 export function runAttackAction(ns, hostname, targetName, attackAction) {
   const fname = "runAttackAction";
-
-  if (attackAction.threads <= 0) {
-    throw new Error(`[${fname}] called without threads to run.`);
-  }
-
-  const availableRam = checkServerAvailableRam(
-    ns,
-    hostname,
-    attackAction.threads,
-    attackAction.scriptRam,
-  );
-
-  if (!availableRam) {
-    const message = `[${fname}] Not enough RAM to run ${attackAction.scriptName} on ${hostname} with ${attackAction.threads} threads.`;
-    throw new Error(message);
-  }
 
   const pid = ns.exec(
     attackAction.scriptName,
@@ -355,8 +326,7 @@ export function runAttackAction(ns, hostname, targetName, attackAction) {
       `[${fname}] Failed to run on ${hostname}. ${attackAction.toString()}`,
     );
   }
-  attackAction.pid = pid;
-  attackAction.hostname = hostname;
+  attackAction.setAction(hostname, pid);
 }
 
 //#endregion Run Actions
