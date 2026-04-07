@@ -95,7 +95,7 @@ export class MyGang {
 
       for (const memberName of gangMemberNames) {
         const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-        this.#buyAugmentationForMember(memberInfo);
+        this.#buyAugmentationsForMember(memberInfo);
         this.#buyEquipmentForMember(memberInfo);
       }
     }
@@ -330,7 +330,7 @@ export class MyGang {
     this.addMemberToTraining(memberName, this.trainingTask);
 
     const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-    this.#buyAugmentationForMember(memberInfo);
+    this.#buyAugmentationsForMember(memberInfo);
     this.#buyEquipmentForMember(memberInfo);
 
     this.#ns.print(
@@ -455,7 +455,7 @@ export class MyGang {
   //#region Equipment
 
   /** @param {GangMemberInfo} member */
-  #buyAugmentationForMember(member) {
+  #buyAugmentationsForMember(member) {
     if (!this.#buyAugmentations) {
       return;
     }
