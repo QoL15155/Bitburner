@@ -89,7 +89,8 @@ export async function collectServerInfo(
 
   const serverInfo = {
     hostname: targetName,
-    homeCores: targetObject.cpuCores,
+    cpuCores: targetObject.cpuCores,
+    maxRam: ns.formatRam(targetObject.maxRam),
 
     money: moneyObject,
     grow: growthObject,

@@ -11,8 +11,6 @@ const scriptsToDistribute = [
 
 const controllerScript = "/hack/controller_batch.js";
 
-/* Utils */
-
 //#region Distribution
 
 /**

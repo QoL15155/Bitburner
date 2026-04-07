@@ -2,6 +2,22 @@ import { getGangEquipmentInformation } from "./utils.js";
 import { formatGainRate } from "/utils/formatters.js";
 import { Color, printInfo, toGreen } from "/utils/print.js";
 
+function printGangMembers(ns) {
+  const gangMembers = ns.gang.getMemberNames();
+  ns.tprint(`Gang members (${gangMembers.length})`);
+  for (const memberName of gangMembers) {
+    const memberInfo = ns.gang.getMemberInformation(memberName);
+    ns.tprint(JSON.stringify(memberInfo, null, 2));
+  }
+}
+
+function printTasks(ns) {
+  for (const taskName of ns.gang.getTaskNames()) {
+    const task = ns.gang.getTaskStats(taskName);
+    ns.tprint(JSON.stringify(task, null, 2));
+  }
+}
+
 //#region Equipment
 
 function printEquipmentItems(ns, items) {
@@ -75,23 +91,8 @@ function printGangEquipment(ns) {
 
 //#endregion Equipment
 
-function printGangMembers(ns) {
-  const gangMembers = ns.gang.getMemberNames();
-  ns.tprint(`Gang members (${gangMembers.length})`);
-  for (const memberName of gangMembers) {
-    const memberInfo = ns.gang.getMemberInformation(memberName);
-    ns.tprint(JSON.stringify(memberInfo, null, 2));
-  }
-}
-
-function printTasks(ns) {
-  for (const taskName of ns.gang.getTaskNames()) {
-    const task = ns.gang.getTaskStats(taskName);
-    ns.tprint(JSON.stringify(task, null, 2));
-  }
-}
-
 //#region Gang Info
+
 function printGangInformation(ns) {
   const gangInformation = ns.gang.getGangInformation();
 
