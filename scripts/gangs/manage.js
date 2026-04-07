@@ -1,23 +1,16 @@
 import {
-  printError,
-  printInfo,
-  print,
-  printLogInfo,
-  printLogWarn,
-  printWarn,
-} from "/utils/print.js";
-import {
-  doConversion,
-  formatTimeSeconds,
-  formatGainRate,
-} from "/utils/formatters.js";
-import { memberNamePrefix } from "./constants.js";
-import {
+  memberNamePrefix,
   recruitmentMaxWaitTimeSeconds,
   wantedGainSafeThreshold,
   wantedPenaltyMax,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
+import {
+  doConversion,
+  formatGainRate,
+  formatTimeSeconds,
+} from "/utils/formatters.js";
+import { printError, printLogInfo, printLogWarn } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -159,14 +152,17 @@ export function ascendGangMembers(ns, memberNames) {
     }
 
     const ascendResult = ns.gang.ascendMember(memberName);
-    if (ascendResult) {
-      printLogInfo(
-        ns,
-        `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(ascendResult)}`,
-      );
-    } else {
+    if (!ascendResult) {
       printError(ns, `[${fname}] Failed to ascend member ${memberName}`);
+      continue;
     }
+
+    printLogInfo(
+      ns,
+      `[${fname}] Ascended member ${memberName}. Result: ${JSON.stringify(ascendResult)}`,
+    );
+
+    myGang.buyEquipmentForMember(ns.gang.getMemberInformation(memberName));
   }
 }
 
