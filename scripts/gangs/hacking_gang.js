@@ -8,10 +8,10 @@ import {
 import { MyGang } from "./my_gang.js";
 import {
   findLeastProductiveMember,
-  findMemberHighestHackingLevel,
-  findMemberHighestWantedLevel,
-  findMemberLowestHackingLevel,
-  findMemberLowestWantedLevel,
+  findMemberMaxHackingLevel,
+  findMemberMaxWantedLevel,
+  findMemberMinHackingLevel,
+  findMemberMinWantedLevel,
   readGangEquipment,
   readGangTasks,
 } from "./utils.js";
@@ -139,7 +139,7 @@ function lowerWantedLevel(ns) {
   // Find member with highest wanted level gain and try to lower it
 
   /** @type {GangMemberInfo} */
-  const member = findMemberHighestWantedLevel(ns, myGang.membersWorking);
+  const member = findMemberMaxWantedLevel(ns, myGang.membersWorking);
   if (myGang.ethicalMembersCount() < normalEthicalMembers) {
     myGang.assignWorkingMemberToEthical(member);
     return;
@@ -221,11 +221,11 @@ function raiseFocusGain(ns) {
 
   // Swap Ethical <-> Working
   // No member can be assigned to a better money task - swap ethical with lowest hacking-level member
-  const worstWorkingMember = findMemberLowestHackingLevel(
+  const worstWorkingMember = findMemberMinHackingLevel(
     ns,
     myGang.membersWorking,
   );
-  const bestEthicalMember = findMemberHighestHackingLevel(
+  const bestEthicalMember = findMemberMaxHackingLevel(
     ns,
     myGang.membersEthical,
   );
@@ -298,7 +298,7 @@ function assignTrainingMemberWorkTask() {
  * The 'ethical' member with the least wanted level gain is chosen to minimize the wanted level gain increase.
  */
 function assignEthicalMemberWorkTask(ns) {
-  const member = findMemberLowestWantedLevel(ns, myGang.membersEthical);
+  const member = findMemberMinWantedLevel(ns, myGang.membersEthical);
   const currentTask = getTask(member.task);
 
   // Tasks with higher focus
