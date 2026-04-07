@@ -95,8 +95,8 @@ export class MyGang {
 
       for (const memberName of gangMemberNames) {
         const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-        this.buyAugmentationsForMember(memberInfo);
-        this.buyEquipmentForMember(memberInfo);
+        this.#buyAugmentationsForMember(memberInfo);
+        this.#buyEquipmentForMember(memberInfo);
       }
     }
   }
@@ -268,15 +268,11 @@ export class MyGang {
 
       const result = this.#ns.gang.ascendMember(memberName);
       if (!result) {
-        printError(
-          this.#ns,
-          `[${fname}] Failed to ascend member '${memberName}'.`,
-        );
-        continue;
+        throw new Error(`Failed to ascend member '${memberName}'.`);
       }
 
       const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-      this.buyEquipmentForMember(memberInfo);
+      this.#buyEquipmentForMember(memberInfo);
     }
   }
 
@@ -334,8 +330,8 @@ export class MyGang {
     this.addMemberToTraining(memberName, this.trainingTask);
 
     const memberInfo = this.#ns.gang.getMemberInformation(memberName);
-    this.buyAugmentationsForMember(memberInfo);
-    this.buyEquipmentForMember(memberInfo);
+    this.#buyAugmentationsForMember(memberInfo);
+    this.#buyEquipmentForMember(memberInfo);
 
     this.#ns.print(
       `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
@@ -459,8 +455,7 @@ export class MyGang {
   //#region Equipment
 
   /** @param {GangMemberInfo} member */
-  buyAugmentationsForMember(member) {
-    const fname = "MyGang.buyAugmentationsForMember";
+  #buyAugmentationsForMember(member) {
     if (!this.#buyAugmentations) {
       return;
     }
@@ -470,30 +465,11 @@ export class MyGang {
         member.augmentations.includes(augmentation.name) === false,
     );
 
-    let newAugmentations = [];
-    for (const augmentation of augmentationsToBuy) {
-      const name = augmentation.name;
-      const result = this.#ns.gang.purchaseEquipment(member.name, name);
-      if (!result) {
-        printLogError(
-          this.#ns,
-          `[${fname}] Failed to purchase augmentation '${name}' for member '${member.name}'.`,
-        );
-      } else {
-        newAugmentations.push(name);
-      }
-    }
-    if (newAugmentations.length > 0) {
-      printLogInfo(
-        this.#ns,
-        `[${fname}] Member '${member.name}' purchased augmentations: '${newAugmentations.join(", ")}'.`,
-      );
-    }
+    this.#buyForMember(member.name, augmentationsToBuy, "Augmentation");
   }
 
   /** @param {GangMemberInfo} member */
-  buyEquipmentForMember(member) {
-    const fname = "MyGang.buyEquipmentForMember";
+  #buyEquipmentForMember(member) {
     if (!this.#buyEquipment) {
       return;
     }
@@ -502,29 +478,38 @@ export class MyGang {
       (equipment) => member.upgrades.includes(equipment.name) === false,
     );
 
-    //TODO: consolidate function
-    let newEquipment = [];
+    this.#buyForMember(member.name, equipmentToBuy, "Equipment");
+  }
+
+  #buyForMember(memberName, purchaseList, itemsType) {
+    const fname = `MyGang.buyForMember`;
+
     let totalCost = 0;
-    let items = 0;
-    for (const equipment of equipmentToBuy) {
-      const name = equipment.name;
-      const result = this.#ns.gang.purchaseEquipment(member.name, name);
+    let itemsCount = 0;
+
+    for (const item of purchaseList) {
+      const name = item.name;
+      const result = this.#ns.gang.purchaseEquipment(memberName, name);
       if (!result) {
+        // Probably failed to buy item due to insufficient funds
+        const formattedCost = this.#ns.formatNumber(item.cost);
         printLogError(
           this.#ns,
-          `[${fname}] Failed to purchase equipment '${name}' for member '${member.name}'.`,
+          `[${fname}] Failed to purchase ${itemsType} for member '${memberName}'.` +
+            ` Item: ${name}, Cost: $${formattedCost}.`,
         );
-        return;
       } else {
-        newEquipment.push(name);
-        totalCost += equipment.cost;
-        items++;
+        totalCost += item.cost;
+        itemsCount++;
       }
     }
-    if (newEquipment.length > 0) {
+
+    if (itemsCount > 0) {
+      const formattedCost = this.#ns.formatNumber(totalCost);
       printLogInfo(
         this.#ns,
-        `[${fname}] Member '${member.name}' purchased ${items} items. Total cost: ${totalCost}.`,
+        `[${fname}] Member '${memberName}' purchased ${itemsCount} items (type ${itemsType}).` +
+          ` Total cost: $${formattedCost}.`,
       );
     }
   }

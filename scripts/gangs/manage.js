@@ -5,11 +5,7 @@ import {
   wantedPenaltyMax,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
-import {
-  doConversion,
-  formatGainRate,
-  formatTimeSeconds,
-} from "/utils/formatters.js";
+import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import { printError, printLogWarn } from "/utils/print.js";
 
 /**
@@ -125,7 +121,7 @@ export function handleRecruitmentStatus(ns, myGang) {
   const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
   const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
 
-  let message = `[${fname}] Respect needed: ${doConversion(neededRespect)}, `;
+  let message = `[${fname}] Respect needed: ${ns.formatNumber(neededRespect)}, `;
   message += `gain: ${formatGainRate(gangInformation.respectGainRate)} `;
   message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
   ns.printf(message);
