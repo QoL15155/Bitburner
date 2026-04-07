@@ -522,9 +522,10 @@ export class MyGang {
       }
     }
     if (newEquipment.length > 0) {
+      const formattedCost = this.#ns.formatNumber(totalCost);
       printLogInfo(
         this.#ns,
-        `[${fname}] Member '${member.name}' purchased ${items} items. Total cost: ${totalCost}.`,
+        `[${fname}] Member '${member.name}' purchased ${items} items. Total cost: $${formattedCost}.`,
       );
     }
   }
