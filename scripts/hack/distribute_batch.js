@@ -67,6 +67,7 @@ function filterTargetServers(
 ) {
   /** @type {Array<MyServer>} Sorted list of servers that can be targeted */
   const fname = "filterTargetServers";
+  const c = Color;
 
   const totalRam = attackingServers.reduce(
     (acc, server) => acc + server.maxRam,
@@ -87,20 +88,24 @@ function filterTargetServers(
     const msgRamDetails = `RAM Required: ${ns.formatRam(requiredRam)}, available: ${ns.formatRam(ramAvailable)}.`;
 
     if (ramAvailable < requiredRam) {
-      ns.printf(`[${fname}] Skipping ${server.name} - ${msgRamDetails}`);
+      ns.printf(
+        `[${fname}] ${c.FgRed}Skipping${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
+      );
     }
 
     if (requiredRam < ramAvailable) {
       targetServers.push(server);
       ramAvailable -= requiredRam;
-      ns.printf(`[${fname}] Adding ${server.name} - ${msgRamDetails}`);
+
+      ns.printf(
+        `[${fname}] ${c.FgGreenBright}Adding${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
+      );
     }
   }
 
-  ns.tprint(
-    `[${fname}] Target servers: ${targetServers.length}/${targetServerList.length}.` +
-      ` Total RAM: ${ns.formatRam(totalRam)}, RAM available after distribution: ${ns.formatRam(ramAvailable)}.`,
-  );
+  const strTargets = `Target servers: ${c.FgGreenBright}${targetServers.length}${c.Reset}/${c.Dim}${targetServerList.length}${c.Reset}.`;
+  const strRam = `Total RAM: ${c.FgYellow}${ns.formatRam(totalRam)}${c.Reset}, RAM available: ${c.FgYellow}${ns.formatRam(ramAvailable)}${c.Reset}.`;
+  ns.printf(`[${fname}] ${strTargets} ${strRam}`);
   return targetServers;
 }
 
