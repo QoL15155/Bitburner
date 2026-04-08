@@ -124,7 +124,9 @@ export function processHack(ns, targetObject) {
   // Sanity check
   if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
     // NOTE: We already log this during sanity tests.
-    const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
+    const message =
+      `Server ${targetName} difficulty is not minimum.` +
+      ` ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
     printWarn(ns, `[${fname}] ${message}`);
   }
 
@@ -287,6 +289,27 @@ export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
 }
 
 //#endregion HGW
+
+//#region Preparation
+
+export function calculateTargetAttackThreads(
+  ns,
+  targetName,
+  useFormulas = false,
+) {
+  const targetObject = ns.getServer(targetName);
+  // const cpuCores = ns.getServer("home").cpuCores;
+  const cpuCores = 1;
+
+  targetObject.hackDifficulty = targetObject.minDifficulty;
+
+  const hackThreads = processHack(ns, targetObject);
+  const growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
+  const weakenThreads = getWeakenThreads(cpuCores, targetObject);
+  return hackThreads + growThreads + weakenThreads;
+}
+
+//#endregion Preparation
 
 //#region Run Actions
 

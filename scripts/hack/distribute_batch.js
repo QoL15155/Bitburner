@@ -1,4 +1,8 @@
-import { getAttackingServers, getTargetServers } from "/hack/utils.js";
+import {
+  calculateTargetAttackThreads,
+  getAttackingServers,
+  getTargetServers,
+} from "/hack/utils.js";
 import { Color, printError, printLogError } from "/utils/print.js";
 import { importServersData } from "/utils/servers.js";
 
@@ -28,15 +32,11 @@ function handleAttackingServers(ns, allServers) {
   );
 
   return attackingServers.sort((a, b) => {
-    if (getMaxRam(b) === getMaxRam(a)) {
+    if (b.maxRam === a.maxRam) {
       return b.cpuCores - a.cpuCores;
     }
-    return getMaxRam(b) - getMaxRam(a);
+    return b.maxRam - a.maxRam;
   });
-
-  function getMaxRam(server) {
-    return server.name === "home" ? Infinity : server.maxRam;
-  }
 }
 
 /**
@@ -56,6 +56,55 @@ function distributeScriptsToServer(ns, serverName) {
 }
 
 //#endregion Distribution
+
+//#region Targets
+
+function filterTargetServers(
+  ns,
+  attackingServers,
+  targetServerList,
+  useFormulas,
+) {
+  /** @type {Array<MyServer>} Sorted list of servers that can be targeted */
+  const fname = "filterTargetServers";
+
+  const totalRam = attackingServers.reduce(
+    (acc, server) => acc + server.maxRam,
+    0,
+  );
+
+  // Reduce the amount of target servers that can run with the current RAM limitations
+  let targetServers = [];
+  let ramAvailable = totalRam;
+
+  for (const server of targetServerList) {
+    const requiredRam = calculateTargetAttackThreads(
+      ns,
+      server.name,
+      useFormulas,
+    );
+
+    const msgRamDetails = `RAM Required: ${ns.formatRam(requiredRam)}, available: ${ns.formatRam(ramAvailable)}.`;
+
+    if (ramAvailable < requiredRam) {
+      ns.printf(`[${fname}] Skipping ${server.name} - ${msgRamDetails}`);
+    }
+
+    if (requiredRam < ramAvailable) {
+      targetServers.push(server);
+      ramAvailable -= requiredRam;
+      ns.printf(`[${fname}] Adding ${server.name} - ${msgRamDetails}`);
+    }
+  }
+
+  ns.tprint(
+    `[${fname}] Target servers: ${targetServers.length}/${targetServerList.length}.` +
+      ` Total RAM: ${ns.formatRam(totalRam)}, RAM available after distribution: ${ns.formatRam(ramAvailable)}.`,
+  );
+  return targetServers;
+}
+
+//#endregion Targets
 
 //#region Display
 
@@ -205,16 +254,28 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
 async function smartDistribution(ns, useFormulas) {
   const allServers = importServersData(ns);
 
-  // Distribute scripts and return list of the servers.
-  // Arrange by max RAM. Home should be first (?)
+  // Distribute scripts and return a list of the servers sorted by Max RAM
   const attackingServers = handleAttackingServers(ns, allServers);
 
-  const targetServers = getTargetServers(ns, allServers);
+  const targetServerList = getTargetServers(ns, allServers);
+  const targetServers = filterTargetServers(
+    ns,
+    attackingServers,
+    targetServerList,
+    useFormulas,
+  );
 
-  const distributionSummary = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
+  // Log distribution summary
+  const msgTargetServers = `Targets: ${targetServers.length}/${targetServerList.length}.`;
+  const distributionSummary = `Total Machines: ${allServers.length}. ${msgTargetServers} Attacking: ${attackingServers.length}`;
   ns.tprint(distributionSummary);
 
-  // TODO: targets / attackers should be dynamic - and chosen by the controller script?
+  if (targetServers.length === 0) {
+    ns.tprint("ERROR: No target servers available for attack.");
+    return false;
+  }
+
+  // TODO: targets / attackers should be dynamic and chosen by the controller script?
   const attackingNames = attackingServers.map((s) => s.name);
   const targetNames = targetServers.map((s) => s.name);
 
@@ -299,8 +360,6 @@ export async function main(ns) {
 
   const useFormulas =
     !args["no-formulas"] && ns.fileExists("Formulas.exe", "home");
-  const result = await smartDistribution(ns, useFormulas);
-  if (result) {
-    ns.ui.closeTail();
-  }
+  ns.clearLog();
+  await smartDistribution(ns, useFormulas);
 }
