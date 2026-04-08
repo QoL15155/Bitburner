@@ -1,5 +1,5 @@
 import {
-  calculateTargetAttackThreads,
+  calculateTargetAttackRam,
   getAttackingServers,
   getTargetServers,
 } from "/hack/utils.js";
@@ -79,19 +79,9 @@ function filterTargetServers(
   let ramAvailable = totalRam;
 
   for (const server of targetServerList) {
-    const requiredRam = calculateTargetAttackThreads(
-      ns,
-      server.name,
-      useFormulas,
-    );
+    const requiredRam = calculateTargetAttackRam(ns, server.name, useFormulas);
 
     const msgRamDetails = `RAM Required: ${ns.formatRam(requiredRam)}, available: ${ns.formatRam(ramAvailable)}.`;
-
-    if (ramAvailable < requiredRam) {
-      ns.printf(
-        `[${fname}] ${c.FgRed}Skipping${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
-      );
-    }
 
     if (requiredRam < ramAvailable) {
       targetServers.push(server);
@@ -99,6 +89,10 @@ function filterTargetServers(
 
       ns.printf(
         `[${fname}] ${c.FgGreenBright}Adding${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
+      );
+    } else {
+      ns.printf(
+        `[${fname}] ${c.FgRed}Skipping${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
       );
     }
   }

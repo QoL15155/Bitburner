@@ -281,11 +281,7 @@ export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
 
 //#region Preparation
 
-export function calculateTargetAttackThreads(
-  ns,
-  targetName,
-  useFormulas = false,
-) {
+export function calculateTargetAttackRam(ns, targetName, useFormulas) {
   const targetObject = ns.getServer(targetName);
   // const cpuCores = ns.getServer("home").cpuCores;
   const cpuCores = 1;
@@ -293,9 +289,15 @@ export function calculateTargetAttackThreads(
   targetObject.hackDifficulty = targetObject.minDifficulty;
 
   const hackThreads = processHack(ns, targetObject);
+  const hackRam = hackThreads * distributionScripts.hackScript.ram;
+
   const growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
+  const growRam = growThreads * distributionScripts.growScript.ram;
+
   const weakenThreads = getWeakenThreads(cpuCores, targetObject);
-  return hackThreads + growThreads + weakenThreads;
+  const weakenRam = weakenThreads * distributionScripts.weakenScript.ram;
+
+  return hackRam + growRam + weakenRam;
 }
 
 //#endregion Preparation
