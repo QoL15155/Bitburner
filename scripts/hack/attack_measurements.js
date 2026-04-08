@@ -1,5 +1,5 @@
-import { Color } from "/utils/print.js";
 import { formatTime } from "/utils/formatters.js";
+import { Color } from "/utils/print.js";
 
 export class AttackMeasurements {
   static maxErrorMessages = 5;
@@ -7,6 +7,7 @@ export class AttackMeasurements {
   constructor(isFormulas) {
     this.rounds = 0;
     this.totalAttackPerRound = 0;
+    this.targetServerCount = 0;
     this.useFormulas = isFormulas;
 
     // Threads
@@ -32,11 +33,13 @@ export class AttackMeasurements {
    * @param {number} attacks - number of servers attacked this round
    * @param {number} threads - total threads used this round
    * @param {number} delayTime - sleep time this round (ms)
+   * @param {number} targetServerCount - total number of remaining target servers
    * @param {Array<string>} errorMessages - error messages for this round
    */
-  addRound(attacks, threads, delayTime = 0, errorMessages = []) {
+  addRound(attacks, threads, delayTime, targetServerCount, errorMessages) {
     this.rounds += 1;
     this.totalAttackPerRound += attacks;
+    this.targetServerCount = targetServerCount;
 
     // Threads
     this.totalThreadsPerRound += threads;
@@ -117,7 +120,7 @@ export class AttackMeasurements {
       `${w}  ${c.Bold}${c.FgCyanBright}◈ ROUND ${c.FgWhiteBright}#${this.rounds}${c.Reset}`,
     );
     ns.print(
-      `${w}    ${c.FgWhite}Attacked${c.Reset}   ${c.FgGreenBright}${attackedServers}${c.Reset}`,
+      `${w}    ${c.FgWhite}Attacked${c.Reset}   ${c.FgGreenBright}${attackedServers}${c.Reset}  ${c.Dim}${c.FgWhite}/${c.Reset}  ${c.FgWhite}Targets${c.Reset} ${c.FgGreenBright}${this.targetServerCount}${c.Reset}`,
     );
     ns.print(
       `${w}    ${c.FgWhite}Threads${c.Reset}    ${c.FgGreenBright}${totalThreads}${c.Reset}`,
