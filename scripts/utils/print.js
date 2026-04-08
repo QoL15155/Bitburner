@@ -41,6 +41,10 @@ export const Color = {
   BgWhite: "\x1b[0;47m",
 };
 
+export function toDimWhite(msg) {
+  return `\x1b[2;37m${msg}${Color.Reset}`;
+}
+
 export function toGreen(msg) {
   return `${Color.FgGreen}${msg}${Color.Reset}`;
 }

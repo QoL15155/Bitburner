@@ -241,6 +241,10 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
 
     // Remove batches that couldn't be executed due to insufficient RAM
     for (const targetBatch of targetsToRemove) {
+      logger.warn(
+        fname,
+        `Removing target '${targetBatch.targetName}' due to insufficient RAM`,
+      );
       removeItemFromArray(targetList, targetBatch);
     }
 
@@ -275,6 +279,7 @@ async function doBatchAttack(ns, attackingServers, targetServers) {
       attackedServers,
       totalThreads,
       delayTime,
+      targetList.length,
       errorMessages,
     );
 
