@@ -293,6 +293,7 @@ export function calculateTargetAttackRam(ns, targetName, useFormulas) {
 
   const growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
   const growRam = growThreads * distributionScripts.growScript.ram;
+  targetObject.hackDifficulty += getGrowSecurityIncrease(growThreads);
 
   const weakenThreads = getWeakenThreads(cpuCores, targetObject);
   const weakenRam = weakenThreads * distributionScripts.weakenScript.ram;
