@@ -1,5 +1,3 @@
-import { Color, toGreen } from "/utils/print.js";
-
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
  * @param {string[]} args - current arguments, not including "run script.js"
@@ -15,6 +13,9 @@ export function autocomplete(data, args) {
  * Prompts the user to select a zip, js, or ts file from their computer,
  * then writes/extracts the file(s) into the home directory.
  *
+ * NOTE: This script might be the starting point in a new machine.
+ *     DO NOT IMPORT ANY OTHER MODULES IN THIS SCRIPT
+ *
  * @param {NS} ns
  */
 export async function main(ns) {
@@ -24,8 +25,8 @@ export async function main(ns) {
   ]);
 
   if (args.help || args.h) {
-    const usage = toGreen(`run ${ns.getScriptName()}`);
-    const options = `${Color.Italic}folder${Color.Reset}`;
+    const usage = `run ${ns.getScriptName()}`;
+    const options = "folder";
 
     ns.tprint(`Usage: ${usage} [<${options}>]`);
     ns.tprint("");
