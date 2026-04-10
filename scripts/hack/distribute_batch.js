@@ -59,6 +59,17 @@ function distributeScriptsToServer(ns, serverName) {
 
 //#region Targets
 
+
+/**
+ * Gets a list of target servers that can be attacked, and filters them
+ * based on the available RAM for the attack scripts.
+ *
+ * @param {NS} ns
+ * @param {Array<MyServer>} attackingServers - list of servers that can be used to run attack scripts
+ * @param {Array<MyServer>} targetServerList - list of potential target servers to attack
+ * @param {boolean} useFormulas - whether to use formulas for calculations
+ * @returns {Array<MyServer>} list of target servers that can be attacked with the current RAM limitations.
+ */
 function filterTargetServers(
   ns,
   attackingServers,

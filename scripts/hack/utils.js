@@ -117,7 +117,6 @@ export function getHackSecurityIncrease(threads) {
 }
 
 export function processHack(ns, targetObject) {
-  const fname = "processHack";
   const targetName = targetObject.hostname;
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
