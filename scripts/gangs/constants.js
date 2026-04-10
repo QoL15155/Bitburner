@@ -25,14 +25,17 @@ const maxAscensionLevel = 25;
 
 // Wanted Lower : Lower
 // We want to keep the wanted level penalty below 10% (this is the inverse).
+// WantedPenalty = respect / (respect + wantedLevel)
 // Money and respect gains multiplied by this number
+// For Example see "Gang/formulas/formulas.ts" calculateMoneyGain
+//  moneyGain=(baseMoneyGain*respectGain * wantedPenalty)
 export const wantedPenaltyMax = 0.9;
 // const wantedLevelMax = 1000;
 
 // Wanted Level : Raise
 // When the wanted level is under these thresholds, we can focus on raising respect and money gain
 export const wantedGainSafeThreshold = 1;
-export const wantedPenaltySafeThreshold = 0.1;
+export const wantedPenaltySafeThreshold = 0.95;
 
 // Gang Equipment
 // =====================

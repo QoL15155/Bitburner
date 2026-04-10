@@ -177,7 +177,7 @@ export function shouldAscendMember(ns, memberName) {
 export const WantedLevelStatus = {
   ShouldLower: "Should Lower",
   Safe: "Safe",
-  CanBeRaise: "Can Be Raise",
+  CanBeRaised: "Can be Raised",
 };
 
 /**
@@ -188,9 +188,10 @@ export const WantedLevelStatus = {
 function shouldLowerWantedLevel(ns, gangInformation) {
   const fname = "shouldLowerWantedLevel";
 
-  if (gangInformation.wantedLevelGainRate <= 0) {
+  if (gangInformation.wantedLevelGainRate < 0) {
     return false;
   }
+  // Wanted level is rising
 
   if (gangInformation.wantedPenalty < wantedPenaltyMax) {
     const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
@@ -203,9 +204,6 @@ function shouldLowerWantedLevel(ns, gangInformation) {
 
   /*
   if (gangInformation.wantedLevel > wantedLevelMax) {
-    return true;
-  }
-  if (wantedGainRatePerSecond > wantedGainThreshold) {
     return true;
   }
   */
@@ -224,11 +222,13 @@ let safeCounter = 0;
  */
 export function getWantedLevelStatus(ns, gangInformation) {
   const fname = "getWantedLevelStatus";
+  const wantedPenalty = gangInformation.wantedPenalty;
 
   // Safe
   if (
     gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
-    gangInformation.wantedPenalty < wantedPenaltySafeThreshold
+    (wantedPenalty > wantedPenaltyMax &&
+      wantedPenalty < wantedPenaltySafeThreshold)
   ) {
     displaySafeStatus();
     safeCounter++;
@@ -242,16 +242,19 @@ export function getWantedLevelStatus(ns, gangInformation) {
   }
 
   // Wanted level gain rate it low
-  return WantedLevelStatus.CanBeRaise;
+  return WantedLevelStatus.CanBeRaised;
 
   function displaySafeStatus() {
     if (safeCounter % 10 !== 0) return;
     safeCounter = 0;
 
+    const gainRate = formatGainRate(gangInformation.wantedLevelGainRate);
+    const penalty = ns.formatNumber(wantedPenalty);
+
     let message = `Playing it safe.`;
-    message += ` Wanted level gain rate: ${formatGainRate(gangInformation.wantedLevelGainRate)}.`;
-    message += ` Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`;
-    ns.printf(message);
+    message += ` Wanted level gain rate: ${gainRate}.`;
+    message += ` Wanted penalty: ${penalty}.`;
+    ns.printf(`[${fname}] ${message}`);
   }
 }
 
