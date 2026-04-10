@@ -428,7 +428,6 @@ function sortMemberByTask(ns, memberName) {
       myGang.addMemberToTraining(memberName, myGang.trainingTask);
       return;
     }
-    // TODO: Adapt for combat gang
   }
 
   myGang.addMemberToWorking(memberName, taskName);
@@ -556,8 +555,8 @@ function initializeTasks(ns) {
  * Checks if we should buy augmentations.
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
-  const augmentationCost = isHackingGang
+function shouldBuyAugmentation(ns, isHackingFocus, buyArgument, playerMoney) {
+  const augmentationCost = isHackingFocus
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
   const augmentationCostPercent = augmentationCost / Math.max(1, playerMoney);
@@ -592,8 +591,8 @@ function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
  * Checks if we should buy equipment
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
-  const regularCost = isHackingGang
+function shouldBuyEquipment(ns, isHackingFocus, buyArgument, playerMoney) {
+  const regularCost = isHackingFocus
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
   const regularCostPercent = regularCost / Math.max(1, playerMoney);
@@ -627,9 +626,17 @@ function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
   return false;
 }
 
+/**
+ *
+ * @param {NS} ns
+ * @param {boolean} isHackingFocus - Defaults to true (for hacking gang)
+ * @param {string[]} gangMemberNames - Array of current gang member names.
+ * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
+ * @param {boolean} buyEquipment - Whether to buy equipment for gang members.
+ */
 function initializeGang(
   ns,
-  isHackingGang,
+  isHackingFocus,
   gangMemberNames,
   buyAugmentations,
   buyEquipment,
@@ -639,20 +646,20 @@ function initializeGang(
   // Equipment
   buyAugmentations = shouldBuyAugmentation(
     ns,
-    isHackingGang,
+    isHackingFocus,
     buyAugmentations,
     playerMoney,
   );
   buyEquipment = shouldBuyEquipment(
     ns,
-    isHackingGang,
+    isHackingFocus,
     buyEquipment,
     playerMoney,
   );
 
   myGang = new MyGang(
     ns,
-    isHackingGang,
+    isHackingFocus,
     gangMemberNames,
     buyAugmentations,
     buyEquipment,
@@ -686,6 +693,9 @@ function printUsage(ns) {
   ns.tprint(
     "  --buy-equipment        - Buy equipment (and augmentations) for gang members.",
   );
+  ns.tprint(
+    "  --override-focus       - Override gang members' focus (hacking->combat, combat->hacking).",
+  );
   ns.tprint("");
   ns.tprint("Should be run by 'gangs/start.js' script");
 }
@@ -698,8 +708,9 @@ function printUsage(ns) {
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const options = ["--buy-augmentations", "--buy-equipment"];
+  const focusOptions = ["--override-focus"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions, ...options, ...focusOptions];
 }
 
 /** @param {NS} ns */
@@ -709,6 +720,7 @@ export async function main(ns) {
     ["h", false],
     ["buy-augmentations", false],
     ["buy-equipment", false],
+    ["override-focus", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
     printUsage(ns);
@@ -731,9 +743,10 @@ export async function main(ns) {
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
   const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
+  const isHackingFocus = !args["override-focus"];
   initializeGang(
     ns,
-    true,
+    isHackingFocus,
     gangMemberNames,
     buyAugmentations,
     args["buy-equipment"],

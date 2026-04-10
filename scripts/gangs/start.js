@@ -27,6 +27,7 @@ export function startGangManagement(
   toKill = false,
   buyAugmentations = false,
   buyEquipment = false,
+  overrideFocus = false,
 ) {
   // Write tasks info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
@@ -52,6 +53,9 @@ export function startGangManagement(
   }
   if (buyEquipment) {
     additionalArguments.push("--buy-equipment");
+  }
+  if (overrideFocus) {
+    additionalArguments.push("--override-focus");
   }
   const pid = ns.run(
     gangManagementScript,
@@ -122,6 +126,9 @@ function printUsage(ns) {
     `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
   );
   ns.tprint(
+    `  ${toGreen("--override-focus")}     Override gang members' focus (hacking->combat, combat->hacking).`,
+  );
+  ns.tprint(
     `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,
   );
 }
@@ -135,8 +142,9 @@ export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const options = ["-k", "--kill"];
   const equipmentOptions = ["--buy-equipment", "--buy-augmentations"];
+  const focusOptions = ["--override-focus"];
 
-  return [...defaultOptions, ...options, ...equipmentOptions];
+  return [...defaultOptions, ...options, ...equipmentOptions, ...focusOptions];
 }
 
 export async function main(ns) {
@@ -145,6 +153,7 @@ export async function main(ns) {
     ["h", false],
     ["buy-augmentations", false],
     ["buy-equipment", false],
+    ["override-focus", false],
     ["kill", false],
     ["k", false],
   ]);
@@ -169,6 +178,7 @@ export async function main(ns) {
     toKill,
     args["buy-augmentations"],
     args["buy-equipment"],
+    args["override-focus"],
   );
 
   if (result === false) {
