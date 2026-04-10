@@ -45,6 +45,10 @@ export function toGreen(msg) {
   return `${Color.FgGreen}${msg}${Color.Reset}`;
 }
 
+export function toRed(msg) {
+  return `${Color.FgRed}${msg}${Color.Reset}`;
+}
+
 export function printError(ns, msg) {
   ns.print(`${Color.FgRed}${msg}${Color.Reset}`);
   ns.tprint(`${Color.FgRed}${msg}${Color.Reset}`);
