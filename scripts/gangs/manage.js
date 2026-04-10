@@ -22,6 +22,11 @@ export const GangFocus = Object.freeze({
   COMBAT: 2,
 });
 
+// TODO:
+// calculatePower(): number {
+// return (this.hack + this.str + this.def + this.dex + this.agi + this.cha) / 95;
+// }
+
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
 export const powerTask = "Territory Warfare";
