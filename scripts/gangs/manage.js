@@ -29,7 +29,7 @@ export const GangFocus = Object.freeze({
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
-export const powerTask = "Territory Warfare";
+export const powerTaskName = "Territory Warfare";
 
 export function isEthicalTask(taskName) {
   return allEthicalTasks.includes(taskName);

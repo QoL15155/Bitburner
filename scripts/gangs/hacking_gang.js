@@ -22,7 +22,7 @@ import {
   handleRecruitmentStatus,
   isEthicalTask,
   isTrainingTask,
-  powerTask,
+  powerTaskName,
   recruitGangMembers,
   TrainingTasks,
   WantedLevelStatus,
@@ -56,6 +56,7 @@ let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
 let tasksWithCombatGain = null;
+let powerTasks = null;
 
 let equipmentByType = null;
 
@@ -291,7 +292,7 @@ function assignTrainingMemberWorkTask() {
       focusTasks = tasksWithMoneyGain;
       break;
     case GangFocus.COMBAT:
-      focusTasks = tasksWithCombatGain;
+      focusTasks = powerTasks;
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -330,9 +331,7 @@ function assignEthicalMemberWorkTask(ns) {
       );
       break;
     case GangFocus.COMBAT:
-      relevantTasks = tasksWithCombatGain.filter(
-        (t) => getTaskCombat(currentTask) < getTaskCombat(t),
-      );
+      relevantTasks = powerTasks;
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -364,7 +363,9 @@ function tryUpdateWorkingMemberTask(ns) {
       sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByMoney);
       break;
     case GangFocus.COMBAT:
-      sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByCombat);
+      // We only have one task that gains power
+      // FIXME: probably redundant
+      sortedTaskList = powerTasks;
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -412,15 +413,6 @@ function sortTasksByMoney(a, b) {
   return a.baseWanted - b.baseWanted;
 }
 
-function sortTasksByCombat(a, b) {
-  const aCombat = getTaskCombat(a);
-  const bCombat = getTaskCombat(b);
-  if (aCombat !== bCombat) {
-    return aCombat - bCombat;
-  }
-  return a.baseWanted - b.baseWanted;
-}
-
 function sortMemberByTask(ns, memberName) {
   const fname = "sortMemberByTask";
   const memberInfo = ns.gang.getMemberInformation(memberName);
@@ -455,7 +447,7 @@ function sortMemberByTask(ns, memberName) {
     return;
   }
 
-  if (taskName === powerTask) {
+  if (taskName === powerTaskName) {
     // NOTE: we still let COMBAT focus have Territory Warfare
     if (myGang.type === GangFocus.MONEY) {
       printWarn(ns, strChangingTasks("Territory Warfare", myGang.trainingTask));
@@ -509,6 +501,11 @@ function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
   let bestTaskCombatGain = getTaskCombat(bestTask);
 
+  if (myGang.focus === GangFocus.COMBAT) {
+    // There is only one power task
+    return powerTasks[0];
+  }
+
   for (const task of tasksByWantedLevel) {
     if (task.baseWanted > memberTask.baseWanted) {
       return bestTask;
@@ -523,14 +520,6 @@ function getMemberBestTaskForWantedLevel(memberTask) {
       case GangFocus.MONEY:
         if (task.baseMoney > bestTask.baseMoney) {
           bestTask = task;
-        }
-        break;
-      case GangFocus.COMBAT:
-        const taskCombatGain = getTaskCombat(task);
-
-        if (taskCombatGain > bestTaskCombatGain) {
-          bestTask = task;
-          bestTaskCombatGain = taskCombatGain;
         }
         break;
       default:
@@ -565,8 +554,14 @@ async function manageGang(ns) {
       myGang.checkFocus = false;
     }
 
-    // Update members tasks according to wanted level
-    handleWantedLevel(ns);
+    if (
+      myGang.focus === GangFocus.MONEY ||
+      myGang.focus === GangFocus.RECRUITING
+    ) {
+      // TODO: I think only money + respect are influenced by wanted level. make sure!
+      // Update members tasks according to wanted level
+      handleWantedLevel(ns);
+    }
 
     // Wait for the next gang update
     const duration = await ns.gang.nextUpdate();
@@ -595,6 +590,7 @@ function initializeTasks(ns) {
   tasksWithCombatGain = tasksByWantedLevel.filter(
     (task) => getTaskCombat(task) > 0,
   );
+  powerTasks = [getTaskFromMap(powerTaskName)];
   return true;
 }
 
