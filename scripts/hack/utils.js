@@ -1,5 +1,4 @@
 import { AttackAction } from "/hack/attack_action.js";
-import { printError, printWarn } from "/utils/print.js";
 
 //#region Servers
 
@@ -118,15 +117,7 @@ export function getHackSecurityIncrease(threads) {
 }
 
 export function processHack(ns, targetObject) {
-  const fname = "processHack";
   const targetName = targetObject.hostname;
-
-  // Sanity check
-  if (targetObject.hackDifficulty !== targetObject.minDifficulty) {
-    // NOTE: We already log this during sanity tests.
-    const message = `Server ${targetName} difficulty is not minimum. ${targetObject.hackDifficulty} != ${targetObject.minDifficulty}`;
-    printWarn(ns, `[${fname}] ${message}`);
-  }
 
   let threads = ns.hackAnalyzeThreads(targetName, targetObject.moneyMax);
   threads = Math.ceil(threads);
@@ -279,7 +270,6 @@ export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
   ) {
     let msg = `[${fname}] Hack difficulty: ${targetObject.hackDifficulty}, minimum: ${targetObject.minDifficulty}`;
     msg += `\tweaken threads: ${threads}, expected security decrease: ${securityDecrease}. New difficulty: ${newDifficulty}`;
-    printError(ns, msg);
     throw new Error(msg);
   }
 
@@ -287,6 +277,30 @@ export function getWeakenThreadsSanity(ns, cpuCores, targetObject) {
 }
 
 //#endregion HGW
+
+//#region Preparation
+
+export function calculateTargetAttackRam(ns, targetName, useFormulas) {
+  const targetObject = ns.getServer(targetName);
+  // const cpuCores = ns.getServer("home").cpuCores;
+  const cpuCores = 1;
+
+  targetObject.hackDifficulty = targetObject.minDifficulty;
+
+  const hackThreads = processHack(ns, targetObject);
+  const hackRam = hackThreads * distributionScripts.hackScript.ram;
+
+  const growThreads = getGrowThreads(ns, cpuCores, targetObject, useFormulas);
+  const growRam = growThreads * distributionScripts.growScript.ram;
+  targetObject.hackDifficulty += getGrowSecurityIncrease(growThreads);
+
+  const weakenThreads = getWeakenThreads(cpuCores, targetObject);
+  const weakenRam = weakenThreads * distributionScripts.weakenScript.ram;
+
+  return hackRam + growRam + weakenRam;
+}
+
+//#endregion Preparation
 
 //#region Run Actions
 

@@ -1,4 +1,8 @@
-import { getAttackingServers, getTargetServers } from "/hack/utils.js";
+import {
+  calculateTargetAttackRam,
+  getAttackingServers,
+  getTargetServers,
+} from "/hack/utils.js";
 import { Color, printError, printLogError } from "/utils/print.js";
 import { importServersData } from "/utils/servers.js";
 
@@ -10,8 +14,6 @@ const scriptsToDistribute = [
 ];
 
 const controllerScript = "/hack/controller_batch.js";
-
-/* Utils */
 
 //#region Distribution
 
@@ -30,15 +32,11 @@ function handleAttackingServers(ns, allServers) {
   );
 
   return attackingServers.sort((a, b) => {
-    if (getMaxRam(b) === getMaxRam(a)) {
+    if (b.maxRam === a.maxRam) {
       return b.cpuCores - a.cpuCores;
     }
-    return getMaxRam(b) - getMaxRam(a);
+    return b.maxRam - a.maxRam;
   });
-
-  function getMaxRam(server) {
-    return server.name === "home" ? Infinity : server.maxRam;
-  }
 }
 
 /**
@@ -58,6 +56,65 @@ function distributeScriptsToServer(ns, serverName) {
 }
 
 //#endregion Distribution
+
+//#region Targets
+
+
+/**
+ * Gets a list of target servers that can be attacked, and filters them
+ * based on the available RAM for the attack scripts.
+ *
+ * @param {NS} ns
+ * @param {Array<MyServer>} attackingServers - list of servers that can be used to run attack scripts
+ * @param {Array<MyServer>} targetServerList - list of potential target servers to attack
+ * @param {boolean} useFormulas - whether to use formulas for calculations
+ * @returns {Array<MyServer>} list of target servers that can be attacked with the current RAM limitations.
+ */
+function filterTargetServers(
+  ns,
+  attackingServers,
+  targetServerList,
+  useFormulas,
+) {
+  /** @type {Array<MyServer>} Sorted list of servers that can be targeted */
+  const fname = "filterTargetServers";
+  const c = Color;
+
+  const totalRam = attackingServers.reduce(
+    (acc, server) => acc + server.maxRam,
+    0,
+  );
+
+  // Reduce the amount of target servers that can run with the current RAM limitations
+  let targetServers = [];
+  let ramAvailable = totalRam;
+
+  for (const server of targetServerList) {
+    const requiredRam = calculateTargetAttackRam(ns, server.name, useFormulas);
+
+    const msgRamDetails = `RAM Required: ${ns.formatRam(requiredRam)}, available: ${ns.formatRam(ramAvailable)}.`;
+
+    if (requiredRam < ramAvailable) {
+      targetServers.push(server);
+      ramAvailable -= requiredRam;
+
+      ns.printf(
+        `[${fname}] ${c.FgGreenBright}Adding${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
+      );
+    } else {
+      ns.printf(
+        `[${fname}] ${c.FgRed}Skipping${c.Reset} ${c.FgWhiteBright}${server.name}${c.Reset} - ${c.Dim}${msgRamDetails}${c.Reset}`,
+      );
+    }
+  }
+
+  const strTargets = `Target servers: ${c.FgGreenBright}${targetServers.length}${c.Reset}/${c.Dim}${targetServerList.length}${c.Reset}.`;
+  const strRam = `Total RAM: ${c.FgYellow}${ns.formatRam(totalRam)}${c.Reset}, RAM available: ${c.FgYellow}${ns.formatRam(ramAvailable)}${c.Reset}.`;
+  ns.printf(`[${fname}] ${strTargets} ${strRam}`);
+  return targetServers;
+}
+
+//#endregion Targets
 
 //#region Display
 
@@ -207,16 +264,28 @@ async function checkHomeRunningScripts(ns, killScripts = false) {
 async function smartDistribution(ns, useFormulas) {
   const allServers = importServersData(ns);
 
-  // Distribute scripts and return list of the servers.
-  // Arrange by max RAM. Home should be first (?)
+  // Distribute scripts and return a list of the servers sorted by Max RAM
   const attackingServers = handleAttackingServers(ns, allServers);
 
-  const targetServers = getTargetServers(ns, allServers);
+  const targetServerList = getTargetServers(ns, allServers);
+  const targetServers = filterTargetServers(
+    ns,
+    attackingServers,
+    targetServerList,
+    useFormulas,
+  );
 
-  const distributionSummary = `Total Machines: ${allServers.length}. Targets: ${targetServers.length}. Attacking: ${attackingServers.length}`;
+  // Log distribution summary
+  const msgTargetServers = `Targets: ${targetServers.length}/${targetServerList.length}.`;
+  const distributionSummary = `Total Machines: ${allServers.length}. ${msgTargetServers} Attacking: ${attackingServers.length}`;
   ns.tprint(distributionSummary);
 
-  // TODO: targets / attackers should be dynamic - and chosen by the controller script?
+  if (targetServers.length === 0) {
+    ns.tprint("ERROR: No target servers available for attack.");
+    return false;
+  }
+
+  // TODO: targets / attackers should be dynamic and chosen by the controller script?
   const attackingNames = attackingServers.map((s) => s.name);
   const targetNames = targetServers.map((s) => s.name);
 
@@ -301,8 +370,6 @@ export async function main(ns) {
 
   const useFormulas =
     !args["no-formulas"] && ns.fileExists("Formulas.exe", "home");
-  const result = await smartDistribution(ns, useFormulas);
-  if (result) {
-    ns.ui.closeTail();
-  }
+  ns.clearLog();
+  await smartDistribution(ns, useFormulas);
 }
