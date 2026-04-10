@@ -22,6 +22,7 @@ import {
   handleRecruitmentStatus,
   isEthicalTask,
   isTrainingTask,
+  powerTask,
   recruitGangMembers,
   TrainingTasks,
   WantedLevelStatus,
@@ -41,7 +42,6 @@ const unassignedTask = "Unassigned";
 // All charisma tasks are also 'hacking tasks'
 // const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
 // const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
-const territoryTask = "Territory Warfare";
 
 /* Variables */
 
@@ -55,6 +55,7 @@ let tasksByWantedLevel = null;
 let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
+let tasksWithCombatGain = null;
 
 let equipmentByType = null;
 
@@ -159,7 +160,7 @@ function lowerWantedLevel(ns) {
 
   // Working Task -> Working Task with lower wanted level gain
 
-  // Get the best task with lower wanted level gain and higher respect or money gain depending on the focus.
+  // Get the best task with lower wanted level gain and higher focus gain (respect/money/combat/power).
   /** @type {GangTaskStats} */
   let nextTask = null;
   switch (myGang.focus) {
@@ -175,6 +176,14 @@ function lowerWantedLevel(ns) {
         return current.baseMoney > prev.baseMoney ? current : prev;
       });
       break;
+    case GangFocus.COMBAT:
+      nextTask = relevantTasks.reduce((prev, current) => {
+        const prevCombat = getTaskCombat(prev);
+        const currentCombat = getTaskCombat(current);
+        return currentCombat > prevCombat ? current : prev;
+      });
+      break;
+
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
@@ -246,6 +255,10 @@ function raiseFocusGain(ns) {
 
 //#region Tasks
 
+function getTaskCombat(task) {
+  return task.strWeight + task.defWeight + task.dexWeight + task.agiWeight;
+}
+
 /** Retrieves task information for a given task name.
  *
  * @param {string} taskName
@@ -276,6 +289,9 @@ function assignTrainingMemberWorkTask() {
       break;
     case GangFocus.MONEY:
       focusTasks = tasksWithMoneyGain;
+      break;
+    case GangFocus.COMBAT:
+      focusTasks = tasksWithCombatGain;
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -313,6 +329,11 @@ function assignEthicalMemberWorkTask(ns) {
         (t) => currentTask.baseMoney < t.baseMoney,
       );
       break;
+    case GangFocus.COMBAT:
+      relevantTasks = tasksWithCombatGain.filter(
+        (t) => getTaskCombat(currentTask) < getTaskCombat(t),
+      );
+      break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
@@ -341,6 +362,9 @@ function tryUpdateWorkingMemberTask(ns) {
       break;
     case GangFocus.MONEY:
       sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByMoney);
+      break;
+    case GangFocus.COMBAT:
+      sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByCombat);
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -388,6 +412,15 @@ function sortTasksByMoney(a, b) {
   return a.baseWanted - b.baseWanted;
 }
 
+function sortTasksByCombat(a, b) {
+  const aCombat = getTaskCombat(a);
+  const bCombat = getTaskCombat(b);
+  if (aCombat !== bCombat) {
+    return aCombat - bCombat;
+  }
+  return a.baseWanted - b.baseWanted;
+}
+
 function sortMemberByTask(ns, memberName) {
   const fname = "sortMemberByTask";
   const memberInfo = ns.gang.getMemberInformation(memberName);
@@ -405,7 +438,7 @@ function sortMemberByTask(ns, memberName) {
 
   if (isTrainingTask(taskName)) {
     if (!TrainingTasks[myGang.type].includes(taskName)) {
-      // NOTE: we still allow for "Train Charisma" for hacking gang.
+      // NOTE: we still allow for "Train Charisma" for hacking gang with money focus
       printWarn(ns, strChangingTasks(taskName, myGang.trainingTask));
       taskName = myGang.trainingTask;
     }
@@ -422,7 +455,8 @@ function sortMemberByTask(ns, memberName) {
     return;
   }
 
-  if (taskName === territoryTask) {
+  if (taskName === powerTask) {
+    // NOTE: we still let COMBAT focus have Territory Warfare
     if (myGang.type === GangFocus.MONEY) {
       printWarn(ns, strChangingTasks("Territory Warfare", myGang.trainingTask));
       myGang.addMemberToTraining(memberName, myGang.trainingTask);
@@ -473,6 +507,7 @@ function handleMembersTaskFocus(ns) {
  */
 function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
+  let bestTaskCombatGain = getTaskCombat(bestTask);
 
   for (const task of tasksByWantedLevel) {
     if (task.baseWanted > memberTask.baseWanted) {
@@ -488,6 +523,14 @@ function getMemberBestTaskForWantedLevel(memberTask) {
       case GangFocus.MONEY:
         if (task.baseMoney > bestTask.baseMoney) {
           bestTask = task;
+        }
+        break;
+      case GangFocus.COMBAT:
+        const taskCombatGain = getTaskCombat(task);
+
+        if (taskCombatGain > bestTaskCombatGain) {
+          bestTask = task;
+          bestTaskCombatGain = taskCombatGain;
         }
         break;
       default:
@@ -548,6 +591,10 @@ function initializeTasks(ns) {
     (task) => task.baseRespect > 0,
   );
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
+
+  tasksWithCombatGain = tasksByWantedLevel.filter(
+    (task) => getTaskCombat(task) > 0,
+  );
   return true;
 }
 

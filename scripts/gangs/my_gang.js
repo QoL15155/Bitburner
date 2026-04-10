@@ -68,7 +68,7 @@ export class MyGang {
     this.#ns = ns;
 
     // Focus
-    this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.POWER;
+    this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.COMBAT;
     this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 

@@ -19,11 +19,12 @@ import { printError, printLogWarn } from "/utils/print.js";
 export const GangFocus = Object.freeze({
   RECRUITING: 0,
   MONEY: 1,
-  POWER: 2,
+  COMBAT: 2,
 });
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
+export const powerTask = "Territory Warfare";
 
 export function isEthicalTask(taskName) {
   return allEthicalTasks.includes(taskName);
@@ -35,12 +36,12 @@ export function isTrainingTask(taskName) {
 
 export const TrainingTasks = {
   [GangFocus.MONEY]: ["Train Hacking", "Train Charisma"],
-  [GangFocus.POWER]: ["Train Combat"],
+  [GangFocus.COMBAT]: ["Train Combat"],
 };
 
 export const EthicalTasks = {
   [GangFocus.MONEY]: ["Ethical Hacking"],
-  [GangFocus.POWER]: ["Vigilante Justice"],
+  [GangFocus.COMBAT]: ["Vigilante Justice"],
 };
 
 export function getGangTrainingTask(gangFocus) {
