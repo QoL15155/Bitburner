@@ -139,9 +139,8 @@ export class MyGang {
 
     this.#shouldWaitAscend = value;
     if (value === true) {
-      printLogInfo(
-        this.#ns,
-        `[${fname}] Waiting to recruit next member before ascending current members.`,
+      this.#ns.print(
+        `[${fname}] ${toGreen("Waiting to ascend")} members until next recruitment.`,
       );
     }
   }
@@ -178,19 +177,19 @@ export class MyGang {
   //#region Stringify
 
   #membersString() {
-    let message = `Gang Members (${this.memberCount()}):`;
+    let message = `Gang Members ${toGreen(this.memberCount())}:`;
 
-    message += `\n- Training: ${this.#membersTraining.length} `;
+    message += `\n\t- Training: ${this.#membersTraining.length} `;
     if (this.#membersTraining.length > 0) {
       message += `(${this.#membersTraining.join(", ")})`;
     }
 
-    message += `\n- Ethical: ${this.#membersEthical.length} `;
+    message += `\n\t- Ethical: ${this.#membersEthical.length} `;
     if (this.#membersEthical.length > 0) {
       message += `(${this.#membersEthical.join(", ")})`;
     }
 
-    message += `\n- Working: ${this.#membersWorking.length} `;
+    message += `\n\t- Working: ${this.#membersWorking.length} `;
     if (this.#membersWorking.length > 0) {
       message += `(${this.#membersWorking.join(", ")})`;
     }
@@ -199,11 +198,25 @@ export class MyGang {
   }
 
   toString() {
-    let message = `Gang Status: `;
-    message += `Type: ${this.type}, Focus: ${this.focus}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
-    message += `Buy Augmentations? ${this.#buyAugmentations}, Buy Equipment? ${this.#buyEquipment}\n`;
+    const header = `${Color.FgCyan}⭐MyGang⭐${Color.Reset}`;
+    const type = this.type === GangFocus.MONEY ? "Hacking" : "Combat";
+
+    let message = `${header} Type: ${toMagenta(type)}, Focus: ${toMagenta(this.focus)}\n`;
+    message += `\tWait to ascend? ${toGreen(this.shouldWaitAscend)}, Focus optimized? ${toGreen(this.isFocusOptimized)}\n`;
+
+    const buyAugmentations = this.#buyAugmentations
+      ? toGreen("✅ Buy Augmentations")
+      : toRed("❌ Don't buy Augmentations");
+    const buyEquipment = this.#buyEquipment
+      ? toGreen("✅ Buy Equipment")
+      : toRed("❌ Don't buy Equipment");
+    message += `\t${buyAugmentations}, ${buyEquipment}\n`;
     message += this.#membersString();
     return message;
+
+    function toMagenta(text) {
+      return `${Color.FgMagenta}${text}${Color.Reset}`;
+    }
   }
 
   //#endregion Stringify
@@ -318,8 +331,10 @@ export class MyGang {
     this.#buyAugmentationsForMember(memberInfo);
     this.#buyEquipmentForMember(memberInfo);
 
+    // Log
+    const msgRecruited = `Recruited '${toGreen(memberName)}' and assigned '${this.trainingTask}' task`;
     this.#ns.print(
-      `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
+      `[${fname}] ${msgRecruited}. Total members: ${this.memberCount()}.`,
     );
   }
 
