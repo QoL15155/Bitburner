@@ -69,6 +69,10 @@ let myGang = null;
 /** Calculates the minimum chance for the gang to win in a clash */
 function getClashMinWinChance(ns, gangInformation) {
   const myPower = gangInformation.power;
+  if (myPower === 0) {
+    return 0;
+  }
+
   const otherGangs = ns.gang.getOtherGangInformation();
 
   let minClashChance = -1;
@@ -76,6 +80,7 @@ function getClashMinWinChance(ns, gangInformation) {
     if (gangName === gangInformation.faction) {
       continue;
     }
+
     const clashChance = myPower / (myPower + gangInfo.power);
     if (clashChance < minClashChance || minClashChance === -1) {
       minClashChance = clashChance;
