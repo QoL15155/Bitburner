@@ -5,7 +5,7 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
-import { Color, printLogError, printLogInfo } from "/utils/print.js";
+import { Color, printLogError, printLogInfo, toGreen } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -414,10 +414,8 @@ export class MyGang {
    * @param {string} toTask
    */
   logMemberReassignTask(fname, memberName, fromTask, toTask) {
-    printLogInfo(
-      this.#ns,
-      `[${fname}] Assigned member '${memberName}' task from '${fromTask}' to '${toTask}'.`,
-    );
+    const msgAssign = `'${toGreen(memberName)}': ${toGreen(fromTask)} -> ${toGreen(toTask)}.`;
+    this.#ns.print(`[${fname}] ${msgAssign}`);
   }
 
   /**
@@ -427,10 +425,10 @@ export class MyGang {
    * @param {GangTaskStats} toTask
    */
   logMemberReassignTaskEx(fname, memberName, fromTask, toTask) {
-    let message = `[${fname}] Assigned member '${memberName}' `;
-    message += `\n\tfrom '${fromTask.name}' (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted}) `;
-    message += `\n\tto '${toTask.name}' (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted}).`;
-    printLogInfo(this.#ns, message);
+    const msgAssign = `'${toGreen(memberName)}': ${toGreen(fromTask.name)} -> ${toGreen(toTask.name)}.`;
+    const msgFromTask = `\n\t${fromTask.name} (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted})`;
+    const msgToTask = `\n\t${toTask.name} (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted})`;
+    this.#ns.print(`[${fname}] ${msgAssign}${msgFromTask}${msgToTask}`);
   }
 
   //#endregion Reassign Members

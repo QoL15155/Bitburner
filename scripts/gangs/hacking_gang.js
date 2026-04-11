@@ -148,7 +148,7 @@ function handleWarfare(ns) {
 
   if (myGang.handleMaxTerritory()) {
     // when territory is 100% -> Don't engage in warfare + Money focus
-    ns.print(`[${fname}] Territory is 100%. Turning off warfare`);
+    ns.print(`[${fname}] Territory is 100%. ${toGreen("Turning off warfare")}`);
     ns.gang.setTerritoryWarfare(false);
     return;
   }
