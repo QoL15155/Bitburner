@@ -338,7 +338,7 @@ function raiseFocusGain(ns) {
     myGang.membersEthical,
   );
   if (worstWorkingMember.hack < bestEthicalMember.hack) {
-    swapMembersTasks(bestEthicalMember, worstWorkingMember);
+    swapMembersTasks(ns, bestEthicalMember, worstWorkingMember);
     return;
   }
 
@@ -493,7 +493,8 @@ function tryUpdateWorkingMemberTask(ns) {
   return true;
 }
 
-function swapMembersTasks(ethicalMember, workingMember) {
+function swapMembersTasks(ns, ethicalMember, workingMember) {
+  const fname = "swapMembersTasks";
   // Log message
   const worker = toGreen(workingMember.name);
   const ethical = toGreen(ethicalMember.name);
