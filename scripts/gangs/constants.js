@@ -50,3 +50,8 @@ export const minEquipmentCostPercent = 0.0001;
 // User asked to buy equipment, but the percentage is higher than max
 export const maxAugmentationsCostPercent = 0.1;
 export const maxEquipmentCostPercent = 0.001;
+
+// Gang Warfare
+// =====================
+// If the gang's minimum clash win chance is under this threshold, disengage in warfare to avoid losses
+export const clashWinChanceThreshold = 0.7;

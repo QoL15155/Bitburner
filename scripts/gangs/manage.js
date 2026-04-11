@@ -16,6 +16,12 @@ import { printError, printLogWarn } from "/utils/print.js";
 
 //#region Focus & Tasks
 
+/**
+ * Enum for gang focus types.
+ *
+ * Hacking : Recruiting -> Money
+ * Combat: Recruiting -> Combat -> Money (when territory is 100%)
+ */
 export const GangFocus = Object.freeze({
   RECRUITING: 0,
   MONEY: 1,

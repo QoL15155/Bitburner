@@ -1,6 +1,6 @@
 import { scriptHackingGang } from "./constants.js";
 import { writeGangEquipment, writeGangTasks } from "./utils.js";
-import { Color, print, printError, toGreen } from "/utils/print.js";
+import { Color, printError, toGreen } from "/utils/print.js";
 
 /**
  * Arranges the environment for gang management, including:
@@ -22,7 +22,7 @@ import { Color, print, printError, toGreen } from "/utils/print.js";
  * @param {boolean} toKill - whether to kill currently running gang management script. Default: false
  * @return {boolean} False when the script was called with errors
  */
-export function startGangManagement(
+function startGangManagement(
   ns,
   toKill = false,
   buyAugmentations = false,
@@ -40,12 +40,19 @@ export function startGangManagement(
     return true;
   }
 
+  const moneyFocus =
+    (isHackingGang && !overrideFocus) || (!isHackingGang && overrideFocus);
+  if (moneyFocus) {
+    ns.tprint("Turning off territory warfare for hacking gang");
+    ns.gang.setTerritoryWarfare(false);
+  }
+
   const gangManagementScript = scriptHackingGang;
   if (!handleRunningScript(ns, gangManagementScript, toKill)) {
     return true;
   }
 
-  print(ns, `Running ${gangManagementScript}`);
+  ns.tprint(`Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
   const additionalArguments = [];
   if (buyAugmentations) {

@@ -5,7 +5,7 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
-import { printLogError, printLogInfo } from "/utils/print.js";
+import { printLogError, printLogInfo, toGreen } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -24,6 +24,7 @@ export class MyGang {
 
   #focus = GangFocus.RECRUITING;
 
+  // FIXME: why do we need both isRecruiting and focus?
   /** False when maximum number of members has been recruited */
   #isRecruiting = true;
   /** Don't ascend members while waiting to recruit the next member */
@@ -33,6 +34,9 @@ export class MyGang {
    * Saves performance by not trying to optimize task assignments
    */
   isFocusOptimized = false;
+  /** True when first starting or after focus change
+   * Makes sure all members' tasks are optimized for the current focus
+   */
   checkFocus = true;
 
   // Members
@@ -138,27 +142,6 @@ export class MyGang {
         `[${fname}] Waiting to recruit next member before ascending current members.`,
       );
     }
-  }
-
-  #changeFocus(newFocus) {
-    if (newFocus === this.#focus) return;
-    this.#focus = newFocus;
-    this.isFocusOptimized = false;
-    this.checkFocus = true;
-  }
-
-  stopRecruit() {
-    const fname = "MyGang.stopRecruit";
-    if (this.isRecruiting === false) {
-      throw new Error("stopRecruit called but isRecruiting is already false");
-    }
-    this.#isRecruiting = false;
-    this.#changeFocus(this.#gangType);
-
-    printLogInfo(
-      this.#ns,
-      `[${fname}] Maximum number of gang members have been recruited - ${this.memberCount()} members.`,
-    );
   }
 
   get memberNames() {
@@ -452,6 +435,45 @@ export class MyGang {
 
   //#endregion Reassign Members
 
+  //#region Recruitment
+
+  #changeFocus(newFocus) {
+    if (newFocus === this.#focus) return;
+    this.#focus = newFocus;
+    this.isFocusOptimized = false;
+    this.checkFocus = true;
+  }
+
+  /** Start recruiting gang members
+   * Called during Combat when a member is killed
+   */
+  startRecruit() {
+    const fname = "MyGang.startRecruit";
+    if (this.isRecruiting === true) {
+      throw new Error("startRecruit called but isRecruiting is already true");
+    }
+    this.#isRecruiting = true;
+    this.#changeFocus(GangFocus.RECRUITING);
+
+    this.#ns.print(`[${fname}] Recruiting new gang members`);
+  }
+
+  stopRecruit() {
+    const fname = "MyGang.stopRecruit";
+    if (this.isRecruiting === false) {
+      throw new Error("stopRecruit called but isRecruiting is already false");
+    }
+    this.#isRecruiting = false;
+    this.#changeFocus(this.#gangType);
+
+    printLogInfo(
+      this.#ns,
+      `[${fname}] Maximum number of gang members have been recruited - ${this.memberCount()} members.`,
+    );
+  }
+
+  //#endregion Recruitment
+
   //#region Equipment
 
   /** @param {GangMemberInfo} member */
@@ -515,4 +537,30 @@ export class MyGang {
   }
 
   //#endregion Equipment
+
+  //#region Warfare
+
+  /** Check if the gang controls 100% territory
+   * @returns true if gang controls 100% territory and false otherwise.
+   * If true, also changes focus to Money.
+   */
+  handleMaxTerritory() {
+    const fname = "MyGang.handleMaxTerritory";
+    if (this.focus !== GangFocus.COMBAT) {
+      throw new Error(
+        "handleMaxTerritory should only be called for Combat gangs.",
+      );
+    }
+
+    const gangInformation = this.#ns.gang.getGangInformation();
+    if (gangInformation.territory !== 1) return false;
+
+    this.#ns.print(
+      `[${fname}] ${toGreen("Gang controls 100% territory")}! Switching to Money focus.`,
+    );
+    this.#changeFocus(GangFocus.MONEY);
+    return true;
+  }
+
+  //#endregion
 }

@@ -1,4 +1,5 @@
 import {
+  clashWinChanceThreshold,
   maxAugmentationsCostPercent,
   maxEquipmentCostPercent,
   minAugmentationsCostPercent,
@@ -34,6 +35,8 @@ import {
   printLogInfo,
   printLogWarn,
   printWarn,
+  toGreen,
+  toRed,
 } from "/utils/print.js";
 
 // Tasks
@@ -62,6 +65,98 @@ let equipmentByType = null;
 
 /** @type {MyGang} */
 let myGang = null;
+
+//#region Warfare
+
+function getClashWinChangeMin(ns, gangInformation) {
+  const fname = "getClashMinChance";
+  const myPower = gangInformation.power;
+  const otherGangs = ns.gang.getOtherGangInformation();
+
+  let minClashChance = -1;
+  for (const [gangName, gangInfo] of Object.entries(otherGangs)) {
+    if (gangName === gangInformation.faction) {
+      continue;
+    }
+    const clashChance = myPower / (myPower + gangInfo.power);
+    if (clashChance < minClashChance || minClashChance === -1) {
+      minClashChance = clashChance;
+    }
+  }
+  return minClashChance;
+}
+
+/** Turns on/off territory warfare according to clash win chance*/
+function handleClashWinChance(ns) {
+  const fname = "handleClashWinChance";
+
+  const gangInformation = ns.gang.getGangInformation();
+  const winChance = getClashWinChangeMin(ns, gangInformation);
+
+  const msgMinClash = `min clash win chance: ${ns.formatPercent(winChance)}`;
+  if (winChance < clashWinChanceThreshold) {
+    // Do not engage in warfare
+    if (!gangInformation.territoryWarfareEngaged) {
+      return;
+    }
+
+    ns.print(
+      `[${fname}] ${toRed("Disengaging in warfare")} to avoid losses (${msgMinClash}).`,
+    );
+    ns.gang.setTerritoryWarfare(false);
+  } else {
+    // Engage in warfare
+    if (!gangInformation.territoryWarfareEngaged) {
+      ns.print(
+        `[${fname}] ${toGreen("Engaging in warfare")} (${msgMinClash}).`,
+      );
+      ns.gang.setTerritoryWarfare(true);
+    }
+  }
+}
+
+/** Checks if members were killed. In which case, change focus to recruiting */
+function areMembersKilled(ns) {
+  const fname = "areMembersKilled";
+
+  const gangMemberNames = ns.gang.getMemberNames();
+  if (gangMemberNames.length === myGang.memberCount()) {
+    return false;
+  }
+
+  // We lost member(s) in warfare.
+  const lostMembers = myGang.memberNames.filter(
+    (name) => !gangMemberNames.includes(name),
+  );
+  ns.printf(`[${fname}] ${toRed("Lost members")}: ${lostMembers.join(", ")}`);
+
+  return true;
+}
+
+function handleWarfare(ns) {
+  const fname = "handleWarfare";
+
+  // if members were killed -> change focus to Recruiting
+  if (areMembersKilled(ns)) {
+    ns.tprint(
+      `[${fname}] Changing focus to ${toGreen("Recruiting")} and ${toRed("stopping territory warfare")} to recover`,
+    );
+    myGang.startRecruit();
+    ns.gang.setTerritoryWarfare(false);
+    return;
+  }
+
+  if (myGang.handleMaxTerritory()) {
+    // when territory is 100% -> Don't engage in warfare + Money focus
+    ns.print(`[${fname}] Territory is 100%. Turning off warfare`);
+    ns.gang.setTerritoryWarfare(false);
+    return;
+  }
+
+  handleClashWinChance(ns);
+}
+
+//#endregion Warfare
 
 //#region Wanted Level
 
@@ -534,12 +629,17 @@ function getMemberBestTaskForWantedLevel(memberTask) {
 //#region Manage
 
 async function manageGang(ns) {
+  const fname = "manageGang";
   // Always check the focus at the first run
   myGang.checkFocus = true;
 
   while (true) {
     myGang.shouldWaitAscend = false;
     myGang.sanityCheckMembers();
+
+    if (myGang.focus === GangFocus.COMBAT) {
+      handleWarfare(ns);
+    }
 
     if (myGang.isRecruiting) {
       recruitGangMembers(ns, myGang);
@@ -549,16 +649,13 @@ async function manageGang(ns) {
     myGang.ascendMembers();
 
     if (myGang.checkFocus) {
-      // Happens on either when first starting or on focus change
+      // Happens on either when first starting or after focus change
       handleMembersTaskFocus(ns);
       myGang.checkFocus = false;
     }
 
-    if (
-      myGang.focus === GangFocus.MONEY ||
-      myGang.focus === GangFocus.RECRUITING
-    ) {
-      // TODO: I think only money + respect are influenced by wanted level. make sure!
+    if (myGang.focus !== GangFocus.COMBAT) {
+      // Only money & respect are influenced by wanted wanted level.
       // Update members tasks according to wanted level
       handleWantedLevel(ns);
     }
@@ -771,6 +868,7 @@ export async function main(ns) {
   }
 
   ns.disableLog("gang.setMemberTask");
+  ns.disableLog("gang.setTerritoryWarfare");
 
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
