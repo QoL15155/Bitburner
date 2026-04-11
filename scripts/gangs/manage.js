@@ -1,11 +1,11 @@
 import {
   recruitmentMaxWaitTimeSeconds,
-  wantedGainSafeThreshold,
-  wantedPenaltyMax,
+  wantedGainRaiseMax,
+  wantedPenaltyRaiseThreshold,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
 import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
-import { printError, printLogWarn } from "/utils/print.js";
+import { printError } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -177,88 +177,25 @@ export function shouldAscendMember(ns, memberName) {
 
 //#region Wanted Level
 
-export const WantedLevelStatus = {
-  ShouldLower: "Should Lower",
-  Safe: "Safe",
-  CanBeRaised: "Can be Raised",
-};
-
 /**
  * @param {NS} ns
  * @param {GangGenInfo} gangInformation
  * @returns {bool} true if the gang should focus on lowering wanted level, false otherwise
  */
-function shouldLowerWantedLevel(ns, gangInformation) {
-  const fname = "shouldLowerWantedLevel";
-
+export function shouldLowerWantedLevel(gangInformation) {
   if (gangInformation.wantedLevelGainRate < 0) {
     // Wanted level is decreasing
     return false;
   }
 
-  if (gangInformation.wantedPenalty < wantedPenaltyMax) {
-    const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
-    printLogWarn(
-      ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, Wanted Gain Rate: ${wantedGainRate}.`,
-    );
-    return true;
-  }
-
-  /*
-  if (gangInformation.wantedLevel > wantedLevelMax) {
-    return true;
-  }
-  */
-  return false;
+  return gangInformation.wantedPenalty < wantedPenaltySafeThreshold;
 }
 
-/** Counter for safe status messages to avoid spamming
- * @type {number}
- */
-let safeCounter = 0;
-
-/**
- * @param {NS} ns
- * @param {GangGenInfo} gangInformation
- * @returns {WantedLevelStatus} the wanted level status of the gang: lower/safe/raise
- */
-export function getWantedLevelStatus(ns, gangInformation) {
-  const fname = "getWantedLevelStatus";
-  const wantedPenalty = gangInformation.wantedPenalty;
-
-  // Safe
-  if (
-    gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
-    (wantedPenalty > wantedPenaltyMax &&
-      wantedPenalty < wantedPenaltySafeThreshold)
-  ) {
-    displaySafeStatus();
-    safeCounter++;
-    return WantedLevelStatus.Safe;
-  }
-
-  safeCounter = 0;
-
-  if (shouldLowerWantedLevel(ns, gangInformation)) {
-    return WantedLevelStatus.ShouldLower;
-  }
-
-  // Wanted level gain rate it low
-  return WantedLevelStatus.CanBeRaised;
-
-  function displaySafeStatus() {
-    if (safeCounter % 10 !== 0) return;
-    safeCounter = 0;
-
-    const gainRate = formatGainRate(gangInformation.wantedLevelGainRate);
-    const penalty = ns.formatNumber(wantedPenalty);
-
-    let message = `Playing it safe.`;
-    message += ` Wanted level gain rate: ${gainRate}.`;
-    message += ` Wanted penalty: ${penalty}.`;
-    ns.printf(`[${fname}] ${message}`);
-  }
+export function shouldRaiseWantedLevel(gangInformation) {
+  return (
+    gangInformation.wantedLevelGainRate < wantedGainRaiseMax &&
+    gangInformation.wantedPenalty >= wantedPenaltyRaiseThreshold
+  );
 }
 
 //#endregion Wanted Level

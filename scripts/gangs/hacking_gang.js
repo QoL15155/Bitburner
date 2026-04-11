@@ -19,14 +19,14 @@ import {
 import {
   EthicalTasks,
   GangFocus,
-  getWantedLevelStatus,
   handleRecruitmentStatus,
   isEthicalTask,
   isTrainingTask,
   powerTaskName,
   recruitGangMembers,
+  shouldLowerWantedLevel,
+  shouldRaiseWantedLevel,
   TrainingTasks,
-  WantedLevelStatus,
 } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
@@ -163,48 +163,55 @@ function handleWarfare(ns) {
 
 //#region Wanted Level
 
+/** Counter for safe status messages to avoid spamming
+ * @type {number}
+ */
+let safeCounter = 0;
+
 /**
  * Handles the wanted level of the gang.
  *
- * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
- * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
- *
- * Prioritizes respect gain if we can recruit more members,
- * otherwise prioritizes lowering wanted level if the gain is too high.
+ * Strategy:
+ * Penalty too high -> Assign members to lower wanted level tasks
+ * Penalty low -> Assign members to higher focus gain tasks even if they have higher wanted level gain
  */
 function handleWantedLevel(ns) {
   const fname = "handleWantedLevel";
-  const focusString = myGang.isRecruiting ? "Respect" : "Money";
-
   const gangInformation = ns.gang.getGangInformation();
 
-  const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
-  const wantedLevelGainRate = formatGainRate(
-    gangInformation.wantedLevelGainRate,
-  );
-
-  if (wantedLevelStatus === WantedLevelStatus.Safe) {
-    return;
-  }
-
-  if (wantedLevelStatus === WantedLevelStatus.ShouldLower) {
-    ns.printf(
-      `[${fname}] Lowering wanted level (Gain rate: ${wantedLevelGainRate}). ${focusString} focus`,
-    );
+  if (shouldLowerWantedLevel(gangInformation)) {
+    safeCounter = 0;
     myGang.isFocusOptimized = false;
+    ns.print(`[${fname}] Lowering. ${getStatusMessage()}`);
     lowerWantedLevel(ns);
     return;
   }
 
-  if (myGang.isFocusOptimized) {
-    // Gang members are already assigned to the best tasks for the current focus.
+  if (shouldRaiseWantedLevel(gangInformation)) {
+    safeCounter = 0;
+    if (myGang.isFocusOptimized) {
+      // Gang members are already assigned to the best tasks for the current focus.
+      return;
+    }
+
+    ns.print(`[${fname}] Raising. ${getStatusMessage()}`);
+    raiseFocusGain(ns);
     return;
   }
 
-  ns.printf(
-    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Raising ${focusString} gain`,
-  );
-  raiseFocusGain(ns);
+  // Safe
+  safeCounter++;
+  if (safeCounter % 10 === 0) {
+    safeCounter = 0;
+    ns.print(`[${fname}] Safe. ${getStatusMessage()}`);
+    displaySafeStatus();
+  }
+
+  function getStatusMessage() {
+    const penalty = ns.formatPercent(1 - gangInformation.wantedPenalty);
+    const gainRate = formatGainRate(gangInformation.wantedLevelGainRate);
+    return `Wanted Level penalty: ${penalty}, gain rate: ${gainRate}. Focus: ${myGang.focus}`;
+  }
 }
 
 /** Lowers the wanted level gain
