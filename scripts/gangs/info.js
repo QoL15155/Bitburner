@@ -32,28 +32,30 @@ function printWarfareInfo(ns) {
 
   // Other gangs
   const otherGangs = ns.gang.getOtherGangInformation();
-  for (const [gangName, gangInfo] of Object.entries(otherGangs)) {
-    if (gangName === gang.faction) {
+  for (const [rivalName, rivalGang] of Object.entries(otherGangs)) {
+    if (rivalName === gang.faction) {
       // Skip my gang
       continue;
     }
 
-    const fmtGangName = `${Color.FgBlue}${gangName}${Color.Reset}`;
-    const percentTerritory = ns.formatPercent(gangInfo.territory);
+    const fmtRivalGangName = `${Color.FgBlue}${rivalName}${Color.Reset}`;
+    const percentTerritory = ns.formatPercent(rivalGang.territory);
     const fmtTerritory =
-      gangInfo.territory > 0 ? toGreen(percentTerritory) : percentTerritory;
+      rivalGang.territory > 0 ? toGreen(percentTerritory) : percentTerritory;
 
-    const percentPower = ns.formatNumber(gangInfo.power);
+    const percentPower = ns.formatNumber(rivalGang.power);
     const fmtPower =
-      gangInfo.power > gang.power ? toGreen(percentPower) : toRed(percentPower);
+      rivalGang.power > gang.power
+        ? toRed(percentPower)
+        : toGreen(percentPower);
 
-    const clashWinChance = gang.power / (gang.power + gangInfo.power);
+    const clashWinChance = gang.power / (gang.power + rivalGang.power);
     const percentChance = ns.formatPercent(clashWinChance);
     const fmtClashWinChance =
       clashWinChance > 0.5 ? toGreen(percentChance) : toRed(percentChance);
 
     ns.tprint(
-      `Gang: ${fmtGangName}, Power: ${fmtPower}, Territory: ${fmtTerritory}, Clash Win Chance: ${fmtClashWinChance}`,
+      `Gang: ${fmtRivalGangName}, Power: ${fmtPower}, Territory: ${fmtTerritory}, Clash Win Chance: ${fmtClashWinChance}`,
     );
   }
 }
