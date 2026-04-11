@@ -1,5 +1,5 @@
-import { printError, printInfo, print } from "/utils/print.js";
 import { memberNamePrefix } from "./constants.js";
+import { printError } from "/utils/print.js";
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -11,7 +11,7 @@ export async function main(ns) {
     ns.tprint(`Usage: run ${ns.getScriptName()}`);
     ns.tprint("");
     ns.tprint("Gang Member Rename Script");
-    ns.tprint("=====================");
+    ns.tprint("============================");
     ns.tprint("");
     ns.tprint(
       `Renames all gang members to have the prefix '${memberNamePrefix}'.`,
@@ -20,13 +20,21 @@ export async function main(ns) {
     return;
   }
 
+  if (!ns.gang.inGang()) {
+    ns.tprint("ERROR: You are not in a gang.");
+    return;
+  }
+
   const gangMembers = ns.gang.getMemberNames();
-  ns.printf(
+  ns.tprint(
     `Current gang members (${gangMembers.length}) : ${gangMembers.join(", ")}`,
   );
   for (let idx = 0; idx < gangMembers.length; idx++) {
     const memberName = gangMembers[idx];
-    const newMemberName = `${memberNamePrefix}${idx}`;
+    const newMemberName = `${memberNamePrefix} #${idx}`;
+    if (memberName === newMemberName) {
+      continue;
+    }
     let result = ns.gang.renameMember(memberName, newMemberName);
     if (!result) {
       printError(
