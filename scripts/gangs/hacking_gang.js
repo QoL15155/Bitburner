@@ -656,7 +656,7 @@ async function manageGang(ns) {
       handleWarfare(ns);
     }
 
-    if (myGang.isRecruiting) {
+    if (myGang.focus === GangFocus.RECRUITING) {
       recruitGangMembers(ns, myGang);
       handleRecruitmentStatus(ns, myGang);
     }

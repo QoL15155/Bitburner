@@ -31,9 +31,6 @@ export class MyGang {
 
   #focus = GangFocus.RECRUITING;
 
-  // FIXME: why do we need both isRecruiting and focus?
-  /** False when maximum number of members has been recruited */
-  #isRecruiting = true;
   // Number of times a killing was detected. Used for member naming.
   #killedTimes = 0;
   /** Don't ascend members while waiting to recruit the next member */
@@ -132,10 +129,6 @@ export class MyGang {
     return this.#defaultEthicalTask;
   }
 
-  get isRecruiting() {
-    return this.#isRecruiting;
-  }
-
   get shouldWaitAscend() {
     return this.#shouldWaitAscend;
   }
@@ -207,7 +200,7 @@ export class MyGang {
 
   toString() {
     let message = `Gang Status: `;
-    message += `Recruiting? ${this.isRecruiting}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
+    message += `Type: ${this.type}, Focus: ${this.focus}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
     message += `Buy Augmentations? ${this.#buyAugmentations}, Buy Equipment? ${this.#buyEquipment}\n`;
     message += this.#membersString();
     return message;
@@ -456,11 +449,10 @@ export class MyGang {
    */
   startRecruit() {
     const fname = "MyGang.startRecruit";
-    if (this.isRecruiting === true) {
-      throw new Error("startRecruit called but isRecruiting is already true");
+    if (this.focus === GangFocus.RECRUITING) {
+      throw new Error("startRecruit called when already recruiting");
     }
 
-    this.#isRecruiting = true;
     this.#changeFocus(GangFocus.RECRUITING);
 
     this.#ns.print(
@@ -515,10 +507,11 @@ export class MyGang {
 
   stopRecruit() {
     const fname = "MyGang.stopRecruit";
-    if (this.isRecruiting === false) {
-      throw new Error("stopRecruit called but isRecruiting is already false");
+    if (this.focus !== GangFocus.RECRUITING) {
+      throw new Error(
+        `${fname} called when not recruiting. Focus is ${this.focus}`,
+      );
     }
-    this.#isRecruiting = false;
     this.#changeFocus(this.#gangType);
 
     const msgMembers = `${Color.FgMagenta}Recruited maximum${Color.Reset} number of gang members - ${Color.FgMagenta}${this.memberCount()} members${Color.Reset}.`;
