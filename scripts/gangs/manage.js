@@ -23,9 +23,9 @@ import { printError, printLogWarn } from "/utils/print.js";
  * Combat: Recruiting -> Combat -> Money (when territory is 100%)
  */
 export const GangFocus = Object.freeze({
-  RECRUITING: 0,
-  MONEY: 1,
-  COMBAT: 2,
+  RECRUITING: "Recruiting",
+  MONEY: "Money",
+  COMBAT: "Combat",
 });
 
 // TODO:

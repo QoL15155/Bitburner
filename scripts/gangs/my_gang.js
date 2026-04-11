@@ -5,7 +5,7 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
-import { printLogError, printLogInfo, toGreen } from "/utils/print.js";
+import { Color, printLogError, printLogInfo } from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -455,7 +455,9 @@ export class MyGang {
     this.#isRecruiting = true;
     this.#changeFocus(GangFocus.RECRUITING);
 
-    this.#ns.print(`[${fname}] Recruiting new gang members`);
+    this.#ns.print(
+      `[${fname}] ${Color.FgMagenta}Recruiting new gang members${Color.Reset}`,
+    );
   }
 
   stopRecruit() {
@@ -466,10 +468,9 @@ export class MyGang {
     this.#isRecruiting = false;
     this.#changeFocus(this.#gangType);
 
-    printLogInfo(
-      this.#ns,
-      `[${fname}] Maximum number of gang members have been recruited - ${this.memberCount()} members.`,
-    );
+    const msgMembers = `${Color.FgMagenta}Recruited maximum${Color.Reset} number of gang members - ${Color.FgMagenta}${this.memberCount()} members${Color.Reset}.`;
+    const msgFocus = `Set focus to ${Color.FgMagenta}${this.focus}${Color.Reset}.`;
+    this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
   }
 
   //#endregion Recruitment
@@ -555,10 +556,12 @@ export class MyGang {
     const gangInformation = this.#ns.gang.getGangInformation();
     if (gangInformation.territory !== 1) return false;
 
-    this.#ns.print(
-      `[${fname}] ${toGreen("Gang controls 100% territory")}! Switching to Money focus.`,
-    );
     this.#changeFocus(GangFocus.MONEY);
+
+    const msgFocus = `Switching to ${Color.FgMagenta}${this.focus}${Color.Reset} focus.`;
+    this.#ns.print(
+      `[${fname}] ${Color.FgMagenta}Gang controls 100% territory${Color.Reset}! ${msgFocus}`,
+    );
     return true;
   }
 
