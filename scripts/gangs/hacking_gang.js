@@ -68,8 +68,8 @@ let myGang = null;
 
 //#region Warfare
 
-function getClashWinChangeMin(ns, gangInformation) {
-  const fname = "getClashMinChance";
+function getClashMinWinChance(ns, gangInformation) {
+  const fname = "getClashMinWinChance";
   const myPower = gangInformation.power;
   const otherGangs = ns.gang.getOtherGangInformation();
 
@@ -91,7 +91,7 @@ function handleClashWinChance(ns) {
   const fname = "handleClashWinChance";
 
   const gangInformation = ns.gang.getGangInformation();
-  const winChance = getClashWinChangeMin(ns, gangInformation);
+  const winChance = getClashMinWinChance(ns, gangInformation);
 
   const msgMinClash = `min clash win chance: ${ns.formatPercent(winChance)}`;
   if (winChance < clashWinChanceThreshold) {
