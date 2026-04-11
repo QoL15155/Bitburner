@@ -17,6 +17,7 @@ import {
   readGangTasks,
 } from "./utils.js";
 import {
+  canRaiseWantedLevel,
   EthicalTasks,
   GangFocus,
   handleRecruitmentStatus,
@@ -25,14 +26,12 @@ import {
   powerTaskName,
   recruitGangMembers,
   shouldLowerWantedLevel,
-  shouldRaiseWantedLevel,
   TrainingTasks,
 } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
   printError,
   printInfo,
-  printLogInfo,
   printLogWarn,
   printWarn,
   toGreen,
@@ -69,7 +68,6 @@ let myGang = null;
 
 /** Calculates the minimum chance for the gang to win in a clash */
 function getClashMinWinChance(ns, gangInformation) {
-  const fname = "getClashMinWinChance";
   const myPower = gangInformation.power;
   const otherGangs = ns.gang.getOtherGangInformation();
 
@@ -124,8 +122,6 @@ function handleClashWinChance(ns) {
 
 /** Checks if members were killed. In which case, change focus to recruiting */
 function getKilledMembers(ns) {
-  const fname = "getKilledMembers";
-
   const gangMemberNames = ns.gang.getMemberNames();
   if (gangMemberNames.length === myGang.memberCount()) {
     return [];
@@ -187,7 +183,7 @@ function handleWantedLevel(ns) {
     return;
   }
 
-  if (shouldRaiseWantedLevel(gangInformation)) {
+  if (canRaiseWantedLevel(gangInformation)) {
     safeCounter = 0;
     if (myGang.isFocusOptimized) {
       // Gang members are already assigned to the best tasks for the current focus.
@@ -204,7 +200,6 @@ function handleWantedLevel(ns) {
   if (safeCounter % 10 === 0) {
     safeCounter = 0;
     ns.print(`[${fname}] Safe. ${getStatusMessage()}`);
-    displaySafeStatus();
   }
 
   function getStatusMessage() {
@@ -326,10 +321,9 @@ function raiseFocusGain(ns) {
 
   if (!myGang.isMembersEthical) {
     myGang.isFocusOptimized = true;
-    printLogInfo(
-      ns,
-      `[${fname}] All members are working on the best focus gaining task`,
-    );
+
+    const message = `All members are working on the best focus gaining task.`;
+    ns.print(`[${fname}] ${toGreen(message)}`);
     return;
   }
 
@@ -345,10 +339,6 @@ function raiseFocusGain(ns) {
   );
   if (worstWorkingMember.hack < bestEthicalMember.hack) {
     swapMembersTasks(bestEthicalMember, worstWorkingMember);
-    printLogInfo(
-      ns,
-      `[${fname}] Swapped member ${worstWorkingMember.name} with ${bestEthicalMember.name} tasks.`,
-    );
     return;
   }
 
@@ -504,8 +494,15 @@ function tryUpdateWorkingMemberTask(ns) {
 }
 
 function swapMembersTasks(ethicalMember, workingMember) {
-  const workingTask = workingMember.task;
+  // Log message
+  const worker = toGreen(workingMember.name);
+  const ethical = toGreen(ethicalMember.name);
+  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember.hack)}`;
+  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember.hack)}`;
+  const message = `Swapping ${worker} with ${ethical} to increase ${toGreen(myGang.focus)} gain.`;
+  ns.print(`[${fname}] ${message}\n\t${messageWorking}\n\t${messageEthical}`);
 
+  const workingTask = workingMember.task;
   myGang.assignWorkingMemberToEthical(workingMember);
   myGang.assignEthicalMemberToWork(ethicalMember, workingTask);
 }
@@ -648,7 +645,6 @@ function getMemberBestTaskForWantedLevel(memberTask) {
 //#region Manage
 
 async function manageGang(ns) {
-  const fname = "manageGang";
   // Always check the focus at the first run
   myGang.checkFocus = true;
 
@@ -674,7 +670,7 @@ async function manageGang(ns) {
     }
 
     if (myGang.focus !== GangFocus.COMBAT) {
-      // Only money & respect are influenced by wanted wanted level.
+      // Only money & respect are influenced by wanted level.
       // Update members tasks according to wanted level
       handleWantedLevel(ns);
     }

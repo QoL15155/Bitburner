@@ -178,9 +178,8 @@ export function shouldAscendMember(ns, memberName) {
 //#region Wanted Level
 
 /**
- * @param {NS} ns
  * @param {GangGenInfo} gangInformation
- * @returns {bool} true if the gang should focus on lowering wanted level, false otherwise
+ * @returns {bool} true if the gang should lower its wanted level, false otherwise
  */
 export function shouldLowerWantedLevel(gangInformation) {
   if (gangInformation.wantedLevelGainRate < 0) {
@@ -191,7 +190,14 @@ export function shouldLowerWantedLevel(gangInformation) {
   return gangInformation.wantedPenalty < wantedPenaltySafeThreshold;
 }
 
-export function shouldRaiseWantedLevel(gangInformation) {
+/**
+ * Checks if the gang can choose a task with a better focus gain even if it means raising the
+ * wanted level.
+ *
+ * @param {GangGenInfo} gangInformation
+ * @returns {bool} true if the gang can raise its wanted level, false otherwise
+ */
+export function canRaiseWantedLevel(gangInformation) {
   return (
     gangInformation.wantedLevelGainRate < wantedGainRaiseMax &&
     gangInformation.wantedPenalty >= wantedPenaltyRaiseThreshold
