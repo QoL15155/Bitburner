@@ -35,8 +35,8 @@ function startGangManagement(
   writeGangTasks(ns, isHackingGang);
   writeGangEquipment(ns);
 
-  // Override gang type if asked by the user.
-  isHackingGang ^= overrideFocus;
+  // Toggle gang type if user asked to override
+  isHackingGang = overrideFocus ? !isHackingGang : isHackingGang;
   if (isHackingGang) {
     ns.tprint("Turning off territory warfare for hacking gang");
     ns.gang.setTerritoryWarfare(false);

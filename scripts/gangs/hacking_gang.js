@@ -834,8 +834,8 @@ export async function main(ns) {
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
-  // XOR to determine gang type based on current gang and override argument
-  isHackingGang ^= args["override-focus"];
+  // Toggle gang type when the override flag is set
+  isHackingGang = args["override-focus"] ? !isHackingGang : isHackingGang;
   const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
 
   initializeGang(
