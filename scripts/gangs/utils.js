@@ -52,15 +52,17 @@ export function writeGangTasks(ns, isHackingGang = true) {
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang : Hacking / Combat gang
+ * @returns {GangTaskStats[]} Array of gang task stats objects.
+ *   Null if file doesn't exist or is empty.
  */
-export function readGangTasks(ns, isHackingGang = true) {
+export function readGangTasks(ns, isHackingGang) {
   const fname = "readGangTasks";
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
 
   if (!checkFileExists(ns, fname, "Tasks", filename)) {
-    return [];
+    return null;
   }
 
   const tasksJson = ns.read(filename);

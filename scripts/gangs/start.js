@@ -31,18 +31,13 @@ function startGangManagement(
 ) {
   // Write tasks info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
-  const isHackingGang = gangInformation.isHacking;
+  let isHackingGang = gangInformation.isHacking;
   writeGangTasks(ns, isHackingGang);
   writeGangEquipment(ns);
 
-  if (!isHackingGang) {
-    ns.tprint("ERROR Combat gang is not implemented yet!");
-    return true;
-  }
-
-  const moneyFocus =
-    (isHackingGang && !overrideFocus) || (!isHackingGang && overrideFocus);
-  if (moneyFocus) {
+  // Override gang type if asked by the user.
+  isHackingGang ^= overrideFocus;
+  if (isHackingGang) {
     ns.tprint("Turning off territory warfare for hacking gang");
     ns.gang.setTerritoryWarfare(false);
   }

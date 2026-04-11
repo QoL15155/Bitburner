@@ -690,14 +690,14 @@ async function manageGang(ns) {
 
 //#region Initialize
 
-function initializeTasks(ns) {
-  tasksByWantedLevel = readGangTasks(ns, true).sort(
-    (a, b) => a.baseWanted - b.baseWanted,
-  );
-  if (tasksByWantedLevel.length === 0) {
+function initializeTasks(ns, isHackingGang) {
+  tasksByWantedLevel = readGangTasks(ns, isHackingGang);
+  if (!tasksByWantedLevel) {
     printError(ns, "Failed to read gang tasks.");
     return false;
   }
+
+  tasksByWantedLevel.sort((a, b) => a.baseWanted - b.baseWanted);
 
   tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
   tasksWithRespectGain = tasksByWantedLevel.filter(
@@ -713,8 +713,8 @@ function initializeTasks(ns) {
  * Checks if we should buy augmentations.
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyAugmentation(ns, isHackingFocus, buyArgument, playerMoney) {
-  const augmentationCost = isHackingFocus
+function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
+  const augmentationCost = isHackingGang
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
   const augmentationCostPercent = augmentationCost / Math.max(1, playerMoney);
@@ -749,8 +749,8 @@ function shouldBuyAugmentation(ns, isHackingFocus, buyArgument, playerMoney) {
  * Checks if we should buy equipment
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyEquipment(ns, isHackingFocus, buyArgument, playerMoney) {
-  const regularCost = isHackingFocus
+function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
+  const regularCost = isHackingGang
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
   const regularCostPercent = regularCost / Math.max(1, playerMoney);
@@ -759,6 +759,7 @@ function shouldBuyEquipment(ns, isHackingFocus, buyArgument, playerMoney) {
     if (regularCostPercent < maxEquipmentCostPercent) {
       return true;
     }
+
     const formattedCostPercent = ns.formatPercent(regularCostPercent);
     const formattedThreshold = ns.formatPercent(maxEquipmentCostPercent);
     // TODO: prompt the user
@@ -787,14 +788,14 @@ function shouldBuyEquipment(ns, isHackingFocus, buyArgument, playerMoney) {
 /**
  *
  * @param {NS} ns
- * @param {boolean} isHackingFocus - Defaults to true (for hacking gang)
+ * @param {boolean} isHackingGang - Hacking / Combat gang
  * @param {string[]} gangMemberNames - Array of current gang member names.
  * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
  * @param {boolean} buyEquipment - Whether to buy equipment for gang members.
  */
 function initializeGang(
   ns,
-  isHackingFocus,
+  isHackingGang,
   gangMemberNames,
   buyAugmentations,
   buyEquipment,
@@ -804,20 +805,20 @@ function initializeGang(
   // Equipment
   buyAugmentations = shouldBuyAugmentation(
     ns,
-    isHackingFocus,
+    isHackingGang,
     buyAugmentations,
     playerMoney,
   );
   buyEquipment = shouldBuyEquipment(
     ns,
-    isHackingFocus,
+    isHackingGang,
     buyEquipment,
     playerMoney,
   );
 
   myGang = new MyGang(
     ns,
-    isHackingFocus,
+    isHackingGang,
     gangMemberNames,
     buyAugmentations,
     buyEquipment,
@@ -891,7 +892,8 @@ export async function main(ns) {
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
 
-  if (!initializeTasks(ns)) {
+  let isHackingGang = ns.gang.getGangInformation().isHacking;
+  if (!initializeTasks(ns, isHackingGang)) {
     return;
   }
   equipmentByType = readGangEquipment(ns);
@@ -901,11 +903,13 @@ export async function main(ns) {
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
+  // XOR to determine gang type based on current gang and override argument
+  isHackingGang ^= args["override-focus"];
   const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
-  const isHackingFocus = !args["override-focus"];
+
   initializeGang(
     ns,
-    isHackingFocus,
+    isHackingGang,
     gangMemberNames,
     buyAugmentations,
     args["buy-equipment"],
