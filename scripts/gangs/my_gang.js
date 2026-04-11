@@ -6,7 +6,13 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
-import { Color, printLogError, printLogInfo, toGreen } from "/utils/print.js";
+import {
+  Color,
+  printLogError,
+  printLogInfo,
+  toGreen,
+  toRed,
+} from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -453,7 +459,6 @@ export class MyGang {
     if (this.isRecruiting === true) {
       throw new Error("startRecruit called but isRecruiting is already true");
     }
-    this.#killedTimes++;
 
     this.#isRecruiting = true;
     this.#changeFocus(GangFocus.RECRUITING);
@@ -461,6 +466,51 @@ export class MyGang {
     this.#ns.print(
       `[${fname}] ${Color.FgMagenta}Recruiting new gang members${Color.Reset}`,
     );
+  }
+
+  getNewMemberName() {
+    const members = this.memberCount();
+    if (this.#killedTimes === 0) {
+      return `${memberNamePrefix} #${members}`;
+    }
+
+    const killed = String(this.#killedTimes).padStart(2, "0");
+    return `${memberNamePrefix}.K${killed} #${members}`;
+  }
+
+  /** Removes killed members from the gang and start recruiting new members.
+   *
+   * @param {string[]} memberNames - Members that were killed in combat.
+   */
+  handleKilledMembers(memberNames) {
+    const fname = "MyGang.handleKilledMembers";
+    this.#killedTimes++;
+
+    // Log
+    const killedMembers = toRed(memberNames.join(", "));
+    const msgMembers = `Removing killed members (${toRed(memberNames.length)}): ${killedMembers}.`;
+    const msgKilledTimes = `${Color.FgMagenta}Killed times: ${this.#killedTimes}${Color.Reset}.`;
+    this.#ns.print(`[${fname}] ${msgMembers} ${msgKilledTimes}`);
+
+    // Remove killed members
+    for (const memberName of memberNames) {
+      this.#gangMemberNames = this.#gangMemberNames.filter(
+        (name) => name !== memberName,
+      );
+
+      // Remove killed members from task lists
+      this.#membersTraining = this.#membersTraining.filter(
+        (name) => name !== memberName,
+      );
+      this.#membersEthical = this.#membersEthical.filter(
+        (name) => name !== memberName,
+      );
+      this.#membersWorking = this.#membersWorking.filter(
+        (name) => name !== memberName,
+      );
+    }
+
+    this.startRecruit();
   }
 
   stopRecruit() {
@@ -474,16 +524,6 @@ export class MyGang {
     const msgMembers = `${Color.FgMagenta}Recruited maximum${Color.Reset} number of gang members - ${Color.FgMagenta}${this.memberCount()} members${Color.Reset}.`;
     const msgFocus = `Set focus to ${Color.FgMagenta}${this.focus}${Color.Reset}.`;
     this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
-  }
-
-  getNewMemberName() {
-    const members = this.memberCount();
-    if (this.#killedTimes === 0) {
-      return `${memberNamePrefix} #${members}`;
-    }
-
-    const killed = String(this.#killedTimes).padStart(2, "0");
-    return `${memberNamePrefix}.K${killed} #${members}`;
   }
 
   //#endregion Recruitment

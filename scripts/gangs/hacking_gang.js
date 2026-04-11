@@ -67,6 +67,7 @@ let myGang = null;
 
 //#region Warfare
 
+/** Calculates the minimum chance for the gang to win in a clash */
 function getClashMinWinChance(ns, gangInformation) {
   const fname = "getClashMinWinChance";
   const myPower = gangInformation.power;
@@ -82,6 +83,13 @@ function getClashMinWinChance(ns, gangInformation) {
       minClashChance = clashChance;
     }
   }
+
+  if (minClashChance === -1) {
+    throw new Error(
+      "Got -1 for minimum clash win chance, which means there is no other gang.",
+    );
+  }
+
   return minClashChance;
 }
 
@@ -115,32 +123,28 @@ function handleClashWinChance(ns) {
 }
 
 /** Checks if members were killed. In which case, change focus to recruiting */
-function areMembersKilled(ns) {
-  const fname = "areMembersKilled";
+function getKilledMembers(ns) {
+  const fname = "getKilledMembers";
 
   const gangMemberNames = ns.gang.getMemberNames();
   if (gangMemberNames.length === myGang.memberCount()) {
-    return false;
+    return [];
   }
 
-  // We lost member(s) in warfare.
-  const lostMembers = myGang.memberNames.filter(
-    (name) => !gangMemberNames.includes(name),
-  );
-  ns.printf(`[${fname}] ${toRed("Lost members")}: ${lostMembers.join(", ")}`);
-
-  return true;
+  // member(s) killed in warfare.
+  return myGang.memberNames.filter((name) => !gangMemberNames.includes(name));
 }
 
 function handleWarfare(ns) {
   const fname = "handleWarfare";
 
   // if members were killed -> change focus to Recruiting
-  if (areMembersKilled(ns)) {
+  const killedMembers = getKilledMembers(ns);
+  if (killedMembers.length > 0) {
     ns.tprint(
       `[${fname}] Changing focus to ${toGreen("Recruiting")} and ${toRed("stopping territory warfare")} to recover`,
     );
-    myGang.startRecruit();
+    myGang.handleKilledMembers(killedMembers);
     ns.gang.setTerritoryWarfare(false);
     return;
   }
