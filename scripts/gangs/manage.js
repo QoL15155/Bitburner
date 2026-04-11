@@ -1,5 +1,4 @@
 import {
-  memberNamePrefix,
   recruitmentMaxWaitTimeSeconds,
   wantedGainSafeThreshold,
   wantedPenaltyMax,
@@ -88,15 +87,13 @@ function canRecruit(gangInformation) {
  */
 export function recruitGangMembers(ns, myGang) {
   const fname = "recruitGangMembers";
-  let membersCount = myGang.memberCount();
 
   while (canRecruit(ns.gang.getGangInformation())) {
-    membersCount++;
-    const memberName = `${memberNamePrefix}${membersCount}`;
+    const memberName = myGang.getNewMemberName();
     if (!ns.gang.recruitMember(memberName)) {
       printError(
         ns,
-        `[${fname}] Failed to recruit member ${memberName}. Current member count: ${membersCount - 1} `,
+        `[${fname}] Failed to recruit member ${memberName}. Current member count: ${myGang.memberCount()} `,
       );
       return;
     }

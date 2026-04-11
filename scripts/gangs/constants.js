@@ -4,7 +4,7 @@
  * These constants are suitable for both Hacking and Combat gangs.
  */
 
-export const memberNamePrefix = "Keves #";
+export const memberNamePrefix = "Keves";
 
 export const scriptHackingGang = "gangs/hacking_gang.js";
 // TODO: not implemented yet

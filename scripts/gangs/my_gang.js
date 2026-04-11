@@ -1,3 +1,4 @@
+import { memberNamePrefix } from "./constants.js";
 import { readGangEquipment } from "./utils.js";
 import {
   GangFocus,
@@ -27,6 +28,8 @@ export class MyGang {
   // FIXME: why do we need both isRecruiting and focus?
   /** False when maximum number of members has been recruited */
   #isRecruiting = true;
+  // Number of times a killing was detected. Used for member naming.
+  #killedTimes = 0;
   /** Don't ascend members while waiting to recruit the next member */
   #shouldWaitAscend = false;
   /**
@@ -450,6 +453,8 @@ export class MyGang {
     if (this.isRecruiting === true) {
       throw new Error("startRecruit called but isRecruiting is already true");
     }
+    this.#killedTimes++;
+
     this.#isRecruiting = true;
     this.#changeFocus(GangFocus.RECRUITING);
 
@@ -469,6 +474,16 @@ export class MyGang {
     const msgMembers = `${Color.FgMagenta}Recruited maximum${Color.Reset} number of gang members - ${Color.FgMagenta}${this.memberCount()} members${Color.Reset}.`;
     const msgFocus = `Set focus to ${Color.FgMagenta}${this.focus}${Color.Reset}.`;
     this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
+  }
+
+  getNewMemberName() {
+    const members = this.memberCount();
+    if (this.#killedTimes === 0) {
+      return `${memberNamePrefix} #${members}`;
+    }
+
+    const killed = String(this.#killedTimes).padStart(2, "0");
+    return `${memberNamePrefix}.K${killed} #${members}`;
   }
 
   //#endregion Recruitment
