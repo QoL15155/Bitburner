@@ -1,11 +1,9 @@
-import { printError } from "/utils/print.js";
-
-// Task lists
-const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
-const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
-
-// Gang equipment mapping
-const equipmentJsonFilename = "data/gang_equipment.json";
+import {
+  equipmentJsonFilename,
+  tasksJsonCombatFilename,
+  tasksJsonHackingFilename,
+} from "./constants.js";
+import { print, printError, toGreen } from "/utils/print.js";
 
 function checkFileExists(ns, fname, type, filename) {
   if (ns.fileExists(filename)) {
@@ -40,7 +38,7 @@ export function writeGangTasks(ns, isHackingGang = true) {
   });
 
   ns.write(filename, JSON.stringify(tasks, null, 2), "w");
-  ns.printf(
+  ns.print(
     `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks written to ${filename}`,
   );
 }
@@ -67,7 +65,7 @@ export function readGangTasks(ns, isHackingGang) {
 
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
-  ns.printf(
+  ns.print(
     `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks read from ${filename}`,
   );
   return tasks;
@@ -154,7 +152,7 @@ export function writeGangEquipment(ns) {
 
   const equipment = getGangEquipmentInformation(ns);
   ns.write(filename, JSON.stringify(equipment, null, 2), "w");
-  ns.printf(`[${fname}] Equipment object written to ${filename}`);
+  ns.print(`[${fname}] Equipment object written to ${filename}`);
 }
 
 export function readGangEquipment(ns) {
@@ -167,8 +165,44 @@ export function readGangEquipment(ns) {
 
   const equipmentJson = ns.read(filename);
   const equipment = JSON.parse(equipmentJson);
-  ns.printf(`[${fname}] Equipment read from ${filename}`);
+  ns.print(`[${fname}] Equipment read from ${filename}`);
   return equipment;
+}
+
+/**
+ * Checks if we should buy equipment type (Augmentation or Equipment)
+ * The calculations here are a rough estimate of whether the players has enough money.
+ * @param {NS} ns
+ * @param {number} cost - the total cost of the equipment being considered
+ * @param {object} buyLimits - the cost limits for buying this type of equipment
+ * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
+ */
+export function shouldBuy(ns, cost, buyLimits, buyArgument) {
+  const playerMoney = ns.getPlayer().money;
+  const costPercent = cost / Math.max(1, playerMoney);
+  if (buyArgument) {
+    if (costPercent < buyLimits.maxCostPercent) {
+      return true;
+    }
+
+    const formattedCostPercent = ns.formatPercent(costPercent);
+    const formattedThreshold = ns.formatPercent(buyLimits.maxCostPercent);
+    // TODO: prompt the user
+    const message = `${buyLimits.type} cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying ${buyLimits.type} for gang members.`;
+    printError(ns, message);
+    return false;
+  }
+
+  // No buy argument provided, buy if cost is below min threshold
+  if (costPercent < buyLimits.minCostPercent) {
+    const formattedCostPercent = ns.formatPercent(costPercent, 5);
+    const formattedThreshold = ns.formatPercent(buyLimits.minCostPercent);
+    const msgCost = `✅ ${toGreen(buyLimits.type)} cost (${toGreen(formattedCostPercent)}) is below the threshold (${formattedThreshold})`;
+    const msgAction = `${toGreen("Buying " + buyLimits.type + " for gang members")}.`;
+    print(ns, `${msgCost}. ${msgAction}`);
+    return true;
+  }
+  return false;
 }
 
 //#endregion Equipment

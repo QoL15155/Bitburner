@@ -6,11 +6,22 @@
 
 export const memberNamePrefix = "Keves";
 
+//#region File names
+
 export const scriptHackingGang = "gangs/hacking_gang.js";
 // TODO: not implemented yet
 export const scriptCombatGang = "gangs/combat_gang.js";
 
 export const recruitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
+
+// Task lists
+export const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
+export const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
+
+// Gang equipment mapping
+export const equipmentJsonFilename = "data/gang_equipment.json";
+
+//#endregion File names
 
 /**
  * Recommended number of ethical members in a hacking gang until it is formed.
@@ -20,6 +31,7 @@ export const normalEthicalMembers = 2;
 
 const maxAscensionLevel = 25;
 
+//#region Wanted Level
 // Wanted Level
 // =====================
 
@@ -42,6 +54,10 @@ export const wantedPenaltyRaiseThreshold = 0.95;
 // Wanted level gain rate is under this threshold
 export const wantedGainRaiseMax = 1;
 
+//#endregion Wanted Level
+
+//#region Equipment
+
 // Gang Equipment
 // =====================
 // Limits of the percentage of equipment cost out of the player's money.
@@ -49,12 +65,27 @@ export const wantedGainRaiseMax = 1;
 //
 // Buy equipment:
 // User didn't ask to buy equipment, but the percentage is lower than min
-export const minAugmentationsCostPercent = 0.01;
-export const minEquipmentCostPercent = 0.0001;
+const minAugmentationsCostPercent = 0.01;
+const minEquipmentCostPercent = 0.0001;
 // Don't buy equipment:
 // User asked to buy equipment, but the percentage is higher than max
-export const maxAugmentationsCostPercent = 0.1;
-export const maxEquipmentCostPercent = 0.001;
+const maxAugmentationsCostPercent = 0.1;
+const maxEquipmentCostPercent = 0.001;
+
+export const BuyLimits = {
+  augmentations: {
+    type: "Augmentations",
+    minCostPercent: minAugmentationsCostPercent,
+    maxCostPercent: maxAugmentationsCostPercent,
+  },
+  equipment: {
+    type: "Equipment",
+    minCostPercent: minEquipmentCostPercent,
+    maxCostPercent: maxEquipmentCostPercent,
+  },
+};
+
+//#endregion Equipment
 
 // Gang Warfare
 // =====================

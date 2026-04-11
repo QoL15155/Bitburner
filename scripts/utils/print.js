@@ -78,7 +78,7 @@ export function printLogInfo(ns, msg) {
 
 /** Prints message both to stdout and log file */
 export function print(ns, msg) {
-  ns.printf(msg);
+  ns.print(msg);
   ns.tprint(msg);
 }
 

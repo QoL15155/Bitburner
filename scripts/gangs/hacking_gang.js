@@ -1,9 +1,6 @@
 import {
+  BuyLimits,
   clashWinChanceThreshold,
-  maxAugmentationsCostPercent,
-  maxEquipmentCostPercent,
-  minAugmentationsCostPercent,
-  minEquipmentCostPercent,
   normalEthicalMembers,
 } from "./constants.js";
 import { MyGang } from "./my_gang.js";
@@ -15,6 +12,7 @@ import {
   findMemberMinWantedLevel,
   readGangEquipment,
   readGangTasks,
+  shouldBuy,
 } from "./utils.js";
 import {
   canRaiseWantedLevel,
@@ -31,7 +29,6 @@ import {
 import { formatGainRate } from "/utils/formatters.js";
 import {
   printError,
-  printInfo,
   printLogWarn,
   printWarn,
   toGreen,
@@ -713,76 +710,22 @@ function initializeTasks(ns, isHackingGang) {
  * Checks if we should buy augmentations.
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
-  const augmentationCost = isHackingGang
+function shouldBuyAugmentation(ns, isHackingGang, buyArgument) {
+  const cost = isHackingGang
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
-  const augmentationCostPercent = augmentationCost / Math.max(1, playerMoney);
-
-  if (buyArgument) {
-    if (augmentationCostPercent < maxAugmentationsCostPercent) return true;
-    const formattedCostPercent = ns.formatPercent(augmentationCostPercent);
-    const formattedThreshold = ns.formatPercent(maxAugmentationsCostPercent);
-    // TODO: prompt the user
-    printWarn(
-      ns,
-      `Augmentations cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying augmentations for gang members.`,
-    );
-    return false;
-  }
-
-  // User didn't ask for augmentation
-  if (augmentationCostPercent < minAugmentationsCostPercent) {
-    const formattedCostPercent = ns.formatPercent(augmentationCostPercent, 5);
-    const formattedThreshold = ns.formatPercent(minAugmentationsCostPercent);
-    printInfo(
-      ns,
-      `Augmentations cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying augmentations for gang members.`,
-    );
-    return true;
-  }
-
-  return false;
+  return shouldBuy(ns, cost, BuyLimits.augmentations, buyArgument);
 }
 
 /**
  * Checks if we should buy equipment
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
-  const regularCost = isHackingGang
+function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
+  const cost = isHackingGang
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
-  const regularCostPercent = regularCost / Math.max(1, playerMoney);
-
-  if (buyArgument) {
-    if (regularCostPercent < maxEquipmentCostPercent) {
-      return true;
-    }
-
-    const formattedCostPercent = ns.formatPercent(regularCostPercent);
-    const formattedThreshold = ns.formatPercent(maxEquipmentCostPercent);
-    // TODO: prompt the user
-    printWarn(
-      ns,
-      `Equipment cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying equipment for gang members.`,
-    );
-    return false;
-  }
-
-  // User didn't ask for equipment
-  if (regularCostPercent < minEquipmentCostPercent) {
-    const formattedCostPercent = ns.formatPercent(regularCostPercent, 5);
-    const formattedThreshold = ns.formatPercent(minEquipmentCostPercent);
-    // TODO: prompt user?
-    printInfo(
-      ns,
-      `Equipment cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying equipment for gang members.`,
-    );
-    return true;
-  }
-
-  return false;
+  return shouldBuy(ns, cost, BuyLimits.equipment, buyArgument);
 }
 
 /**
@@ -800,21 +743,9 @@ function initializeGang(
   buyAugmentations,
   buyEquipment,
 ) {
-  const playerMoney = ns.getPlayer().money;
-
   // Equipment
-  buyAugmentations = shouldBuyAugmentation(
-    ns,
-    isHackingGang,
-    buyAugmentations,
-    playerMoney,
-  );
-  buyEquipment = shouldBuyEquipment(
-    ns,
-    isHackingGang,
-    buyEquipment,
-    playerMoney,
-  );
+  buyAugmentations = shouldBuyAugmentation(ns, isHackingGang, buyAugmentations);
+  buyEquipment = shouldBuyEquipment(ns, isHackingGang, buyEquipment);
 
   myGang = new MyGang(
     ns,
