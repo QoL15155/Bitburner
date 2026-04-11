@@ -58,7 +58,6 @@ let tasksByWantedLevel = null;
 let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
-let tasksWithCombatGain = null;
 let powerTasks = null;
 
 let equipmentByType = null;
@@ -351,6 +350,16 @@ function raiseFocusGain(ns) {
 
 //#region Tasks
 
+/**
+ * Calculates the combat gain of a task based on its weights.
+ *
+ * NOTE: This is not the same as Power gain.
+ *  calculatePower :
+ *    return (this.hack + this.str + this.def + this.dex + this.agi + this.cha) / 95;
+ *
+ * @param {GangTaskStats} task
+ * @returns {number} The combat gain of the task.
+ */
 function getTaskCombat(task) {
   return task.strWeight + task.defWeight + task.dexWeight + task.agiWeight;
 }
@@ -594,7 +603,6 @@ function handleMembersTaskFocus(ns) {
  */
 function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
-  let bestTaskCombatGain = getTaskCombat(bestTask);
 
   if (myGang.focus === GangFocus.COMBAT) {
     // There is only one power task
@@ -684,9 +692,6 @@ function initializeTasks(ns) {
   );
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
 
-  tasksWithCombatGain = tasksByWantedLevel.filter(
-    (task) => getTaskCombat(task) > 0,
-  );
   powerTasks = [getTaskFromMap(powerTaskName)];
   return true;
 }

@@ -28,11 +28,6 @@ export const GangFocus = Object.freeze({
   COMBAT: "Combat",
 });
 
-// TODO:
-// calculatePower(): number {
-// return (this.hack + this.str + this.def + this.dex + this.agi + this.cha) / 95;
-// }
-
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
 export const powerTaskName = "Territory Warfare";
@@ -200,9 +195,9 @@ function shouldLowerWantedLevel(ns, gangInformation) {
   const fname = "shouldLowerWantedLevel";
 
   if (gangInformation.wantedLevelGainRate < 0) {
+    // Wanted level is decreasing
     return false;
   }
-  // Wanted level is rising
 
   if (gangInformation.wantedPenalty < wantedPenaltyMax) {
     const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
