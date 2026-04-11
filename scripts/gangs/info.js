@@ -49,7 +49,8 @@ function printWarfareInfo(ns) {
         ? toRed(percentPower)
         : toGreen(percentPower);
 
-    const clashWinChance = gang.power / (gang.power + rivalGang.power);
+    const clashWinChance =
+      gang.power === 0 ? 0 : gang.power / (gang.power + rivalGang.power);
     const percentChance = ns.formatPercent(clashWinChance);
     const fmtClashWinChance =
       clashWinChance > 0.5 ? toGreen(percentChance) : toRed(percentChance);
