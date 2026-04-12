@@ -153,6 +153,8 @@ export function shouldAscendMember(ns, member) {
   }
 
   function shouldAscendForStat(statName) {
+    if (statName === "respect") return false;
+
     const multiplier = ascensionResult[statName];
     if (multiplier >= 2) {
       return true;
@@ -160,7 +162,6 @@ export function shouldAscendMember(ns, member) {
     return member[statName] >= 1000 && multiplier >= 1.5;
   }
 
-  delete ascensionResult.respect;
   return Object.keys(ascensionResult).some((key) => {
     return shouldAscendForStat(key);
   });
