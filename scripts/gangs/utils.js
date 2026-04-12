@@ -148,6 +148,8 @@ export function getGangEquipmentInformation(ns) {
  * Assumes player has already created a gang and equipment is available.
  *
  * @param {NS} ns
+ * @returns {GangEquipment} The gang equipment object that was written to the file.
+ *    See getGangEquipmentInformation for details on the structure of this object.
  */
 export function writeGangEquipment(ns) {
   const fname = "writeGangEquipment";
@@ -156,6 +158,8 @@ export function writeGangEquipment(ns) {
   const equipment = getGangEquipmentInformation(ns);
   ns.write(filename, JSON.stringify(equipment, null, 2), "w");
   ns.print(`[${fname}] Equipment object written to ${filename}`);
+
+  return equipment;
 }
 
 export function readGangEquipment(ns) {
