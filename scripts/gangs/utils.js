@@ -178,9 +178,9 @@ export function readGangEquipment(ns) {
  *
  * @param {NS} ns
  * @param {number} cost - the total cost of the equipment being considered
- * @param {object} buyLimits - the cost limits for buying this type of equipment
+ * @param {{maxCostPercent: number, minCostPercent: number, type: string}} buyLimits - the cost limits for buying this type of equipment
  * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
- * @return {boolean} true if we should buy this type of equipment, false otherwise
+ * @returns {Promise<boolean>} true if we should buy this type of equipment, false otherwise
  */
 export async function shouldBuy(ns, cost, buyLimits, buyArgument) {
   const playerMoney = ns.getPlayer().money;
