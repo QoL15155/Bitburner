@@ -457,8 +457,8 @@ function assignEthicalMemberWorkTask(ns) {
   myGang.assignEthicalMemberToWork(member, lowestWantedTask.name);
 }
 
-/** Try to find member another work task with better focus gain
- * @returns {boolean} false - when all working members have the optimal task
+/** Try to find a member another work task with better focus gain
+ * @returns {boolean} false when all working members have the optimal task
  *    for focus gain
  */
 function tryUpdateWorkingMemberTask(ns) {
@@ -472,9 +472,7 @@ function tryUpdateWorkingMemberTask(ns) {
       break;
     case GangFocus.COMBAT:
       // We only have one task that gains power
-      // FIXME: probably redundant
-      sortedTaskList = powerTasks;
-      break;
+      return false;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
