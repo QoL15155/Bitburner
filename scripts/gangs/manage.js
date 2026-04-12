@@ -150,27 +150,20 @@ export function shouldAscendMember(ns, memberName) {
     // Member cannot be ascended
     return false;
   }
+  const member = ns.gang.getMemberInformation(memberName);
 
-  if (Math.floor(ascensionResult.hack) >= 2) {
-    return true;
-  }
-  if (Math.floor(ascensionResult.str) >= 2) {
-    return true;
-  }
-  if (Math.floor(ascensionResult.def) >= 2) {
-    return true;
-  }
-  if (Math.floor(ascensionResult.dex) >= 2) {
-    return true;
-  }
-  if (Math.floor(ascensionResult.agi) >= 2) {
-    return true;
-  }
-  if (Math.floor(ascensionResult.cha) >= 2) {
-    return true;
+  function shouldAscendForStat(statName) {
+    const multiplier = ascensionResult[statName];
+    if (multiplier >= 2) {
+      return true;
+    }
+    return member[statName] >= 1000 && multiplier >= 1.5;
   }
 
-  return false;
+  delete ascensionResult.respect;
+  return Object.keys(ascensionResult).some((key) => {
+    return shouldAscendForStat(key);
+  });
 }
 
 //#endregion Ascend
