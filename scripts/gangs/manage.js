@@ -138,19 +138,19 @@ export function handleRecruitmentStatus(ns, myGang) {
 
 //#region Ascend
 
-/** Determines if a gang member should be ascended based on their potential stat gains.
- * Criteria: Ascend if the member will gain at least 2 levels in any stat after ascending.
+/**
+ * Determines if a gang member should be ascended based on their potential stat gains.
+ *
  * @param {NS} ns - the Netscript environment
- * @param {string} memberName - the name of the gang member
+ * @param {Object} member - the gang member object
  * @returns {boolean} true if the member should be ascended, false otherwise
  */
-export function shouldAscendMember(ns, memberName) {
-  const ascensionResult = ns.gang.getAscensionResult(memberName);
+export function shouldAscendMember(ns, member) {
+  const ascensionResult = ns.gang.getAscensionResult(member.name);
   if (ascensionResult == null) {
     // Member cannot be ascended
     return false;
   }
-  const member = ns.gang.getMemberInformation(memberName);
 
   function shouldAscendForStat(statName) {
     const multiplier = ascensionResult[statName];

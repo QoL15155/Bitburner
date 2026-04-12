@@ -254,7 +254,8 @@ export class MyGang {
     }
 
     for (const memberName of this.#gangMemberNames) {
-      if (!shouldAscendMember(this.#ns, memberName)) {
+      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+      if (!shouldAscendMember(this.#ns, memberInfo)) {
         continue;
       }
 
@@ -263,7 +264,6 @@ export class MyGang {
         throw new Error(`Failed to ascend member '${memberName}'.`);
       }
 
-      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
       this.#buyEquipmentForMember(memberInfo);
     }
   }
