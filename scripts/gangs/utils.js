@@ -85,6 +85,8 @@ export function readGangTasks(ns, isHackingGang) {
 export function getGangEquipmentInformation(ns) {
   let augmentations = { hacking: [], combat: [] };
   let regular = { hacking: [], combat: [] };
+
+  // Add equipment by type
   for (const equipmentName of ns.gang.getEquipmentNames()) {
     const type = ns.gang.getEquipmentType(equipmentName);
     const equipmentStats = ns.gang.getEquipmentStats(equipmentName);
@@ -95,14 +97,15 @@ export function getGangEquipmentInformation(ns) {
       cost: cost,
       stats: equipmentStats,
     };
+
     if (type === "Augmentation") {
-      if (equipmentStats.hack) {
+      if (equipmentStats["hack"]) {
         augmentations.hacking.push(equipmentInfo);
       } else {
         augmentations.combat.push(equipmentInfo);
       }
     } else {
-      if (equipmentStats.hack) {
+      if (equipmentStats["hack"]) {
         regular.hacking.push(equipmentInfo);
       } else {
         regular.combat.push(equipmentInfo);
@@ -111,22 +114,13 @@ export function getGangEquipmentInformation(ns) {
   }
 
   // Costs
-  const augmentationsHackingCost = augmentations.hacking.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const augmentationsCombatCost = augmentations.combat.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const regularHackingCost = regular.hacking.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const regularCombatCost = regular.combat.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
+  function sumCost(equipmentList) {
+    return equipmentList.reduce((sum, item) => sum + item.cost, 0);
+  }
+  const augmentationsHackingCost = sumCost(augmentations.hacking);
+  const augmentationsCombatCost = sumCost(augmentations.combat);
+  const regularHackingCost = sumCost(regular.hacking);
+  const regularCombatCost = sumCost(regular.combat);
 
   const equipment = {
     augmentations: augmentations,
