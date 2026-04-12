@@ -10,14 +10,15 @@ import {
 } from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
+  canRaiseWantedLevel,
   findLeastProductiveMember,
   findMemberMaxHackingLevel,
   findMemberMaxWantedLevel,
   findMemberMinHackingLevel,
   findMemberMinWantedLevel,
   readGangTasks,
+  shouldLowerWantedLevel,
 } from "./utils.js";
-import { canRaiseWantedLevel, shouldLowerWantedLevel } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
   Color,
