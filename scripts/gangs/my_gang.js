@@ -1,3 +1,4 @@
+import { memberNamePrefix } from "./constants.js";
 import { readGangEquipment } from "./utils.js";
 import {
   GangFocus,
@@ -5,7 +6,14 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
-import { printLogError, printLogInfo } from "/utils/print.js";
+import {
+  Color,
+  printLogError,
+  printLogInfo,
+  toGreen,
+  toMagenta,
+  toRed,
+} from "/utils/print.js";
 
 export class MyGang {
   /** @const {NS} */
@@ -24,8 +32,8 @@ export class MyGang {
 
   #focus = GangFocus.RECRUITING;
 
-  /** False when maximum number of members has been recruited */
-  #isRecruiting = true;
+  // Number of times a killing was detected. Used for member naming.
+  #killedTimes = 0;
   /** Don't ascend members while waiting to recruit the next member */
   #shouldWaitAscend = false;
   /**
@@ -33,6 +41,9 @@ export class MyGang {
    * Saves performance by not trying to optimize task assignments
    */
   isFocusOptimized = false;
+  /** True when first starting or after focus change
+   * Makes sure all members' tasks are optimized for the current focus
+   */
   checkFocus = true;
 
   // Members
@@ -68,7 +79,7 @@ export class MyGang {
     this.#ns = ns;
 
     // Focus
-    this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.POWER;
+    this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.COMBAT;
     this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
@@ -119,10 +130,6 @@ export class MyGang {
     return this.#defaultEthicalTask;
   }
 
-  get isRecruiting() {
-    return this.#isRecruiting;
-  }
-
   get shouldWaitAscend() {
     return this.#shouldWaitAscend;
   }
@@ -133,32 +140,10 @@ export class MyGang {
 
     this.#shouldWaitAscend = value;
     if (value === true) {
-      printLogInfo(
-        this.#ns,
-        `[${fname}] Waiting to recruit next member before ascending current members.`,
+      this.#ns.print(
+        `[${fname}] ${toGreen("Waiting to ascend")} members until next recruitment.`,
       );
     }
-  }
-
-  #changeFocus(newFocus) {
-    if (newFocus === this.#focus) return;
-    this.#focus = newFocus;
-    this.isFocusOptimized = false;
-    this.checkFocus = true;
-  }
-
-  stopRecruit() {
-    const fname = "MyGang.stopRecruit";
-    if (this.isRecruiting === false) {
-      throw new Error("stopRecruit called but isRecruiting is already false");
-    }
-    this.#isRecruiting = false;
-    this.#changeFocus(this.#gangType);
-
-    printLogInfo(
-      this.#ns,
-      `[${fname}] Maximum number of gang members have been recruited - ${this.memberCount()} members.`,
-    );
   }
 
   get memberNames() {
@@ -193,19 +178,19 @@ export class MyGang {
   //#region Stringify
 
   #membersString() {
-    let message = `Gang Members (${this.memberCount()}):`;
+    let message = `Gang Members ${toGreen(this.memberCount())}:`;
 
-    message += `\n- Training: ${this.#membersTraining.length} `;
+    message += `\n\t- Training: ${this.#membersTraining.length} `;
     if (this.#membersTraining.length > 0) {
       message += `(${this.#membersTraining.join(", ")})`;
     }
 
-    message += `\n- Ethical: ${this.#membersEthical.length} `;
+    message += `\n\t- Ethical: ${this.#membersEthical.length} `;
     if (this.#membersEthical.length > 0) {
       message += `(${this.#membersEthical.join(", ")})`;
     }
 
-    message += `\n- Working: ${this.#membersWorking.length} `;
+    message += `\n\t- Working: ${this.#membersWorking.length} `;
     if (this.#membersWorking.length > 0) {
       message += `(${this.#membersWorking.join(", ")})`;
     }
@@ -214,9 +199,19 @@ export class MyGang {
   }
 
   toString() {
-    let message = `Gang Status: `;
-    message += `Recruiting? ${this.isRecruiting}, Wait to ascend? ${this.shouldWaitAscend}, Focus optimized? ${this.isFocusOptimized}\n`;
-    message += `Buy Augmentations? ${this.#buyAugmentations}, Buy Equipment? ${this.#buyEquipment}\n`;
+    const header = `${Color.FgCyan}⭐MyGang⭐${Color.Reset}`;
+    const type = this.type === GangFocus.MONEY ? "Hacking" : "Combat";
+
+    let message = `${header} Type: ${toMagenta(type)}, Focus: ${toMagenta(this.focus)}\n`;
+    message += `\tWait to ascend? ${toGreen(this.shouldWaitAscend)}, Focus optimized? ${toGreen(this.isFocusOptimized)}\n`;
+
+    const buyAugmentations = this.#buyAugmentations
+      ? toGreen("✅ Buy Augmentations")
+      : toRed("❌ Don't buy Augmentations");
+    const buyEquipment = this.#buyEquipment
+      ? toGreen("✅ Buy Equipment")
+      : toRed("❌ Don't buy Equipment");
+    message += `\t${buyAugmentations}, ${buyEquipment}\n`;
     message += this.#membersString();
     return message;
   }
@@ -333,8 +328,10 @@ export class MyGang {
     this.#buyAugmentationsForMember(memberInfo);
     this.#buyEquipmentForMember(memberInfo);
 
+    // Log
+    const msgRecruited = `Recruited '${toGreen(memberName)}' and assigned '${this.trainingTask}' task`;
     this.#ns.print(
-      `[${fname}] Recruited '${memberName}' and assigned '${this.trainingTask}'. Total members: ${this.memberCount()}.`,
+      `[${fname}] ${msgRecruited}. Total members: ${this.memberCount()}.`,
     );
   }
 
@@ -431,10 +428,8 @@ export class MyGang {
    * @param {string} toTask
    */
   logMemberReassignTask(fname, memberName, fromTask, toTask) {
-    printLogInfo(
-      this.#ns,
-      `[${fname}] Assigned member '${memberName}' task from '${fromTask}' to '${toTask}'.`,
-    );
+    const msgAssign = `'${toGreen(memberName)}': ${toGreen(fromTask)} -> ${toGreen(toTask)}.`;
+    this.#ns.print(`[${fname}] ${msgAssign}`);
   }
 
   /**
@@ -444,13 +439,97 @@ export class MyGang {
    * @param {GangTaskStats} toTask
    */
   logMemberReassignTaskEx(fname, memberName, fromTask, toTask) {
-    let message = `[${fname}] Assigned member '${memberName}' `;
-    message += `\n\tfrom '${fromTask.name}' (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted}) `;
-    message += `\n\tto '${toTask.name}' (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted}).`;
-    printLogInfo(this.#ns, message);
+    const msgAssign = `'${toGreen(memberName)}': ${toGreen(fromTask.name)} -> ${toGreen(toTask.name)}.`;
+    const msgFromTask = `\n\t${fromTask.name} (money: ${fromTask.baseMoney}, respect: ${fromTask.baseRespect}, wanted: ${fromTask.baseWanted})`;
+    const msgToTask = `\n\t${toTask.name} (money: ${toTask.baseMoney}, respect: ${toTask.baseRespect}, wanted: ${toTask.baseWanted})`;
+    this.#ns.print(`[${fname}] ${msgAssign}${msgFromTask}${msgToTask}`);
   }
 
   //#endregion Reassign Members
+
+  //#region Recruitment
+
+  #changeFocus(newFocus) {
+    if (newFocus === this.#focus) return;
+    this.#focus = newFocus;
+    this.isFocusOptimized = false;
+    this.checkFocus = true;
+  }
+
+  /** Start recruiting gang members
+   * Called during Combat when a member is killed
+   */
+  startRecruit() {
+    const fname = "MyGang.startRecruit";
+    if (this.focus === GangFocus.RECRUITING) {
+      throw new Error("startRecruit called when already recruiting");
+    }
+
+    this.#changeFocus(GangFocus.RECRUITING);
+
+    this.#ns.print(`[${fname}] ${toMagenta("Recruiting new gang members")}`);
+  }
+
+  getNewMemberName() {
+    const members = this.memberCount();
+    if (this.#killedTimes === 0) {
+      return `${memberNamePrefix} #${members}`;
+    }
+
+    const killed = String(this.#killedTimes).padStart(2, "0");
+    return `${memberNamePrefix}.K${killed} #${members}`;
+  }
+
+  /** Removes killed members from the gang and start recruiting new members.
+   *
+   * @param {string[]} memberNames - Members that were killed in combat.
+   */
+  handleKilledMembers(memberNames) {
+    const fname = "MyGang.handleKilledMembers";
+    this.#killedTimes++;
+
+    // Log
+    const killedMembers = toRed(memberNames.join(", "));
+    const msgMembers = `Removing killed members (${toRed(memberNames.length)}): ${killedMembers}.`;
+    const msgKilledTimes = `${toMagenta(`Killed times: ${this.#killedTimes}`)}.`;
+    this.#ns.print(`[${fname}] ${msgMembers} ${msgKilledTimes}`);
+
+    // Remove killed members
+    for (const memberName of memberNames) {
+      this.#gangMemberNames = this.#gangMemberNames.filter(
+        (name) => name !== memberName,
+      );
+
+      // Remove killed members from task lists
+      this.#membersTraining = this.#membersTraining.filter(
+        (name) => name !== memberName,
+      );
+      this.#membersEthical = this.#membersEthical.filter(
+        (name) => name !== memberName,
+      );
+      this.#membersWorking = this.#membersWorking.filter(
+        (name) => name !== memberName,
+      );
+    }
+
+    this.startRecruit();
+  }
+
+  stopRecruit() {
+    const fname = "MyGang.stopRecruit";
+    if (this.focus !== GangFocus.RECRUITING) {
+      throw new Error(
+        `${fname} called when not recruiting. Focus is ${this.focus}`,
+      );
+    }
+    this.#changeFocus(this.#gangType);
+
+    const msgMembers = `${toMagenta("Recruited maximum")} number of gang members - ${toMagenta(this.memberCount() + " members")}.`;
+    const msgFocus = `Set focus to ${toMagenta(this.focus)}.`;
+    this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
+  }
+
+  //#endregion Recruitment
 
   //#region Equipment
 
@@ -515,4 +594,32 @@ export class MyGang {
   }
 
   //#endregion Equipment
+
+  //#region Warfare
+
+  /**
+   * Check if the gang controls 100% territory.
+   * If so, change focus to Money to avoid unnecessary warfare tasks.
+   *
+   * @returns {boolean} true if gang controls 100% territory and false otherwise.
+   */
+  handleMaxTerritory() {
+    const fname = "MyGang.handleMaxTerritory";
+    if (this.focus !== GangFocus.COMBAT) {
+      throw new Error(`${fname} should only be called when focus is Combat.`);
+    }
+
+    const gangInformation = this.#ns.gang.getGangInformation();
+    if (gangInformation.territory !== 1) return false;
+
+    this.#changeFocus(GangFocus.MONEY);
+
+    const msgFocus = `Switching to ${toMagenta(this.focus)} focus.`;
+    this.#ns.print(
+      `[${fname}] ${toMagenta("Gang controls 100% territory")}! ${msgFocus}`,
+    );
+    return true;
+  }
+
+  //#endregion
 }

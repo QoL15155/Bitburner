@@ -41,17 +41,25 @@ export const Color = {
   BgWhite: "\x1b[0;47m",
 };
 
-export function toGreen(msg) {
-  return `${Color.FgGreen}${msg}${Color.Reset}`;
+export function toGreen(text) {
+  return `${Color.FgGreen}${text}${Color.Reset}`;
+}
+
+export function toRed(text) {
+  return `${Color.FgRed}${text}${Color.Reset}`;
+}
+
+export function toMagenta(text) {
+  return `${Color.FgMagenta}${text}${Color.Reset}`;
 }
 
 export function printError(ns, msg) {
-  ns.print(`${Color.FgRed}${msg}${Color.Reset}`);
-  ns.tprint(`${Color.FgRed}${msg}${Color.Reset}`);
+  ns.print(toRed(msg));
+  ns.tprint(toRed(msg));
 }
 
 export function printLogError(ns, msg) {
-  ns.print(`${Color.FgRed}${msg}${Color.Reset}`);
+  ns.print(toRed(msg));
 }
 
 export function printWarn(ns, msg) {
@@ -74,7 +82,7 @@ export function printLogInfo(ns, msg) {
 
 /** Prints message both to stdout and log file */
 export function print(ns, msg) {
-  ns.printf(msg);
+  ns.print(msg);
   ns.tprint(msg);
 }
 

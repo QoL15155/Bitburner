@@ -1,12 +1,11 @@
 import {
-  memberNamePrefix,
   recruitmentMaxWaitTimeSeconds,
-  wantedGainSafeThreshold,
-  wantedPenaltyMax,
+  wantedGainRaiseMax,
+  wantedPenaltyRaiseThreshold,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
 import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
-import { printError, printLogWarn } from "/utils/print.js";
+import { printError } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -16,14 +15,21 @@ import { printError, printLogWarn } from "/utils/print.js";
 
 //#region Focus & Tasks
 
+/**
+ * Enum for gang focus types.
+ *
+ * Hacking : Recruiting -> Money
+ * Combat: Recruiting -> Combat -> Money (when territory is 100%)
+ */
 export const GangFocus = Object.freeze({
-  RECRUITING: 0,
-  MONEY: 1,
-  POWER: 2,
+  RECRUITING: "Recruiting",
+  MONEY: "Money",
+  COMBAT: "Combat",
 });
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
+export const powerTaskName = "Territory Warfare";
 
 export function isEthicalTask(taskName) {
   return allEthicalTasks.includes(taskName);
@@ -35,12 +41,12 @@ export function isTrainingTask(taskName) {
 
 export const TrainingTasks = {
   [GangFocus.MONEY]: ["Train Hacking", "Train Charisma"],
-  [GangFocus.POWER]: ["Train Combat"],
+  [GangFocus.COMBAT]: ["Train Combat"],
 };
 
 export const EthicalTasks = {
   [GangFocus.MONEY]: ["Ethical Hacking"],
-  [GangFocus.POWER]: ["Vigilante Justice"],
+  [GangFocus.COMBAT]: ["Vigilante Justice"],
 };
 
 export function getGangTrainingTask(gangFocus) {
@@ -81,15 +87,13 @@ function canRecruit(gangInformation) {
  */
 export function recruitGangMembers(ns, myGang) {
   const fname = "recruitGangMembers";
-  let membersCount = myGang.memberCount();
 
   while (canRecruit(ns.gang.getGangInformation())) {
-    membersCount++;
-    const memberName = `${memberNamePrefix}${membersCount}`;
+    const memberName = myGang.getNewMemberName();
     if (!ns.gang.recruitMember(memberName)) {
       printError(
         ns,
-        `[${fname}] Failed to recruit member ${memberName}. Current member count: ${membersCount - 1} `,
+        `[${fname}] Failed to recruit member ${memberName}. Current member count: ${myGang.memberCount()} `,
       );
       return;
     }
@@ -173,85 +177,31 @@ export function shouldAscendMember(ns, memberName) {
 
 //#region Wanted Level
 
-export const WantedLevelStatus = {
-  ShouldLower: "Should Lower",
-  Safe: "Safe",
-  CanBeRaise: "Can Be Raise",
-};
-
 /**
- * @param {NS} ns
  * @param {GangGenInfo} gangInformation
- * @returns {bool} true if the gang should focus on lowering wanted level, false otherwise
+ * @returns {bool} true if the gang should lower its wanted level, false otherwise
  */
-function shouldLowerWantedLevel(ns, gangInformation) {
-  const fname = "shouldLowerWantedLevel";
-
-  if (gangInformation.wantedLevelGainRate <= 0) {
+export function shouldLowerWantedLevel(gangInformation) {
+  if (gangInformation.wantedLevelGainRate < 0) {
+    // Wanted level is decreasing
     return false;
   }
 
-  if (gangInformation.wantedPenalty < wantedPenaltyMax) {
-    const wantedGainRate = formatGainRate(gangInformation.wantedLevelGainRate);
-    printLogWarn(
-      ns,
-      `[${fname}] Wanted penalty ${gangInformation.wantedPenalty} has reached the maximum. Wanted level: ${gangInformation.wantedLevel}, Wanted Gain Rate: ${wantedGainRate}.`,
-    );
-    return true;
-  }
-
-  /*
-  if (gangInformation.wantedLevel > wantedLevelMax) {
-    return true;
-  }
-  if (wantedGainRatePerSecond > wantedGainThreshold) {
-    return true;
-  }
-  */
-  return false;
+  return gangInformation.wantedPenalty < wantedPenaltySafeThreshold;
 }
 
-/** Counter for safe status messages to avoid spamming
- * @type {number}
- */
-let safeCounter = 0;
-
 /**
- * @param {NS} ns
+ * Checks if the gang can choose a task with a better focus gain even if it means raising the
+ * wanted level.
+ *
  * @param {GangGenInfo} gangInformation
- * @returns {WantedLevelStatus} the wanted level status of the gang: lower/safe/raise
+ * @returns {bool} true if the gang can raise its wanted level, false otherwise
  */
-export function getWantedLevelStatus(ns, gangInformation) {
-  const fname = "getWantedLevelStatus";
-
-  // Safe
-  if (
-    gangInformation.wantedLevelGainRate > wantedGainSafeThreshold ||
-    gangInformation.wantedPenalty < wantedPenaltySafeThreshold
-  ) {
-    displaySafeStatus();
-    safeCounter++;
-    return WantedLevelStatus.Safe;
-  }
-
-  safeCounter = 0;
-
-  if (shouldLowerWantedLevel(ns, gangInformation)) {
-    return WantedLevelStatus.ShouldLower;
-  }
-
-  // Wanted level gain rate it low
-  return WantedLevelStatus.CanBeRaise;
-
-  function displaySafeStatus() {
-    if (safeCounter % 10 !== 0) return;
-    safeCounter = 0;
-
-    let message = `Playing it safe.`;
-    message += ` Wanted level gain rate: ${formatGainRate(gangInformation.wantedLevelGainRate)}.`;
-    message += ` Wanted penalty: ${gangInformation.wantedPenalty.toFixed(3)}.`;
-    ns.printf(message);
-  }
+export function canRaiseWantedLevel(gangInformation) {
+  return (
+    gangInformation.wantedLevelGainRate < wantedGainRaiseMax &&
+    gangInformation.wantedPenalty >= wantedPenaltyRaiseThreshold
+  );
 }
 
 //#endregion Wanted Level

@@ -1,6 +1,6 @@
 import { getGangEquipmentInformation } from "./utils.js";
 import { formatGainRate } from "/utils/formatters.js";
-import { Color, printInfo, toGreen } from "/utils/print.js";
+import { Color, printInfo, toGreen, toRed } from "/utils/print.js";
 
 function printGangMembers(ns) {
   const gangMembers = ns.gang.getMemberNames();
@@ -17,6 +17,50 @@ function printTasks(ns) {
     ns.tprint(JSON.stringify(task, null, 2));
   }
 }
+
+//#region Warfare
+
+function printWarfareInfo(ns) {
+  ns.tprint(toGreen("Warfare info"));
+
+  // My gang
+  const gang = ns.gang.getGangInformation();
+  const power = `${Color.FgYellow}${ns.formatNumber(gang.power)}${Color.Reset}`;
+  const territory = `${Color.FgYellow}${ns.formatPercent(gang.territory)}${Color.Reset}`;
+  const faction = `${Color.FgMagenta}${gang.faction}${Color.Reset}`;
+  ns.tprint(`Faction ${faction} - Power: ${power}, Territory: ${territory}`);
+
+  // Other gangs
+  const otherGangs = ns.gang.getOtherGangInformation();
+  for (const [rivalName, rivalGang] of Object.entries(otherGangs)) {
+    if (rivalName === gang.faction) {
+      // Skip my gang
+      continue;
+    }
+
+    const fmtRivalGangName = `${Color.FgBlue}${rivalName}${Color.Reset}`;
+    const percentTerritory = ns.formatPercent(rivalGang.territory);
+    const fmtTerritory =
+      rivalGang.territory > 0 ? toGreen(percentTerritory) : percentTerritory;
+
+    const percentPower = ns.formatNumber(rivalGang.power);
+    const fmtPower =
+      rivalGang.power > gang.power
+        ? toRed(percentPower)
+        : toGreen(percentPower);
+
+    const clashWinChance =
+      gang.power === 0 ? 0 : gang.power / (gang.power + rivalGang.power);
+    const percentChance = ns.formatPercent(clashWinChance);
+    const fmtClashWinChance =
+      clashWinChance > 0.5 ? toGreen(percentChance) : toRed(percentChance);
+
+    ns.tprint(
+      `Gang: ${fmtRivalGangName}, Power: ${fmtPower}, Territory: ${fmtTerritory}, Clash Win Chance: ${fmtClashWinChance}`,
+    );
+  }
+}
+//#endregion Warfare
 
 //#region Equipment
 
@@ -139,7 +183,7 @@ function printGangInformation(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--equipment", "--members", "--tasks"];
+  const options = ["--equipment", "--members", "--tasks", "--warfare"];
 
   return [...defaultOptions, ...options];
 }
@@ -152,6 +196,7 @@ export async function main(ns) {
     ["tasks", false],
     ["members", false],
     ["equipment", false],
+    ["warfare", false],
   ]);
 
   if (args.help || args.h) {
@@ -167,6 +212,7 @@ export async function main(ns) {
     ns.tprint("  --equipment    - Print information about gang equipment");
     ns.tprint("  --members      - Print information about gang members");
     ns.tprint("  --tasks        - Print information about gang tasks");
+    ns.tprint("  --warfare      - Print information about gang warfare");
     return;
   }
 
@@ -180,6 +226,10 @@ export async function main(ns) {
 
   if (args.tasks) {
     printTasks(ns);
+  }
+
+  if (args.warfare) {
+    printWarfareInfo(ns);
   }
 
   printGangInformation(ns);

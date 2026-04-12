@@ -1,6 +1,6 @@
 import { scriptHackingGang } from "./constants.js";
 import { writeGangEquipment, writeGangTasks } from "./utils.js";
-import { Color, print, printError, toGreen } from "/utils/print.js";
+import { Color, printError, toGreen } from "/utils/print.js";
 
 /**
  * Arranges the environment for gang management, including:
@@ -18,33 +18,30 @@ import { Color, print, printError, toGreen } from "/utils/print.js";
  * Calls appropriate gang management script.
  * Should only be called after a gang has been formed
  *
- * @param {NS} ns - Netscript API object
- * @param {boolean} toKill - whether to kill currently running gang management script. Default: false
  * @return {boolean} False when the script was called with errors
  */
-export function startGangManagement(
+function startGangManagement(
   ns,
-  toKill = false,
   buyAugmentations = false,
   buyEquipment = false,
+  overrideFocus = false,
 ) {
-  // Write tasks info to a json file for other scripts to use.
+  // Write tasks and equipment info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
-  const isHackingGang = gangInformation.isHacking;
-  writeGangTasks(ns, isHackingGang);
+  let isHackingGang = gangInformation.isHacking;
+  writeGangTasks(ns, isHackingGang); // use gang's actual type (before potential override)
   writeGangEquipment(ns);
 
-  if (!isHackingGang) {
-    ns.tprint("ERROR Combat gang is not implemented yet!");
-    return true;
+  // Toggle gang type if user asked to override
+  isHackingGang = overrideFocus ? !isHackingGang : isHackingGang;
+  if (isHackingGang) {
+    ns.tprint("Turning off territory warfare for hacking gang");
+    ns.gang.setTerritoryWarfare(false);
   }
 
   const gangManagementScript = scriptHackingGang;
-  if (!handleRunningScript(ns, gangManagementScript, toKill)) {
-    return true;
-  }
 
-  print(ns, `Running ${gangManagementScript}`);
+  ns.tprint(`Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
   const additionalArguments = [];
   if (buyAugmentations) {
@@ -52,6 +49,9 @@ export function startGangManagement(
   }
   if (buyEquipment) {
     additionalArguments.push("--buy-equipment");
+  }
+  if (overrideFocus) {
+    additionalArguments.push("--override-focus");
   }
   const pid = ns.run(
     gangManagementScript,
@@ -122,6 +122,9 @@ function printUsage(ns) {
     `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
   );
   ns.tprint(
+    `  ${toGreen("--override-focus")}     Override gang's type and focus (hacking->combat, combat->hacking).`,
+  );
+  ns.tprint(
     `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,
   );
 }
@@ -135,8 +138,9 @@ export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const options = ["-k", "--kill"];
   const equipmentOptions = ["--buy-equipment", "--buy-augmentations"];
+  const focusOptions = ["--override-focus"];
 
-  return [...defaultOptions, ...options, ...equipmentOptions];
+  return [...defaultOptions, ...options, ...equipmentOptions, ...focusOptions];
 }
 
 export async function main(ns) {
@@ -145,12 +149,13 @@ export async function main(ns) {
     ["h", false],
     ["buy-augmentations", false],
     ["buy-equipment", false],
+    ["override-focus", false],
     ["kill", false],
     ["k", false],
   ]);
   if (args.help || args.h) {
     printUsage(ns);
-    return 0;
+    return;
   }
 
   // Check if member is in gang
@@ -158,17 +163,20 @@ export async function main(ns) {
     ns.tprint(
       "ERROR You are not in a gang. Join a gang before running this script.",
     );
-    return 0;
+    return;
   }
 
   const toKill = args.kill || args.k;
+  if (!handleRunningScript(ns, scriptHackingGang, toKill)) {
+    return;
+  }
 
   // Run management script
   const result = startGangManagement(
     ns,
-    toKill,
     args["buy-augmentations"],
     args["buy-equipment"],
+    args["override-focus"],
   );
 
   if (result === false) {

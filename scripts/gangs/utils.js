@@ -1,11 +1,9 @@
-import { printError } from "/utils/print.js";
-
-// Task lists
-const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
-const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
-
-// Gang equipment mapping
-const equipmentJsonFilename = "data/gang_equipment.json";
+import {
+  equipmentJsonFilename,
+  tasksJsonCombatFilename,
+  tasksJsonHackingFilename,
+} from "./constants.js";
+import { print, printError, toGreen, toRed } from "/utils/print.js";
 
 function checkFileExists(ns, fname, type, filename) {
   if (ns.fileExists(filename)) {
@@ -40,9 +38,10 @@ export function writeGangTasks(ns, isHackingGang = true) {
   });
 
   ns.write(filename, JSON.stringify(tasks, null, 2), "w");
-  ns.printf(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks written to ${filename}`,
-  );
+
+  // Log
+  const gangType = isHackingGang ? "Hacking" : "Combat";
+  ns.print(`[${fname}] ${toGreen(gangType)} tasks written to ${filename}`);
 }
 
 /**
@@ -52,22 +51,26 @@ export function writeGangTasks(ns, isHackingGang = true) {
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang : Hacking / Combat gang
+ * @returns {GangTaskStats[]|null} Array of gang task stats objects.
+ *   Null if file doesn't exist.
  */
-export function readGangTasks(ns, isHackingGang = true) {
+export function readGangTasks(ns, isHackingGang) {
   const fname = "readGangTasks";
   const filename = isHackingGang
     ? tasksJsonHackingFilename
     : tasksJsonCombatFilename;
 
   if (!checkFileExists(ns, fname, "Tasks", filename)) {
-    return [];
+    return null;
   }
 
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
-  ns.printf(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks read from ${filename}`,
-  );
+
+  // Log
+  const gangType = isHackingGang ? "Hacking" : "Combat";
+  ns.print(`[${fname}] ${toGreen(gangType)} tasks read from ${filename}`);
+
   return tasks;
 }
 
@@ -152,7 +155,7 @@ export function writeGangEquipment(ns) {
 
   const equipment = getGangEquipmentInformation(ns);
   ns.write(filename, JSON.stringify(equipment, null, 2), "w");
-  ns.printf(`[${fname}] Equipment object written to ${filename}`);
+  ns.print(`[${fname}] Equipment object written to ${filename}`);
 }
 
 export function readGangEquipment(ns) {
@@ -165,8 +168,76 @@ export function readGangEquipment(ns) {
 
   const equipmentJson = ns.read(filename);
   const equipment = JSON.parse(equipmentJson);
-  ns.printf(`[${fname}] Equipment read from ${filename}`);
+  ns.print(`[${fname}] Equipment read from ${filename}`);
   return equipment;
+}
+
+/**
+ * Checks if we should buy equipment type (Augmentation or Equipment)
+ * The calculations here are a rough estimate of whether the player has enough money.
+ *
+ * @param {NS} ns
+ * @param {number} cost - the total cost of the equipment being considered
+ * @param {{maxCostPercent: number, minCostPercent: number, type: string}} buyLimits -
+ *    the cost limits for buying this type of equipment
+ * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
+ * @returns {Promise<boolean>} true if we should buy this type of equipment, false otherwise
+ */
+export async function shouldBuy(ns, cost, buyLimits, buyArgument) {
+  const playerMoney = ns.getPlayer().money;
+  const costPercent = cost / Math.max(1, playerMoney);
+
+  if (buyArgument) {
+    if (costPercent < buyLimits.maxCostPercent) {
+      return true;
+    }
+
+    function toBoldRed(text) {
+      return `\x1b[1;31m${text}\x1b[0m`;
+    }
+    const formattedCostPercent = ns.formatPercent(costPercent, 5);
+    const formattedThreshold = ns.formatPercent(buyLimits.maxCostPercent);
+    const msgCost =
+      toRed("cost (") +
+      toBoldRed(formattedCostPercent) +
+      toRed(") is above the threshold (" + formattedThreshold + ").");
+
+    // Prompt the user
+    // First close tail to make sure prompt is visible
+    ns.ui.closeTail();
+    const response = await ns.prompt(
+      `${buyLimits.type} cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}).\n` +
+        `Do you want to buy ${buyLimits.type} for gang members anyway?`,
+    );
+    ns.ui.openTail();
+
+    if (response) {
+      print(
+        ns,
+        `✅ Buying ${toGreen(buyLimits.type)} for gang members. ${msgCost}`,
+      );
+      return true;
+    } else {
+      const msgAction = `Not buying ${buyLimits.type} for gang members.`;
+      print(
+        ns,
+        `${toRed("❌")} ${toBoldRed(buyLimits.type)} ${msgCost} ${toBoldRed(msgAction)}`,
+      );
+
+      return false;
+    }
+  }
+
+  // No buy argument provided, buy if cost is below min threshold
+  if (costPercent < buyLimits.minCostPercent) {
+    const formattedCostPercent = ns.formatPercent(costPercent, 5);
+    const formattedThreshold = ns.formatPercent(buyLimits.minCostPercent);
+    const msgCost = `✅ ${toGreen(buyLimits.type)} cost (${toGreen(formattedCostPercent)}) is below the threshold (${formattedThreshold})`;
+    const msgAction = `${toGreen("Buying " + buyLimits.type + " for gang members")}.`;
+    print(ns, `${msgCost}. ${msgAction}`);
+    return true;
+  }
+  return false;
 }
 
 //#endregion Equipment

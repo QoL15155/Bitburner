@@ -1,8 +1,6 @@
 import {
-  maxAugmentationsCostPercent,
-  maxEquipmentCostPercent,
-  minAugmentationsCostPercent,
-  minEquipmentCostPercent,
+  BuyLimits,
+  clashWinChanceThreshold,
   normalEthicalMembers,
 } from "./constants.js";
 import { MyGang } from "./my_gang.js";
@@ -14,25 +12,28 @@ import {
   findMemberMinWantedLevel,
   readGangEquipment,
   readGangTasks,
+  shouldBuy,
 } from "./utils.js";
 import {
+  canRaiseWantedLevel,
   EthicalTasks,
   GangFocus,
-  getWantedLevelStatus,
   handleRecruitmentStatus,
   isEthicalTask,
   isTrainingTask,
+  powerTaskName,
   recruitGangMembers,
+  shouldLowerWantedLevel,
   TrainingTasks,
-  WantedLevelStatus,
 } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
+  Color,
   printError,
-  printInfo,
-  printLogInfo,
   printLogWarn,
   printWarn,
+  toGreen,
+  toRed,
 } from "/utils/print.js";
 
 // Tasks
@@ -41,7 +42,6 @@ const unassignedTask = "Unassigned";
 // All charisma tasks are also 'hacking tasks'
 // const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
 // const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
-const territoryTask = "Territory Warfare";
 
 /* Variables */
 
@@ -55,56 +55,161 @@ let tasksByWantedLevel = null;
 let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
+let powerTasks = null;
 
 let equipmentByType = null;
 
 /** @type {MyGang} */
 let myGang = null;
 
+//#region Warfare
+
+/** Calculates the minimum chance for the gang to win in a clash */
+function getClashMinWinChance(ns, gangInformation) {
+  const myPower = gangInformation.power;
+  if (myPower === 0) {
+    return 0;
+  }
+
+  const otherGangs = ns.gang.getOtherGangInformation();
+
+  let minClashChance = -1;
+  for (const [gangName, gangInfo] of Object.entries(otherGangs)) {
+    if (gangName === gangInformation.faction) {
+      continue;
+    }
+
+    const clashChance = myPower / (myPower + gangInfo.power);
+    if (clashChance < minClashChance || minClashChance === -1) {
+      minClashChance = clashChance;
+    }
+  }
+
+  if (minClashChance === -1) {
+    throw new Error(
+      "Got -1 for minimum clash win chance, which means there is no other gang.",
+    );
+  }
+
+  return minClashChance;
+}
+
+/** Turns on/off territory warfare according to clash win chance*/
+function handleClashWinChance(ns) {
+  const fname = "handleClashWinChance";
+
+  const gangInformation = ns.gang.getGangInformation();
+  const winChance = getClashMinWinChance(ns, gangInformation);
+
+  const msgMinClash = `min clash win chance: ${ns.formatPercent(winChance)}`;
+  if (winChance < clashWinChanceThreshold) {
+    // Do not engage in warfare
+    if (!gangInformation.territoryWarfareEngaged) {
+      return;
+    }
+
+    ns.print(
+      `[${fname}] ${toRed("Disengaging in warfare")} to avoid losses (${msgMinClash}).`,
+    );
+    ns.gang.setTerritoryWarfare(false);
+  } else {
+    // Engage in warfare
+    if (!gangInformation.territoryWarfareEngaged) {
+      ns.print(
+        `[${fname}] ${toGreen("Engaging in warfare")} (${msgMinClash}).`,
+      );
+      ns.gang.setTerritoryWarfare(true);
+    }
+  }
+}
+
+/** Checks if members were killed. In which case, change focus to recruiting */
+function getKilledMembers(ns) {
+  const gangMemberNames = ns.gang.getMemberNames();
+  if (gangMemberNames.length === myGang.memberCount()) {
+    return [];
+  }
+
+  // member(s) killed in warfare.
+  return myGang.memberNames.filter((name) => !gangMemberNames.includes(name));
+}
+
+function handleWarfare(ns) {
+  const fname = "handleWarfare";
+
+  // if members were killed -> change focus to Recruiting
+  const killedMembers = getKilledMembers(ns);
+  if (killedMembers.length > 0) {
+    ns.tprint(
+      `[${fname}] Changing focus to ${toGreen("Recruiting")} and ${toRed("stopping territory warfare")} to recover`,
+    );
+    myGang.handleKilledMembers(killedMembers);
+    ns.gang.setTerritoryWarfare(false);
+    return;
+  }
+
+  if (myGang.handleMaxTerritory()) {
+    // when territory is 100% -> Don't engage in warfare + Money focus
+    ns.print(`[${fname}] Territory is 100%. ${toGreen("Turning off warfare")}`);
+    ns.gang.setTerritoryWarfare(false);
+    return;
+  }
+
+  handleClashWinChance(ns);
+}
+
+//#endregion Warfare
+
 //#region Wanted Level
+
+/** Counter for safe status messages to avoid spamming
+ * @type {number}
+ */
+let safeCounter = 0;
 
 /**
  * Handles the wanted level of the gang.
  *
- * When the wanted level gain rate is too high, it assigns members to lower wanted level tasks to reduce it.
- * When the wanted level gain rate is low, it assigns members to higher money or respect gain tasks to increase it.
- *
- * Prioritizes respect gain if we can recruit more members,
- * otherwise prioritizes lowering wanted level if the gain is too high.
+ * Strategy:
+ * Penalty too high -> Assign members to lower wanted level tasks
+ * Penalty low -> Assign members to higher focus gain tasks even if they have higher wanted level gain
  */
 function handleWantedLevel(ns) {
   const fname = "handleWantedLevel";
-  const focusString = myGang.isRecruiting ? "Respect" : "Money";
-
   const gangInformation = ns.gang.getGangInformation();
 
-  const wantedLevelStatus = getWantedLevelStatus(ns, gangInformation);
-  const wantedLevelGainRate = formatGainRate(
-    gangInformation.wantedLevelGainRate,
-  );
-
-  if (wantedLevelStatus === WantedLevelStatus.Safe) {
-    return;
-  }
-
-  if (wantedLevelStatus === WantedLevelStatus.ShouldLower) {
-    ns.printf(
-      `[${fname}] Lowering wanted level (Gain rate: ${wantedLevelGainRate}). ${focusString} focus`,
-    );
+  if (shouldLowerWantedLevel(gangInformation)) {
+    safeCounter = 0;
     myGang.isFocusOptimized = false;
+    ns.print(`[${fname}] Lowering. ${getStatusMessage()}`);
     lowerWantedLevel(ns);
     return;
   }
 
-  if (myGang.isFocusOptimized) {
-    // Gang members are already assigned to the best tasks for the current focus.
+  if (canRaiseWantedLevel(gangInformation)) {
+    safeCounter = 0;
+    if (myGang.isFocusOptimized) {
+      // Gang members are already assigned to the best tasks for the current focus.
+      return;
+    }
+
+    ns.print(`[${fname}] Raising. ${getStatusMessage()}`);
+    raiseFocusGain(ns);
     return;
   }
 
-  ns.printf(
-    `[${fname}] Wanted level gain rate is low (${wantedLevelGainRate}). Raising ${focusString} gain`,
-  );
-  raiseFocusGain(ns);
+  // Safe
+  safeCounter++;
+  if (safeCounter % 10 === 0) {
+    safeCounter = 0;
+    ns.print(`[${fname}] Safe. ${getStatusMessage()}`);
+  }
+
+  function getStatusMessage() {
+    const penalty = ns.formatPercent(1 - gangInformation.wantedPenalty);
+    const gainRate = formatGainRate(gangInformation.wantedLevelGainRate);
+    return `Wanted Level penalty: ${penalty}, gain rate: ${gainRate}. Focus: ${myGang.focus}`;
+  }
 }
 
 /** Lowers the wanted level gain
@@ -159,7 +264,7 @@ function lowerWantedLevel(ns) {
 
   // Working Task -> Working Task with lower wanted level gain
 
-  // Get the best task with lower wanted level gain and higher respect or money gain depending on the focus.
+  // Get the best task with lower wanted level gain and higher focus gain (respect/money/combat/power).
   /** @type {GangTaskStats} */
   let nextTask = null;
   switch (myGang.focus) {
@@ -175,6 +280,14 @@ function lowerWantedLevel(ns) {
         return current.baseMoney > prev.baseMoney ? current : prev;
       });
       break;
+    case GangFocus.COMBAT:
+      nextTask = relevantTasks.reduce((prev, current) => {
+        const prevCombat = getTaskCombat(prev);
+        const currentCombat = getTaskCombat(current);
+        return currentCombat > prevCombat ? current : prev;
+      });
+      break;
+
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
@@ -211,10 +324,9 @@ function raiseFocusGain(ns) {
 
   if (!myGang.isMembersEthical) {
     myGang.isFocusOptimized = true;
-    printLogInfo(
-      ns,
-      `[${fname}] All members are working on the best focus gaining task`,
-    );
+
+    const message = `All members are working on the best focus gaining task.`;
+    ns.print(`[${fname}] ${toGreen(message)}`);
     return;
   }
 
@@ -229,11 +341,7 @@ function raiseFocusGain(ns) {
     myGang.membersEthical,
   );
   if (worstWorkingMember.hack < bestEthicalMember.hack) {
-    swapMembersTasks(bestEthicalMember, worstWorkingMember);
-    printLogInfo(
-      ns,
-      `[${fname}] Swapped member ${worstWorkingMember.name} with ${bestEthicalMember.name} tasks.`,
-    );
+    swapMembersTasks(ns, bestEthicalMember, worstWorkingMember);
     return;
   }
 
@@ -245,6 +353,20 @@ function raiseFocusGain(ns) {
 //#endregion Wanted Level
 
 //#region Tasks
+
+/**
+ * Calculates the combat gain of a task based on its weights.
+ *
+ * NOTE: This is not the same as Power gain.
+ *  calculatePower :
+ *    return (this.hack + this.str + this.def + this.dex + this.agi + this.cha) / 95;
+ *
+ * @param {GangTaskStats} task
+ * @returns {number} The combat gain of the task.
+ */
+function getTaskCombat(task) {
+  return task.strWeight + task.defWeight + task.dexWeight + task.agiWeight;
+}
 
 /** Retrieves task information for a given task name.
  *
@@ -276,6 +398,9 @@ function assignTrainingMemberWorkTask() {
       break;
     case GangFocus.MONEY:
       focusTasks = tasksWithMoneyGain;
+      break;
+    case GangFocus.COMBAT:
+      focusTasks = powerTasks;
       break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
@@ -313,6 +438,9 @@ function assignEthicalMemberWorkTask(ns) {
         (t) => currentTask.baseMoney < t.baseMoney,
       );
       break;
+    case GangFocus.COMBAT:
+      relevantTasks = powerTasks;
+      break;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
@@ -329,8 +457,8 @@ function assignEthicalMemberWorkTask(ns) {
   myGang.assignEthicalMemberToWork(member, lowestWantedTask.name);
 }
 
-/** Try to find member another work task with better focus gain
- * @returns {boolean} false - when all working members have the optimal task
+/** Try to find a member another work task with better focus gain
+ * @returns {boolean} false when all working members have the optimal task
  *    for focus gain
  */
 function tryUpdateWorkingMemberTask(ns) {
@@ -342,6 +470,9 @@ function tryUpdateWorkingMemberTask(ns) {
     case GangFocus.MONEY:
       sortedTaskList = [...tasksByWantedLevel].sort(sortTasksByMoney);
       break;
+    case GangFocus.COMBAT:
+      // We only have one task that gains power
+      return false;
     default:
       throw new Error(`Unsupported gang focus ${myGang.focus}`);
   }
@@ -363,9 +494,17 @@ function tryUpdateWorkingMemberTask(ns) {
   return true;
 }
 
-function swapMembersTasks(ethicalMember, workingMember) {
-  const workingTask = workingMember.task;
+function swapMembersTasks(ns, ethicalMember, workingMember) {
+  const fname = "swapMembersTasks";
+  // Log message
+  const worker = toGreen(workingMember.name);
+  const ethical = toGreen(ethicalMember.name);
+  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember.hack)}`;
+  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember.hack)}`;
+  const message = `Swapping ${worker} with ${ethical} to increase ${toGreen(myGang.focus)} gain.`;
+  ns.print(`[${fname}] ${message}\n\t${messageWorking}\n\t${messageEthical}`);
 
+  const workingTask = workingMember.task;
   myGang.assignWorkingMemberToEthical(workingMember);
   myGang.assignEthicalMemberToWork(ethicalMember, workingTask);
 }
@@ -405,7 +544,7 @@ function sortMemberByTask(ns, memberName) {
 
   if (isTrainingTask(taskName)) {
     if (!TrainingTasks[myGang.type].includes(taskName)) {
-      // NOTE: we still allow for "Train Charisma" for hacking gang.
+      // NOTE: we still allow for "Train Charisma" for hacking gang with money focus
       printWarn(ns, strChangingTasks(taskName, myGang.trainingTask));
       taskName = myGang.trainingTask;
     }
@@ -422,13 +561,13 @@ function sortMemberByTask(ns, memberName) {
     return;
   }
 
-  if (taskName === territoryTask) {
+  if (taskName === powerTaskName) {
+    // NOTE: we still let COMBAT focus have Territory Warfare
     if (myGang.type === GangFocus.MONEY) {
       printWarn(ns, strChangingTasks("Territory Warfare", myGang.trainingTask));
       myGang.addMemberToTraining(memberName, myGang.trainingTask);
       return;
     }
-    // TODO: Adapt for combat gang
   }
 
   myGang.addMemberToWorking(memberName, taskName);
@@ -475,6 +614,11 @@ function handleMembersTaskFocus(ns) {
 function getMemberBestTaskForWantedLevel(memberTask) {
   let bestTask = memberTask;
 
+  if (myGang.focus === GangFocus.COMBAT) {
+    // There is only one power task
+    return powerTasks[0];
+  }
+
   for (const task of tasksByWantedLevel) {
     if (task.baseWanted > memberTask.baseWanted) {
       return bestTask;
@@ -510,7 +654,11 @@ async function manageGang(ns) {
     myGang.shouldWaitAscend = false;
     myGang.sanityCheckMembers();
 
-    if (myGang.isRecruiting) {
+    if (myGang.focus === GangFocus.COMBAT) {
+      handleWarfare(ns);
+    }
+
+    if (myGang.focus === GangFocus.RECRUITING) {
       recruitGangMembers(ns, myGang);
       handleRecruitmentStatus(ns, myGang);
     }
@@ -518,13 +666,16 @@ async function manageGang(ns) {
     myGang.ascendMembers();
 
     if (myGang.checkFocus) {
-      // Happens on either when first starting or on focus change
+      // Happens on either when first starting or after focus change
       handleMembersTaskFocus(ns);
       myGang.checkFocus = false;
     }
 
-    // Update members tasks according to wanted level
-    handleWantedLevel(ns);
+    if (myGang.focus !== GangFocus.COMBAT) {
+      // Only money & respect are influenced by wanted level.
+      // Update members tasks according to wanted level
+      handleWantedLevel(ns);
+    }
 
     // Wait for the next gang update
     const duration = await ns.gang.nextUpdate();
@@ -535,20 +686,22 @@ async function manageGang(ns) {
 
 //#region Initialize
 
-function initializeTasks(ns) {
-  tasksByWantedLevel = readGangTasks(ns, true).sort(
-    (a, b) => a.baseWanted - b.baseWanted,
-  );
-  if (tasksByWantedLevel.length === 0) {
+function initializeTasks(ns, isHackingGang) {
+  tasksByWantedLevel = readGangTasks(ns, isHackingGang);
+  if (!tasksByWantedLevel) {
     printError(ns, "Failed to read gang tasks.");
     return false;
   }
+
+  tasksByWantedLevel.sort((a, b) => a.baseWanted - b.baseWanted);
 
   tasksMap = new Map(tasksByWantedLevel.map((task) => [task.name, task]));
   tasksWithRespectGain = tasksByWantedLevel.filter(
     (task) => task.baseRespect > 0,
   );
   tasksWithMoneyGain = tasksByWantedLevel.filter((task) => task.baseMoney > 0);
+
+  powerTasks = [getTaskFromMap(powerTaskName)];
   return true;
 }
 
@@ -556,99 +709,46 @@ function initializeTasks(ns) {
  * Checks if we should buy augmentations.
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyAugmentation(ns, isHackingGang, buyArgument, playerMoney) {
-  const augmentationCost = isHackingGang
+async function shouldBuyAugmentation(ns, isHackingGang, buyArgument) {
+  const cost = isHackingGang
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
-  const augmentationCostPercent = augmentationCost / Math.max(1, playerMoney);
-
-  if (buyArgument) {
-    if (augmentationCostPercent < maxAugmentationsCostPercent) return true;
-    const formattedCostPercent = ns.formatPercent(augmentationCostPercent);
-    const formattedThreshold = ns.formatPercent(maxAugmentationsCostPercent);
-    // TODO: prompt the user
-    printWarn(
-      ns,
-      `Augmentations cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying augmentations for gang members.`,
-    );
-    return false;
-  }
-
-  // User didn't ask for augmentation
-  if (augmentationCostPercent < minAugmentationsCostPercent) {
-    const formattedCostPercent = ns.formatPercent(augmentationCostPercent, 5);
-    const formattedThreshold = ns.formatPercent(minAugmentationsCostPercent);
-    printInfo(
-      ns,
-      `Augmentations cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying augmentations for gang members.`,
-    );
-    return true;
-  }
-
-  return false;
+  return await shouldBuy(ns, cost, BuyLimits.augmentations, buyArgument);
 }
 
 /**
  * Checks if we should buy equipment
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyEquipment(ns, isHackingGang, buyArgument, playerMoney) {
-  const regularCost = isHackingGang
+async function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
+  const cost = isHackingGang
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
-  const regularCostPercent = regularCost / Math.max(1, playerMoney);
-
-  if (buyArgument) {
-    if (regularCostPercent < maxEquipmentCostPercent) {
-      return true;
-    }
-    const formattedCostPercent = ns.formatPercent(regularCostPercent);
-    const formattedThreshold = ns.formatPercent(maxEquipmentCostPercent);
-    // TODO: prompt the user
-    printWarn(
-      ns,
-      `Equipment cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying equipment for gang members.`,
-    );
-    return false;
-  }
-
-  // User didn't ask for equipment
-  if (regularCostPercent < minEquipmentCostPercent) {
-    const formattedCostPercent = ns.formatPercent(regularCostPercent, 5);
-    const formattedThreshold = ns.formatPercent(minEquipmentCostPercent);
-    // TODO: prompt user?
-    printInfo(
-      ns,
-      `Equipment cost (${formattedCostPercent}) is below the threshold (${formattedThreshold}). Buying equipment for gang members.`,
-    );
-    return true;
-  }
-
-  return false;
+  return await shouldBuy(ns, cost, BuyLimits.equipment, buyArgument);
 }
 
-function initializeGang(
+/**
+ *
+ * @param {NS} ns
+ * @param {boolean} isHackingGang - Hacking / Combat gang
+ * @param {string[]} gangMemberNames - Array of current gang member names.
+ * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
+ * @param {boolean} buyEquipment - Whether to buy equipment for gang members.
+ */
+async function initializeGang(
   ns,
   isHackingGang,
   gangMemberNames,
   buyAugmentations,
   buyEquipment,
 ) {
-  const playerMoney = ns.getPlayer().money;
-
   // Equipment
-  buyAugmentations = shouldBuyAugmentation(
+  buyAugmentations = await shouldBuyAugmentation(
     ns,
     isHackingGang,
     buyAugmentations,
-    playerMoney,
   );
-  buyEquipment = shouldBuyEquipment(
-    ns,
-    isHackingGang,
-    buyEquipment,
-    playerMoney,
-  );
+  buyEquipment = await shouldBuyEquipment(ns, isHackingGang, buyEquipment);
 
   myGang = new MyGang(
     ns,
@@ -667,9 +767,12 @@ function initializeGang(
 //#region Main
 
 function printUsage(ns) {
-  ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES]`);
+  const usageMessage = toGreen(`run ${ns.getScriptName()}`);
+  const optionMembers = `${Color.Bold}MEMBER_NAMES${Color.Reset}`;
+  const optionOptions = `${Color.Italic}OPTIONS${Color.Reset}`;
+  ns.tprint(`Usage: ${usageMessage} [${optionMembers}] [${optionOptions}]`);
   ns.tprint("");
-  ns.tprint("Hacking Gang Running Script");
+  ns.tprint("Hacking Gang Management");
   ns.tprint("=============================");
   ns.tprint("");
   ns.tprint("Manages a Hacking Gang members and their tasks.");
@@ -679,15 +782,22 @@ function printUsage(ns) {
   ns.tprint("");
   ns.tprint("Arguments:");
   ns.tprint(
-    "  MEMBER_NAMES: JSON stringified array of current gang member names.",
+    `  ${toGreen("MEMBER_NAMES")}: JSON stringified array of current gang member names.`,
   );
   ns.tprint("Options:");
-  ns.tprint("  --buy-augmentations    - Buy augmentations for gang members. ");
   ns.tprint(
-    "  --buy-equipment        - Buy equipment (and augmentations) for gang members.",
+    `  ${toGreen("--buy-augmentations")}    - Buy augmentations for gang members. `,
+  );
+  ns.tprint(
+    `  ${toGreen("--buy-equipment")}        - Buy equipment (and augmentations) for gang members.`,
+  );
+  ns.tprint(
+    `  ${toGreen("--override-focus")}       - Override gang's type and focus (hacking->combat, combat->hacking).`,
   );
   ns.tprint("");
-  ns.tprint("Should be run by 'gangs/start.js' script");
+  ns.tprint(
+    `${Color.FgYellow}⚠ Should be run by 'gangs/start.js' script${Color.Reset}`,
+  );
 }
 
 /**
@@ -698,8 +808,9 @@ function printUsage(ns) {
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const options = ["--buy-augmentations", "--buy-equipment"];
+  const focusOptions = ["--override-focus"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions, ...options, ...focusOptions];
 }
 
 /** @param {NS} ns */
@@ -709,6 +820,7 @@ export async function main(ns) {
     ["h", false],
     ["buy-augmentations", false],
     ["buy-equipment", false],
+    ["override-focus", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
     printUsage(ns);
@@ -716,11 +828,14 @@ export async function main(ns) {
   }
 
   ns.disableLog("gang.setMemberTask");
+  ns.disableLog("gang.setTerritoryWarfare");
 
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
 
-  if (!initializeTasks(ns)) {
+  let isHackingGang = ns.gang.getGangInformation().isHacking;
+  // Initialize tasks from the json with gang's actual type (before potential override)
+  if (!initializeTasks(ns, isHackingGang)) {
     return;
   }
   equipmentByType = readGangEquipment(ns);
@@ -730,10 +845,13 @@ export async function main(ns) {
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
+  // Toggle gang type when the override flag is set
+  isHackingGang = args["override-focus"] ? !isHackingGang : isHackingGang;
   const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
-  initializeGang(
+
+  await initializeGang(
     ns,
-    true,
+    isHackingGang,
     gangMemberNames,
     buyAugmentations,
     args["buy-equipment"],
