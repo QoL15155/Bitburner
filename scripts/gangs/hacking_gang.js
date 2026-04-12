@@ -711,22 +711,22 @@ function initializeTasks(ns, isHackingGang) {
  * Checks if we should buy augmentations.
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyAugmentation(ns, isHackingGang, buyArgument) {
+async function shouldBuyAugmentation(ns, isHackingGang, buyArgument) {
   const cost = isHackingGang
     ? equipmentByType.augmentationsCosts.hacking
     : equipmentByType.augmentationsCosts.combat;
-  return shouldBuy(ns, cost, BuyLimits.augmentations, buyArgument);
+  return await shouldBuy(ns, cost, BuyLimits.augmentations, buyArgument);
 }
 
 /**
  * Checks if we should buy equipment
  * The calculations here are a rough estimate of whether the players has enough money.
  */
-function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
+async function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
   const cost = isHackingGang
     ? equipmentByType.regularCosts.hacking
     : equipmentByType.regularCosts.combat;
-  return shouldBuy(ns, cost, BuyLimits.equipment, buyArgument);
+  return await shouldBuy(ns, cost, BuyLimits.equipment, buyArgument);
 }
 
 /**
@@ -737,7 +737,7 @@ function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
  * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
  * @param {boolean} buyEquipment - Whether to buy equipment for gang members.
  */
-function initializeGang(
+async function initializeGang(
   ns,
   isHackingGang,
   gangMemberNames,
@@ -745,8 +745,12 @@ function initializeGang(
   buyEquipment,
 ) {
   // Equipment
-  buyAugmentations = shouldBuyAugmentation(ns, isHackingGang, buyAugmentations);
-  buyEquipment = shouldBuyEquipment(ns, isHackingGang, buyEquipment);
+  buyAugmentations = await shouldBuyAugmentation(
+    ns,
+    isHackingGang,
+    buyAugmentations,
+  );
+  buyEquipment = await shouldBuyEquipment(ns, isHackingGang, buyEquipment);
 
   myGang = new MyGang(
     ns,
@@ -847,7 +851,7 @@ export async function main(ns) {
   isHackingGang = args["override-focus"] ? !isHackingGang : isHackingGang;
   const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
 
-  initializeGang(
+  await initializeGang(
     ns,
     isHackingGang,
     gangMemberNames,

@@ -182,11 +182,7 @@ export function readGangEquipment(ns) {
  * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
  * @return {boolean} true if we should buy this type of equipment, false otherwise
  */
-export function shouldBuy(ns, cost, buyLimits, buyArgument) {
-  function toBoldRed(text) {
-    return `\x1b[1;31m${text}\x1b[0m`;
-  }
-
+export async function shouldBuy(ns, cost, buyLimits, buyArgument) {
   const playerMoney = ns.getPlayer().money;
   const costPercent = cost / Math.max(1, playerMoney);
 
@@ -195,13 +191,40 @@ export function shouldBuy(ns, cost, buyLimits, buyArgument) {
       return true;
     }
 
-    // TODO: prompt the user
+    function toBoldRed(text) {
+      return `\x1b[1;31m${text}\x1b[0m`;
+    }
     const formattedCostPercent = ns.formatPercent(costPercent, 5);
     const formattedThreshold = ns.formatPercent(buyLimits.maxCostPercent);
-    const msgCost = `${toBoldRed(buyLimits.type)} ${toRed("cost (")}${toBoldRed(formattedCostPercent)}${toRed(") is above the threshold (" + formattedThreshold + ").")}`;
-    const msgAction = `Not buying ${buyLimits.type} for gang members.`;
-    print(ns, `${toRed("❌")} ${msgCost} ${toBoldRed(msgAction)}`);
-    return false;
+    const msgCost =
+      toRed("cost (") +
+      toBoldRed(formattedCostPercent) +
+      toRed(") is above the threshold (" + formattedThreshold + ").");
+
+    // Prompt the user
+    // First close tail to make sure prompt is visible
+    ns.ui.closeTail();
+    const response = await ns.prompt(
+      `${buyLimits.type} cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}).\n` +
+        `Do you want to buy ${buyLimits.type} for gang members anyway?`,
+    );
+    ns.ui.openTail();
+
+    if (response) {
+      print(
+        ns,
+        `✅ Buying ${toGreen(buyLimits.type)} for gang members. ${msgCost}`,
+      );
+      return true;
+    } else {
+      const msgAction = `Not buying ${buyLimits.type} for gang members.`;
+      print(
+        ns,
+        `${toRed("❌")} ${toBoldRed(buyLimits.type)} ${msgCost} ${toBoldRed(msgAction)}`,
+      );
+
+      return false;
+    }
   }
 
   // No buy argument provided, buy if cost is below min threshold
