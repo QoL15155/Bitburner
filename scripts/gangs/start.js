@@ -18,13 +18,10 @@ import { Color, printError, toGreen } from "/utils/print.js";
  * Calls appropriate gang management script.
  * Should only be called after a gang has been formed
  *
- * @param {NS} ns - Netscript API object
- * @param {boolean} toKill - whether to kill currently running gang management script. Default: false
  * @return {boolean} False when the script was called with errors
  */
 function startGangManagement(
   ns,
-  toKill = false,
   buyAugmentations = false,
   buyEquipment = false,
   overrideFocus = false,
@@ -43,9 +40,6 @@ function startGangManagement(
   }
 
   const gangManagementScript = scriptHackingGang;
-  if (!handleRunningScript(ns, gangManagementScript, toKill)) {
-    return true;
-  }
 
   ns.tprint(`Running ${gangManagementScript}`);
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
@@ -161,7 +155,7 @@ export async function main(ns) {
   ]);
   if (args.help || args.h) {
     printUsage(ns);
-    return 0;
+    return;
   }
 
   // Check if member is in gang
@@ -169,15 +163,17 @@ export async function main(ns) {
     ns.tprint(
       "ERROR You are not in a gang. Join a gang before running this script.",
     );
-    return 0;
+    return;
   }
 
   const toKill = args.kill || args.k;
+  if (!handleRunningScript(ns, scriptHackingGang, toKill)) {
+    return;
+  }
 
   // Run management script
   const result = startGangManagement(
     ns,
-    toKill,
     args["buy-augmentations"],
     args["buy-equipment"],
     args["override-focus"],
