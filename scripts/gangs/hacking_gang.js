@@ -6,7 +6,6 @@ import {
   findMemberMaxWantedLevel,
   findMemberMinHackingLevel,
   findMemberMinWantedLevel,
-  readGangEquipment,
   readGangTasks,
 } from "./utils.js";
 import {
@@ -51,8 +50,6 @@ let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
 let powerTasks = null;
-
-let equipmentByType = null;
 
 /** @type {MyGang} */
 let myGang = null;
@@ -802,10 +799,6 @@ export async function main(ns) {
   let isHackingGang = ns.gang.getGangInformation().isHacking;
   // Initialize tasks from the json with gang's actual type (before potential override)
   if (!initializeTasks(ns, isHackingGang)) {
-    return;
-  }
-  equipmentByType = readGangEquipment(ns);
-  if (equipmentByType == null) {
     return;
   }
 
