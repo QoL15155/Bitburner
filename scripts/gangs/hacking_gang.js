@@ -125,8 +125,9 @@ function handleWarfare(ns) {
   // if members were killed -> change focus to Recruiting
   const killedMembers = getKilledMembers(ns);
   if (killedMembers.length > 0) {
-    ns.tprint(
-      `[${fname}] Changing focus to ${toGreen("Recruiting")} and ${toRed("stopping territory warfare")} to recover`,
+    ns.print(
+      `[${fname}] ${toRed("⚠")} Gang members killed in warfare! ` +
+        `Updating my gang's status and ${toRed("stopping territory warfare")} to recover`,
     );
     myGang.handleKilledMembers(killedMembers);
     ns.gang.setTerritoryWarfare(false);
