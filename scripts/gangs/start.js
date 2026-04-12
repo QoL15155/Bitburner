@@ -122,7 +122,7 @@ async function processBuyingOptions(ns, isHackingGang, args) {
  * @param {NS} ns - Netscript API object
  * @param {string} scriptName - Name of the script to check
  * @param {boolean} toKill - Whether to kill the script if it's running
- * @returns {boolean} True if the script is not running or was killed successfully, false otherwise
+ * @returns {boolean} true if the script is not running or was killed successfully, false otherwise
  */
 function handleRunningScript(ns, scriptName, toKill) {
   if (!ns.scriptRunning(scriptName, "home")) {

@@ -1,9 +1,20 @@
 import {
   equipmentJsonFilename,
+  recruitmentMaxWaitTimeSeconds,
   tasksJsonCombatFilename,
   tasksJsonHackingFilename,
+  wantedGainRaiseMax,
+  wantedPenaltyRaiseThreshold,
+  wantedPenaltySafeThreshold,
 } from "./constants.js";
+import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import { print, printError, toGreen, toRed } from "/utils/print.js";
+
+/**
+ * Utility functions for *General* gang management.
+ *
+ * Suitable for both Hacking and Combat gangs.
+ */
 
 function checkFileExists(ns, fname, type, filename) {
   if (ns.fileExists(filename)) {
@@ -12,7 +23,8 @@ function checkFileExists(ns, fname, type, filename) {
 
   printError(
     ns,
-    `[${fname}] ${type} file ${filename} does not exist. Please run the gangs/start.js script to generate the ${type} file.`,
+    `[${fname}] ${type} file ${filename} does not exist. ` +
+      `Please run the gangs/start.js script to generate the ${type} file.`,
   );
 
   return false;
@@ -317,3 +329,97 @@ export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
   }
   return { member: lowestGainingMember, taskIdx: lowestTaskIdx };
 }
+
+//#region Ascend
+
+/**
+ * Calculates whether we should wait to ascend the gang members based on the time to recruit the next member.
+ * @param {NS} ns
+ * @param {number} respectNeeded
+ * @param {number} respectGainRate
+ * @returns {boolean} true if we should wait to ascend, false otherwise
+ */
+export function shouldGangWaitAscend(ns, respectNeeded, respectGainRate) {
+  const fname = "shouldGangWaitAscend";
+
+  if (respectGainRate <= 0) {
+    // Respect is not increasing, no reason to wait to ascend
+    return false;
+  }
+
+  // respect gain rate is per game cycle
+  const respectGainRatePerSecond = respectGainRate * 5;
+  const timeToNextRecruitSeconds = respectNeeded / respectGainRatePerSecond;
+
+  const fmtRespectNeeded = ns.formatNumber(respectNeeded);
+  const fmtRespectGainRate = formatGainRate(respectGainRate);
+  const fmtTimeToNextRecruit = formatTimeSeconds(timeToNextRecruitSeconds);
+  ns.print(
+    `[${fname}] Respect needed: ${fmtRespectNeeded}, gain rate: ${fmtRespectGainRate} ` +
+      `=> Time to next recruit: ${fmtTimeToNextRecruit}.`,
+  );
+
+  return timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
+}
+
+/**
+ * Determines if a gang member should be ascended based on their potential stat gains.
+ *
+ * @param {NS} ns - the Netscript environment
+ * @param {Object} member - the gang member object
+ * @returns {boolean} true if the member should be ascended, false otherwise
+ */
+export function shouldAscendMember(ns, member) {
+  const ascensionResult = ns.gang.getAscensionResult(member.name);
+  if (ascensionResult == null) {
+    // Member cannot be ascended
+    return false;
+  }
+
+  function shouldAscendForStat(statName) {
+    if (statName === "respect") return false;
+
+    const multiplier = ascensionResult[statName];
+    if (multiplier >= 2) {
+      return true;
+    }
+    return member[statName] >= 1000 && multiplier >= 1.2;
+  }
+
+  return Object.keys(ascensionResult).some((key) => {
+    return shouldAscendForStat(key);
+  });
+}
+
+//#endregion Ascend
+
+//#region Wanted Level
+
+/**
+ * @param {GangGenInfo} gangInformation
+ * @returns {boolean} true if the gang should lower its wanted level, false otherwise
+ */
+export function shouldLowerWantedLevel(gangInformation) {
+  if (gangInformation.wantedLevelGainRate < 0) {
+    // Wanted level is decreasing
+    return false;
+  }
+
+  return gangInformation.wantedPenalty < wantedPenaltySafeThreshold;
+}
+
+/**
+ * Checks if the gang can choose a task with a better focus gain even if it means raising the
+ * wanted level.
+ *
+ * @param {GangGenInfo} gangInformation
+ * @returns {boolean} true if the gang can raise its wanted level, false otherwise
+ */
+export function canRaiseWantedLevel(gangInformation) {
+  return (
+    gangInformation.wantedLevelGainRate < wantedGainRaiseMax &&
+    gangInformation.wantedPenalty >= wantedPenaltyRaiseThreshold
+  );
+}
+
+//#endregion Wanted Level

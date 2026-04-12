@@ -1,25 +1,25 @@
-import { clashWinChanceThreshold, normalEthicalMembers } from "./constants.js";
+import {
+  clashWinChanceThreshold,
+  EthicalTasks,
+  GangFocus,
+  isEthicalTask,
+  isTrainingTask,
+  normalEthicalMembers,
+  powerTaskName,
+  TrainingTasks,
+  unassignedTaskName,
+} from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
+  canRaiseWantedLevel,
   findLeastProductiveMember,
   findMemberMaxHackingLevel,
   findMemberMaxWantedLevel,
   findMemberMinHackingLevel,
   findMemberMinWantedLevel,
   readGangTasks,
-} from "./utils.js";
-import {
-  canRaiseWantedLevel,
-  EthicalTasks,
-  GangFocus,
-  handleRecruitmentStatus,
-  isEthicalTask,
-  isTrainingTask,
-  powerTaskName,
-  recruitGangMembers,
   shouldLowerWantedLevel,
-  TrainingTasks,
-} from "/gangs/manage.js";
+} from "./utils.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
   Color,
@@ -29,13 +29,6 @@ import {
   toGreen,
   toRed,
 } from "/utils/print.js";
-
-// Tasks
-// =====================
-const unassignedTask = "Unassigned";
-// All charisma tasks are also 'hacking tasks'
-// const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
-// const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
 
 /* Variables */
 
@@ -132,8 +125,9 @@ function handleWarfare(ns) {
   // if members were killed -> change focus to Recruiting
   const killedMembers = getKilledMembers(ns);
   if (killedMembers.length > 0) {
-    ns.tprint(
-      `[${fname}] Changing focus to ${toGreen("Recruiting")} and ${toRed("stopping territory warfare")} to recover`,
+    ns.print(
+      `[${fname}] ${toRed("⚠")} Gang members killed in warfare! ` +
+        `Updating my gang's status and ${toRed("stopping territory warfare")} to recover`,
     );
     myGang.handleKilledMembers(killedMembers);
     ns.gang.setTerritoryWarfare(false);
@@ -332,7 +326,7 @@ function raiseFocusGain(ns) {
     ns,
     myGang.membersEthical,
   );
-  if (worstWorkingMember.hack < bestEthicalMember.hack) {
+  if (worstWorkingMember["hack"] < bestEthicalMember["hack"]) {
     swapMembersTasks(ns, bestEthicalMember, worstWorkingMember);
     return;
   }
@@ -491,8 +485,8 @@ function swapMembersTasks(ns, ethicalMember, workingMember) {
   // Log message
   const worker = toGreen(workingMember.name);
   const ethical = toGreen(ethicalMember.name);
-  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember.hack)}`;
-  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember.hack)}`;
+  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember["hack"])}`;
+  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember["hack"])}`;
   const message = `Swapping ${worker} with ${ethical} to increase ${toGreen(myGang.focus)} gain.`;
   ns.print(`[${fname}] ${message}\n\t${messageWorking}\n\t${messageEthical}`);
 
@@ -524,7 +518,7 @@ function sortMemberByTask(ns, memberName) {
   const memberInfo = ns.gang.getMemberInformation(memberName);
   let taskName = memberInfo.task;
 
-  if (taskName === unassignedTask) {
+  if (taskName === unassignedTaskName) {
     const newTask = myGang.trainingTask;
     printWarn(
       ns,
@@ -651,8 +645,7 @@ async function manageGang(ns) {
     }
 
     if (myGang.focus === GangFocus.RECRUITING) {
-      recruitGangMembers(ns, myGang);
-      handleRecruitmentStatus(ns, myGang);
+      myGang.handleRecruitment();
     }
 
     myGang.ascendMembers();
