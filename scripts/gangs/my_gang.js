@@ -4,8 +4,11 @@ import {
   getGangTrainingTask,
   memberNamePrefix,
 } from "./constants.js";
-import { getShouldWaitAscend, readGangEquipment } from "./utils.js";
-import { shouldAscendMember } from "/gangs/manage.js";
+import {
+  readGangEquipment,
+  shouldAscendMember,
+  shouldGangWaitAscend,
+} from "./utils.js";
 import {
   Color,
   printLogError,
@@ -580,7 +583,7 @@ export class MyGang {
       throw new Error(`${fname} ${message}`);
     }
 
-    this.shouldWaitAscend = getShouldWaitAscend(
+    this.shouldWaitAscend = shouldGangWaitAscend(
       this.#ns,
       respectNeeded,
       gangInformation.respectGainRate,

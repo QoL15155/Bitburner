@@ -12,35 +12,6 @@ import {
 
 //#region Ascend
 
-/**
- * Determines if a gang member should be ascended based on their potential stat gains.
- *
- * @param {NS} ns - the Netscript environment
- * @param {Object} member - the gang member object
- * @returns {boolean} true if the member should be ascended, false otherwise
- */
-export function shouldAscendMember(ns, member) {
-  const ascensionResult = ns.gang.getAscensionResult(member.name);
-  if (ascensionResult == null) {
-    // Member cannot be ascended
-    return false;
-  }
-
-  function shouldAscendForStat(statName) {
-    if (statName === "respect") return false;
-
-    const multiplier = ascensionResult[statName];
-    if (multiplier >= 2) {
-      return true;
-    }
-    return member[statName] >= 1000 && multiplier >= 1.2;
-  }
-
-  return Object.keys(ascensionResult).some((key) => {
-    return shouldAscendForStat(key);
-  });
-}
-
 //#endregion Ascend
 
 //#region Wanted Level

@@ -330,8 +330,8 @@ export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
  * @param {number} respectGainRate
  * @returns {boolean} true if we should wait to ascend, false otherwise
  */
-export function getShouldWaitAscend(ns, respectNeeded, respectGainRate) {
-  const fname = "getShouldWaitAscend";
+export function shouldGangWaitAscend(ns, respectNeeded, respectGainRate) {
+  const fname = "shouldGangWaitAscend";
 
   if (respectGainRate <= 0) {
     // Respect is not increasing, no reason to wait to ascend
@@ -351,6 +351,35 @@ export function getShouldWaitAscend(ns, respectNeeded, respectGainRate) {
   );
 
   return timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
+}
+
+/**
+ * Determines if a gang member should be ascended based on their potential stat gains.
+ *
+ * @param {NS} ns - the Netscript environment
+ * @param {Object} member - the gang member object
+ * @returns {boolean} true if the member should be ascended, false otherwise
+ */
+export function shouldAscendMember(ns, member) {
+  const ascensionResult = ns.gang.getAscensionResult(member.name);
+  if (ascensionResult == null) {
+    // Member cannot be ascended
+    return false;
+  }
+
+  function shouldAscendForStat(statName) {
+    if (statName === "respect") return false;
+
+    const multiplier = ascensionResult[statName];
+    if (multiplier >= 2) {
+      return true;
+    }
+    return member[statName] >= 1000 && multiplier >= 1.2;
+  }
+
+  return Object.keys(ascensionResult).some((key) => {
+    return shouldAscendForStat(key);
+  });
 }
 
 //#endregion Ascend
