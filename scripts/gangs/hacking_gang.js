@@ -12,11 +12,9 @@ import {
   canRaiseWantedLevel,
   EthicalTasks,
   GangFocus,
-  handleRecruitmentStatus,
   isEthicalTask,
   isTrainingTask,
   powerTaskName,
-  recruitGangMembers,
   shouldLowerWantedLevel,
   TrainingTasks,
 } from "/gangs/manage.js";
@@ -651,8 +649,7 @@ async function manageGang(ns) {
     }
 
     if (myGang.focus === GangFocus.RECRUITING) {
-      recruitGangMembers(ns, myGang);
-      handleRecruitmentStatus(ns, myGang);
+      myGang.handleRecruitment();
     }
 
     myGang.ascendMembers();

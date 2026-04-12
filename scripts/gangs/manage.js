@@ -1,11 +1,8 @@
 import {
-  recruitmentMaxWaitTimeSeconds,
   wantedGainRaiseMax,
   wantedPenaltyRaiseThreshold,
   wantedPenaltySafeThreshold,
 } from "./constants.js";
-import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
-import { printError } from "/utils/print.js";
 
 /**
  * Utility functions for *General* gang management.
@@ -58,83 +55,6 @@ export function getGangEthicalTask(gangFocus) {
 }
 
 //#endregion Focus & Tasks
-
-//#region Recruitment
-
-function getRespectNeededForNextRecruit(gangInformation) {
-  const respectNeeded = gangInformation["respectForNextRecruit"];
-  if (respectNeeded === Infinity) {
-    return Infinity;
-  }
-
-  if (respectNeeded <= gangInformation.respect) {
-    return 0;
-  }
-
-  return respectNeeded - gangInformation.respect;
-}
-
-function canRecruit(gangInformation) {
-  const respectNeeded = gangInformation["respectForNextRecruit"];
-  return respectNeeded <= gangInformation.respect;
-}
-
-/**
- * Recruits new gang members until we cannot recruit any more members.
- *
- * @param {NS} ns - the Netscript environment
- * @param {MyGang} myGang - the gang management object
- */
-export function recruitGangMembers(ns, myGang) {
-  const fname = "recruitGangMembers";
-
-  while (canRecruit(ns.gang.getGangInformation())) {
-    const memberName = myGang.getNewMemberName();
-    if (!ns.gang.recruitMember(memberName)) {
-      printError(
-        ns,
-        `[${fname}] Failed to recruit member ${memberName}. Current member count: ${myGang.memberCount()} `,
-      );
-      return;
-    }
-
-    myGang.addNewMember(memberName);
-  }
-}
-
-/**
- * Updates the recruitment status of the gang.
- * Should be called after recruiting new members and before deciding whether to ascend members.
- *
- * @param {NS} ns - the Netscript environment
- * @param {MyGang} myGang - the gang management object
- */
-export function handleRecruitmentStatus(ns, myGang) {
-  const fname = "handleRecruitmentStatus";
-  const gangInformation = ns.gang.getGangInformation();
-
-  // Check if we are close to recruiting the next member.
-  // If we are close, wait for respect to recruit the next member instead of ascending current members.
-  const neededRespect = getRespectNeededForNextRecruit(gangInformation);
-  if (neededRespect === Infinity) {
-    myGang.stopRecruit();
-    return;
-  }
-
-  // respect gain rate is per game cycle
-  const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
-  const timeToNextRecruitSeconds = neededRespect / respectGainRatePerSecond;
-
-  let message = `[${fname}] Respect needed: ${ns.formatNumber(neededRespect)}, `;
-  message += `gain: ${formatGainRate(gangInformation.respectGainRate)} `;
-  message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
-  ns.printf(message);
-
-  myGang.shouldWaitAscend =
-    timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
-}
-
-//#endregion Recruitment
 
 //#region Ascend
 
