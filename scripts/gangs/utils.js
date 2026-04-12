@@ -3,7 +3,7 @@ import {
   tasksJsonCombatFilename,
   tasksJsonHackingFilename,
 } from "./constants.js";
-import { print, printError, toGreen } from "/utils/print.js";
+import { print, printError, toGreen, toRed } from "/utils/print.js";
 
 function checkFileExists(ns, fname, type, filename) {
   if (ns.fileExists(filename)) {
@@ -175,24 +175,32 @@ export function readGangEquipment(ns) {
 /**
  * Checks if we should buy equipment type (Augmentation or Equipment)
  * The calculations here are a rough estimate of whether the player has enough money.
+ *
  * @param {NS} ns
  * @param {number} cost - the total cost of the equipment being considered
  * @param {object} buyLimits - the cost limits for buying this type of equipment
  * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
+ * @return {boolean} true if we should buy this type of equipment, false otherwise
  */
 export function shouldBuy(ns, cost, buyLimits, buyArgument) {
+  function toBoldRed(text) {
+    return `\x1b[1;31m${text}\x1b[0m`;
+  }
+
   const playerMoney = ns.getPlayer().money;
   const costPercent = cost / Math.max(1, playerMoney);
+
   if (buyArgument) {
     if (costPercent < buyLimits.maxCostPercent) {
       return true;
     }
 
-    const formattedCostPercent = ns.formatPercent(costPercent);
-    const formattedThreshold = ns.formatPercent(buyLimits.maxCostPercent);
     // TODO: prompt the user
-    const message = `${buyLimits.type} cost (${formattedCostPercent}) is above the threshold (${formattedThreshold}). Not buying ${buyLimits.type} for gang members.`;
-    printError(ns, message);
+    const formattedCostPercent = ns.formatPercent(costPercent, 5);
+    const formattedThreshold = ns.formatPercent(buyLimits.maxCostPercent);
+    const msgCost = `${toBoldRed(buyLimits.type)} ${toRed("cost (")}${toBoldRed(formattedCostPercent)}${toRed(") is above the threshold (" + formattedThreshold + ").")}`;
+    const msgAction = `Not buying ${buyLimits.type} for gang members.`;
+    print(ns, `${toRed("❌")} ${msgCost} ${toBoldRed(msgAction)}`);
     return false;
   }
 
