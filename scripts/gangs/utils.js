@@ -397,7 +397,7 @@ export function shouldAscendMember(ns, member) {
 
 /**
  * @param {GangGenInfo} gangInformation
- * @returns {bool} true if the gang should lower its wanted level, false otherwise
+ * @returns {boolean} true if the gang should lower its wanted level, false otherwise
  */
 export function shouldLowerWantedLevel(gangInformation) {
   if (gangInformation.wantedLevelGainRate < 0) {
@@ -413,7 +413,7 @@ export function shouldLowerWantedLevel(gangInformation) {
  * wanted level.
  *
  * @param {GangGenInfo} gangInformation
- * @returns {bool} true if the gang can raise its wanted level, false otherwise
+ * @returns {boolean} true if the gang can raise its wanted level, false otherwise
  */
 export function canRaiseWantedLevel(gangInformation) {
   return (
