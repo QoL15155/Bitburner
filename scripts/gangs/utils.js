@@ -52,7 +52,7 @@ export function writeGangTasks(ns, isHackingGang = true) {
  * @param {NS} ns
  * @param {boolean} isHackingGang : Hacking / Combat gang
  * @returns {GangTaskStats[]|null} Array of gang task stats objects.
- *   Null if file doesn't exist or is empty.
+ *   Null if file doesn't exist.
  */
 export function readGangTasks(ns, isHackingGang) {
   const fname = "readGangTasks";
@@ -66,9 +66,6 @@ export function readGangTasks(ns, isHackingGang) {
 
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
-  if (tasks.length === 0) {
-    return null;
-  }
 
   // Log
   const gangType = isHackingGang ? "Hacking" : "Combat";
