@@ -528,7 +528,7 @@ export class MyGang {
   }
 
   #recruitNewMembers() {
-    const fname = "MyGang.recruitNewMembers";
+    const fname = "MyGang.#recruitNewMembers";
 
     while (this.#canRecruit()) {
       const memberName = this.#getNewMemberName();

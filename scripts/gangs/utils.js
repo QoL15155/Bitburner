@@ -323,6 +323,13 @@ export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
 
 //#region Ascend
 
+/**
+ * Calculates whether we should wait to ascend the gang members based on the time to recruit the next member.
+ * @param {NS} ns
+ * @param {number} respectNeeded
+ * @param {number} respectGainRate
+ * @returns {boolean} true if we should wait to ascend, false otherwise
+ */
 export function getShouldWaitAscend(ns, respectNeeded, respectGainRate) {
   const fname = "getShouldWaitAscend";
 
@@ -336,7 +343,7 @@ export function getShouldWaitAscend(ns, respectNeeded, respectGainRate) {
   const timeToNextRecruitSeconds = respectNeeded / respectGainRatePerSecond;
 
   const fmtRespectNeeded = ns.formatNumber(respectNeeded);
-  const fmtRespectGainRate = formatGainRate(respectGainRatePerSecond);
+  const fmtRespectGainRate = formatGainRate(respectGainRate);
   const fmtTimeToNextRecruit = formatTimeSeconds(timeToNextRecruitSeconds);
   ns.print(
     `[${fname}] Respect needed: ${fmtRespectNeeded}, gain rate: ${fmtRespectGainRate} ` +
