@@ -29,7 +29,7 @@ const paramOverrideFocus = `--${argOverrideFocus}`;
  *
  * @param {NS} ns - the Netscript environment
  * @param {Object} args - the arguments passed to the script, parsed by ns.flags
- * @return {boolean} False when the script was called with errors
+ * @return {Promise<boolean>} false when the script was called with errors
  */
 async function startGangManagement(ns, args) {
   const overrideFocus = args[argOverrideFocus];
@@ -96,7 +96,7 @@ async function processBuyingOptions(ns, isHackingGang, args) {
     ns,
     costAugmentations,
     BuyLimits.augmentations,
-    args[argBuyAugmentations],
+    args[argBuyAugmentations] || args[argBuyEquipment],
   );
 
   // Equipment
