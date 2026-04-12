@@ -82,8 +82,7 @@ async function startGangManagement(ns, args) {
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang
- * @param {boolean} buyAugmentations
- * @param {boolean} buyEquipment
+ * @param {Object} args - the arguments passed to the script, parsed by ns.flags
  * @returns {Promise<{buyAugmentations: boolean, buyEquipment: boolean}>}
  */
 async function processBuyingOptions(ns, isHackingGang, args) {
