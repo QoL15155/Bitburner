@@ -34,8 +34,6 @@ export class MyGang {
 
   #focus = GangFocus.RECRUITING;
 
-  // Number of times a killing was detected. Used for member naming.
-  #killedTimes = 0;
   /** Don't ascend members while waiting to recruit the next member */
   #shouldWaitAscend = false;
   /**
@@ -51,6 +49,8 @@ export class MyGang {
   // Members
   /** @type {string[]} */
   #gangMemberNames = null;
+  /** @type {string[]} */
+  #killedMemberNames = [];
   /** @type {string[]} */
   #membersTraining = [];
   /** @type {string[]} */
@@ -475,13 +475,12 @@ export class MyGang {
    */
   handleKilledMembers(memberNames) {
     const fname = "MyGang.handleKilledMembers";
-    this.#killedTimes++;
+    this.#killedMemberNames.push(...memberNames);
 
     // Log
     const killedMembers = toRed(memberNames.join(", "));
     const msgMembers = `Removing killed members (${toRed(memberNames.length)}): ${killedMembers}.`;
-    const msgKilledTimes = `${toMagenta(`Killed times: ${this.#killedTimes}`)}.`;
-    this.#ns.print(`[${fname}] ${msgMembers} ${msgKilledTimes}`);
+    this.#ns.print(`[${fname}] ${msgMembers}`);
 
     // Remove killed members
     for (const memberName of memberNames) {
@@ -516,12 +515,22 @@ export class MyGang {
 
   #getNewMemberName() {
     const members = this.memberCount();
-    if (this.#killedTimes === 0) {
+    if (this.#killedMemberNames.length === 0) {
       return `${memberNamePrefix} #${members}`;
     }
 
-    const killed = String(this.#killedTimes).padStart(2, "0");
-    return `${memberNamePrefix}.K${killed} #${members}`;
+    const killedMember = this.#killedMemberNames.shift();
+    const idx = killedMember.indexOf(".K");
+
+    if (idx !== -1) {
+      // Keves #3 -> Keves #3.K1
+      return killedMember + ".K1";
+    }
+
+    // Keves #3.K1 -> Keves #3.K2
+    const suffixNumber = parseInt(killedMember.substring(idx + 2)) + 1;
+    const newName = killedMember.substring(0, idx) + ".K" + suffixNumber;
+    return newName;
   }
 
   #canRecruit() {
