@@ -9,6 +9,7 @@ import {
   getGangTrainingTask,
   shouldAscendMember,
 } from "/gangs/manage.js";
+import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import {
   Color,
   printLogError,
@@ -536,14 +537,14 @@ export class MyGang {
   }
 
   #recruitNewMembers() {
-    const fname = "MyGang.recruitMembers";
+    const fname = "MyGang.recruitNewMembers";
 
     while (this.#canRecruit()) {
       const memberName = this.#getNewMemberName();
       if (!this.#ns.gang.recruitMember(memberName)) {
-        const message = `Failed to recruit member ${memberName}. Current member count: ${this.memberCount()}.`;
-        printError(this.#ns, `[${fname}] ${message}`);
-        return;
+        throw new Error(
+          `${fname} Failed to recruit member ${memberName}. Current member count: ${this.memberCount()}.`,
+        );
       }
 
       this.#addNewMember(memberName);
@@ -577,13 +578,11 @@ export class MyGang {
     }
 
     const respectNeeded = respectForNextRecruit - gangInformation["respect"];
-    if (respectNeeded === 0) {
-      // Can recruit but failed for some reason. Try recruiting again in the next cycle.
+    if (respectNeeded <= 0) {
       const message =
         `Respect requirement met but failed to recruit new member.` +
         ` Respect needed: ${respectForNextRecruit}. Current respect: ${gangInformation["respect"]}.`;
-      printError(this.#ns, `[${fname}] ${message}`);
-      return;
+      throw new Error(`${fname} ${message}`);
     }
 
     // respect gain rate is per game cycle
