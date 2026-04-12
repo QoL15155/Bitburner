@@ -325,7 +325,7 @@ function raiseFocusGain(ns) {
     ns,
     myGang.membersEthical,
   );
-  if (worstWorkingMember.hack < bestEthicalMember.hack) {
+  if (worstWorkingMember["hack"] < bestEthicalMember["hack"]) {
     swapMembersTasks(ns, bestEthicalMember, worstWorkingMember);
     return;
   }
@@ -484,8 +484,8 @@ function swapMembersTasks(ns, ethicalMember, workingMember) {
   // Log message
   const worker = toGreen(workingMember.name);
   const ethical = toGreen(ethicalMember.name);
-  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember.hack)}`;
-  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember.hack)}`;
+  const messageWorking = `'${worker}': hacking level ${ns.formatNumber(workingMember["hack"])}`;
+  const messageEthical = `'${ethical}': hacking level ${ns.formatNumber(ethicalMember["hack"])}`;
   const message = `Swapping ${worker} with ${ethical} to increase ${toGreen(myGang.focus)} gain.`;
   ns.print(`[${fname}] ${message}\n\t${messageWorking}\n\t${messageEthical}`);
 
