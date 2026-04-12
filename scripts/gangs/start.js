@@ -128,7 +128,7 @@ function printUsage(ns) {
     `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--override-focus")}     Override gang' type and focus (hacking->combat, combat->hacking).`,
+    `  ${toGreen("--override-focus")}     Override gang's type and focus (hacking->combat, combat->hacking).`,
   );
   ns.tprint(
     `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,
