@@ -28,6 +28,7 @@ import {
 } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
+  Color,
   printError,
   printLogWarn,
   printWarn,
@@ -764,9 +765,12 @@ function initializeGang(
 //#region Main
 
 function printUsage(ns) {
-  ns.tprint(`Usage: run ${ns.getScriptName()} [MEMBER_NAMES]`);
+  const usageMessage = toGreen(`run ${ns.getScriptName()}`);
+  const optionMembers = `${Color.Bold}MEMBER_NAMES${Color.Reset}`;
+  const optionOptions = `${Color.Italic}OPTIONS${Color.Reset}`;
+  ns.tprint(`Usage: ${usageMessage} [${optionMembers}] [${optionOptions}]`);
   ns.tprint("");
-  ns.tprint("Hacking Gang Running Script");
+  ns.tprint("Hacking Gang Management");
   ns.tprint("=============================");
   ns.tprint("");
   ns.tprint("Manages a Hacking Gang members and their tasks.");
@@ -776,18 +780,22 @@ function printUsage(ns) {
   ns.tprint("");
   ns.tprint("Arguments:");
   ns.tprint(
-    "  MEMBER_NAMES: JSON stringified array of current gang member names.",
+    `  ${toGreen("MEMBER_NAMES")}: JSON stringified array of current gang member names.`,
   );
   ns.tprint("Options:");
-  ns.tprint("  --buy-augmentations    - Buy augmentations for gang members. ");
   ns.tprint(
-    "  --buy-equipment        - Buy equipment (and augmentations) for gang members.",
+    `  ${toGreen("--buy-augmentations")}    - Buy augmentations for gang members. `,
   );
   ns.tprint(
-    "  --override-focus       - Override gang members' focus (hacking->combat, combat->hacking).",
+    `  ${toGreen("--buy-equipment")}        - Buy equipment (and augmentations) for gang members.`,
+  );
+  ns.tprint(
+    `  ${toGreen("--override-focus")}       - Override gang's type and focus (hacking->combat, combat->hacking).`,
   );
   ns.tprint("");
-  ns.tprint("Should be run by 'gangs/start.js' script");
+  ns.tprint(
+    `${Color.FgYellow}⚠ Should be run by 'gangs/start.js' script${Color.Reset}`,
+  );
 }
 
 /**
@@ -824,6 +832,7 @@ export async function main(ns) {
   ns.ui.openTail();
 
   let isHackingGang = ns.gang.getGangInformation().isHacking;
+  // Initialize tasks from the json with gang's actual type (before potential override)
   if (!initializeTasks(ns, isHackingGang)) {
     return;
   }

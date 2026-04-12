@@ -29,10 +29,10 @@ function startGangManagement(
   buyEquipment = false,
   overrideFocus = false,
 ) {
-  // Write tasks info to a json file for other scripts to use.
+  // Write tasks and equipment info to a json file for other scripts to use.
   const gangInformation = ns.gang.getGangInformation();
   let isHackingGang = gangInformation.isHacking;
-  writeGangTasks(ns, isHackingGang);
+  writeGangTasks(ns, isHackingGang); // use gang's actual type (before potential override)
   writeGangEquipment(ns);
 
   // Toggle gang type if user asked to override
@@ -128,7 +128,7 @@ function printUsage(ns) {
     `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--override-focus")}     Override gang members' focus (hacking->combat, combat->hacking).`,
+    `  ${toGreen("--override-focus")}     Override gang' type and focus (hacking->combat, combat->hacking).`,
   );
   ns.tprint(
     `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,

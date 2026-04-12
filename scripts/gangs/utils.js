@@ -38,9 +38,10 @@ export function writeGangTasks(ns, isHackingGang = true) {
   });
 
   ns.write(filename, JSON.stringify(tasks, null, 2), "w");
-  ns.print(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks written to ${filename}`,
-  );
+
+  // Log
+  const gangType = isHackingGang ? "Hacking" : "Combat";
+  ns.print(`[${fname}] ${toGreen(gangType)} tasks written to ${filename}`);
 }
 
 /**
@@ -50,7 +51,7 @@ export function writeGangTasks(ns, isHackingGang = true) {
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang : Hacking / Combat gang
- * @returns {GangTaskStats[]} Array of gang task stats objects.
+ * @returns {GangTaskStats[]|null} Array of gang task stats objects.
  *   Null if file doesn't exist or is empty.
  */
 export function readGangTasks(ns, isHackingGang) {
@@ -65,9 +66,11 @@ export function readGangTasks(ns, isHackingGang) {
 
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
-  ns.print(
-    `[${fname}] ${isHackingGang ? "Hacking" : "Combat"} tasks read from ${filename}`,
-  );
+
+  // Log
+  const gangType = isHackingGang ? "Hacking" : "Combat";
+  ns.print(`[${fname}] ${toGreen(gangType)} tasks read from ${filename}`);
+
   return tasks;
 }
 
