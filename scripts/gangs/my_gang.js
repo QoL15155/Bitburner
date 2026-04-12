@@ -11,6 +11,7 @@ import {
   printLogError,
   printLogInfo,
   toGreen,
+  toMagenta,
   toRed,
 } from "/utils/print.js";
 
@@ -213,10 +214,6 @@ export class MyGang {
     message += `\t${buyAugmentations}, ${buyEquipment}\n`;
     message += this.#membersString();
     return message;
-
-    function toMagenta(text) {
-      return `${Color.FgMagenta}${text}${Color.Reset}`;
-    }
   }
 
   //#endregion Stringify
@@ -470,9 +467,7 @@ export class MyGang {
 
     this.#changeFocus(GangFocus.RECRUITING);
 
-    this.#ns.print(
-      `[${fname}] ${Color.FgMagenta}Recruiting new gang members${Color.Reset}`,
-    );
+    this.#ns.print(`[${fname}] ${toMagenta("Recruiting new gang members")}`);
   }
 
   getNewMemberName() {
@@ -496,7 +491,7 @@ export class MyGang {
     // Log
     const killedMembers = toRed(memberNames.join(", "));
     const msgMembers = `Removing killed members (${toRed(memberNames.length)}): ${killedMembers}.`;
-    const msgKilledTimes = `${Color.FgMagenta}Killed times: ${this.#killedTimes}${Color.Reset}.`;
+    const msgKilledTimes = `${toMagenta(`Killed times: ${this.#killedTimes}`)}.`;
     this.#ns.print(`[${fname}] ${msgMembers} ${msgKilledTimes}`);
 
     // Remove killed members
@@ -529,8 +524,8 @@ export class MyGang {
     }
     this.#changeFocus(this.#gangType);
 
-    const msgMembers = `${Color.FgMagenta}Recruited maximum${Color.Reset} number of gang members - ${Color.FgMagenta}${this.memberCount()} members${Color.Reset}.`;
-    const msgFocus = `Set focus to ${Color.FgMagenta}${this.focus}${Color.Reset}.`;
+    const msgMembers = `${toMagenta("Recruited maximum")} number of gang members - ${toMagenta(this.memberCount() + " members")}.`;
+    const msgFocus = `Set focus to ${toMagenta(this.focus)}.`;
     this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
   }
 
@@ -602,16 +597,16 @@ export class MyGang {
 
   //#region Warfare
 
-  /** Check if the gang controls 100% territory
-   * @returns true if gang controls 100% territory and false otherwise.
-   * If true, also changes focus to Money.
+  /**
+   * Check if the gang controls 100% territory.
+   * If so, change focus to Money to avoid unnecessary warfare tasks.
+   *
+   * @returns {boolean} true if gang controls 100% territory and false otherwise.
    */
   handleMaxTerritory() {
     const fname = "MyGang.handleMaxTerritory";
     if (this.focus !== GangFocus.COMBAT) {
-      throw new Error(
-        "handleMaxTerritory should only be called for Combat gangs.",
-      );
+      throw new Error(`${fname} should only be called when focus is Combat.`);
     }
 
     const gangInformation = this.#ns.gang.getGangInformation();
@@ -619,9 +614,9 @@ export class MyGang {
 
     this.#changeFocus(GangFocus.MONEY);
 
-    const msgFocus = `Switching to ${Color.FgMagenta}${this.focus}${Color.Reset} focus.`;
+    const msgFocus = `Switching to ${toMagenta(this.focus)} focus.`;
     this.#ns.print(
-      `[${fname}] ${Color.FgMagenta}Gang controls 100% territory${Color.Reset}! ${msgFocus}`,
+      `[${fname}] ${toMagenta("Gang controls 100% territory")}! ${msgFocus}`,
     );
     return true;
   }
