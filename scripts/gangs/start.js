@@ -78,7 +78,7 @@ async function startGangManagement(ns, args) {
 
 /**
  * Checks if we should buy augmentations or equipment.
- * The calculations here are a rough estimate of whether the players has enough money.
+ * The calculations here are a rough estimate of whether the player has enough money.
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang
