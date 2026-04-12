@@ -3,11 +3,9 @@ import {
   getGangEthicalTask,
   getGangTrainingTask,
   memberNamePrefix,
-  recruitmentMaxWaitTimeSeconds,
 } from "./constants.js";
-import { readGangEquipment } from "./utils.js";
+import { getShouldWaitAscend, readGangEquipment } from "./utils.js";
 import { shouldAscendMember } from "/gangs/manage.js";
-import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import {
   Color,
   printLogError,
@@ -319,7 +317,7 @@ export class MyGang {
    * @param {string} memberName - the name of the new member to add
    */
   #addNewMember(memberName) {
-    const fname = "MyGang.addNewMember";
+    const fname = "MyGang.#addNewMember";
     this.#gangMemberNames.push(memberName);
     this.addMemberToTraining(memberName, this.trainingTask);
 
@@ -458,14 +456,13 @@ export class MyGang {
   /** Start recruiting gang members
    * Called during Combat when a member is killed
    */
-  startRecruit() {
-    const fname = "MyGang.startRecruit";
+  #startRecruit() {
+    const fname = "MyGang.#startRecruit";
     if (this.focus === GangFocus.RECRUITING) {
       throw new Error("startRecruit called when already recruiting");
     }
 
     this.#changeFocus(GangFocus.RECRUITING);
-
     this.#ns.print(`[${fname}] ${toMagenta("Recruiting new gang members")}`);
   }
 
@@ -501,18 +498,14 @@ export class MyGang {
       );
     }
 
-    this.startRecruit();
+    this.#startRecruit();
   }
 
-  stopRecruit() {
-    const fname = "MyGang.stopRecruit";
-    if (this.focus !== GangFocus.RECRUITING) {
-      throw new Error(
-        `${fname} called when not recruiting. Focus is ${this.focus}`,
-      );
-    }
+  #stopRecruit() {
+    const fname = "MyGang.#stopRecruit";
     this.#changeFocus(this.#gangType);
 
+    // Log message
     const msgMembers = `${toMagenta("Recruited maximum")} number of gang members - ${toMagenta(this.memberCount() + " members")}.`;
     const msgFocus = `Set focus to ${toMagenta(this.focus)}.`;
     this.#ns.print(`[${fname}] ${msgMembers} ${msgFocus}`);
@@ -568,32 +561,30 @@ export class MyGang {
 
     const gangInformation = this.#ns.gang.getGangInformation();
     const respectForNextRecruit = gangInformation["respectForNextRecruit"];
+    const currentRespect = gangInformation["respect"];
 
     if (respectForNextRecruit === Infinity) {
       // All members have been recruited
-      this.stopRecruit();
+      this.#stopRecruit();
       return;
     }
 
-    const respectNeeded = respectForNextRecruit - gangInformation["respect"];
+    // Check if should wait for ascend
+    const respectNeeded = respectForNextRecruit - currentRespect;
     if (respectNeeded <= 0) {
+      const fmtRespectRequired = this.#ns.formatNumber(respectForNextRecruit);
+      const fmtCurrentRespect = this.#ns.formatNumber(currentRespect);
       const message =
-        `Respect requirement met but failed to recruit new member.` +
-        ` Respect needed: ${respectForNextRecruit}. Current respect: ${gangInformation["respect"]}.`;
+        `Respect requirement met but failed to recruit new member. ` +
+        `Respect required: ${fmtRespectRequired}. Current respect: ${fmtCurrentRespect}.`;
       throw new Error(`${fname} ${message}`);
     }
 
-    // respect gain rate is per game cycle
-    const respectGainRatePerSecond = gangInformation.respectGainRate * 5;
-    const timeToNextRecruitSeconds = respectNeeded / respectGainRatePerSecond;
-
-    let message = `[${fname}] Respect needed: ${this.#ns.formatNumber(respectNeeded)}, `;
-    message += `gain: ${formatGainRate(gangInformation.respectGainRate)} `;
-    message += `=> Time to next recruit: ${formatTimeSeconds(timeToNextRecruitSeconds)}.`;
-    this.#ns.printf(message);
-
-    this.shouldWaitAscend =
-      timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
+    this.shouldWaitAscend = getShouldWaitAscend(
+      this.#ns,
+      respectNeeded,
+      gangInformation.respectGainRate,
+    );
   }
 
   //#endregion Recruitment

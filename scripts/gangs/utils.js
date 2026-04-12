@@ -1,8 +1,10 @@
 import {
   equipmentJsonFilename,
+  recruitmentMaxWaitTimeSeconds,
   tasksJsonCombatFilename,
   tasksJsonHackingFilename,
 } from "./constants.js";
+import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import { print, printError, toGreen, toRed } from "/utils/print.js";
 
 function checkFileExists(ns, fname, type, filename) {
@@ -12,7 +14,8 @@ function checkFileExists(ns, fname, type, filename) {
 
   printError(
     ns,
-    `[${fname}] ${type} file ${filename} does not exist. Please run the gangs/start.js script to generate the ${type} file.`,
+    `[${fname}] ${type} file ${filename} does not exist. ` +
+      `Please run the gangs/start.js script to generate the ${type} file.`,
   );
 
   return false;
@@ -317,3 +320,30 @@ export function findLeastProductiveMember(ns, memberNames, sortedTasks) {
   }
   return { member: lowestGainingMember, taskIdx: lowestTaskIdx };
 }
+
+//#region Ascend
+
+export function getShouldWaitAscend(ns, respectNeeded, respectGainRate) {
+  const fname = "getShouldWaitAscend";
+
+  if (respectGainRate <= 0) {
+    // Respect is not increasing, no reason to wait to ascend
+    return false;
+  }
+
+  // respect gain rate is per game cycle
+  const respectGainRatePerSecond = respectGainRate * 5;
+  const timeToNextRecruitSeconds = respectNeeded / respectGainRatePerSecond;
+
+  const fmtRespectNeeded = ns.formatNumber(respectNeeded);
+  const fmtRespectGainRate = formatGainRate(respectGainRatePerSecond);
+  const fmtTimeToNextRecruit = formatTimeSeconds(timeToNextRecruitSeconds);
+  ns.print(
+    `[${fname}] Respect needed: ${fmtRespectNeeded}, gain rate: ${fmtRespectGainRate} ` +
+      `=> Time to next recruit: ${fmtTimeToNextRecruit}.`,
+  );
+
+  return timeToNextRecruitSeconds <= recruitmentMaxWaitTimeSeconds;
+}
+
+//#endregion Ascend
