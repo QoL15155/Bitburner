@@ -1,4 +1,13 @@
-import { clashWinChanceThreshold, normalEthicalMembers } from "./constants.js";
+import {
+  clashWinChanceThreshold,
+  EthicalTasks,
+  GangFocus,
+  isEthicalTask,
+  isTrainingTask,
+  normalEthicalMembers,
+  powerTaskName,
+  TrainingTasks,
+} from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
   findLeastProductiveMember,
@@ -8,16 +17,7 @@ import {
   findMemberMinWantedLevel,
   readGangTasks,
 } from "./utils.js";
-import {
-  canRaiseWantedLevel,
-  EthicalTasks,
-  GangFocus,
-  isEthicalTask,
-  isTrainingTask,
-  powerTaskName,
-  shouldLowerWantedLevel,
-  TrainingTasks,
-} from "/gangs/manage.js";
+import { canRaiseWantedLevel, shouldLowerWantedLevel } from "/gangs/manage.js";
 import { formatGainRate } from "/utils/formatters.js";
 import {
   Color,

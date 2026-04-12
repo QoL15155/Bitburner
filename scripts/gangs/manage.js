@@ -10,52 +10,6 @@ import {
  * Suitable for both Hacking and Combat gangs.
  */
 
-//#region Focus & Tasks
-
-/**
- * Enum for gang focus types.
- *
- * Hacking : Recruiting -> Money
- * Combat: Recruiting -> Combat -> Money (when territory is 100%)
- */
-export const GangFocus = Object.freeze({
-  RECRUITING: "Recruiting",
-  MONEY: "Money",
-  COMBAT: "Combat",
-});
-
-const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
-const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
-export const powerTaskName = "Territory Warfare";
-
-export function isEthicalTask(taskName) {
-  return allEthicalTasks.includes(taskName);
-}
-
-export function isTrainingTask(taskName) {
-  return allTrainingTasks.includes(taskName);
-}
-
-export const TrainingTasks = {
-  [GangFocus.MONEY]: ["Train Hacking", "Train Charisma"],
-  [GangFocus.COMBAT]: ["Train Combat"],
-};
-
-export const EthicalTasks = {
-  [GangFocus.MONEY]: ["Ethical Hacking"],
-  [GangFocus.COMBAT]: ["Vigilante Justice"],
-};
-
-export function getGangTrainingTask(gangFocus) {
-  return TrainingTasks[gangFocus][0];
-}
-
-export function getGangEthicalTask(gangFocus) {
-  return EthicalTasks[gangFocus][0];
-}
-
-//#endregion Focus & Tasks
-
 //#region Ascend
 
 /**

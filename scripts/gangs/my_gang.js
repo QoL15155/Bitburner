@@ -1,14 +1,12 @@
 import {
+  GangFocus,
+  getGangEthicalTask,
+  getGangTrainingTask,
   memberNamePrefix,
   recruitmentMaxWaitTimeSeconds,
 } from "./constants.js";
 import { readGangEquipment } from "./utils.js";
-import {
-  GangFocus,
-  getGangEthicalTask,
-  getGangTrainingTask,
-  shouldAscendMember,
-} from "/gangs/manage.js";
+import { shouldAscendMember } from "/gangs/manage.js";
 import { formatGainRate, formatTimeSeconds } from "/utils/formatters.js";
 import {
   Color,
