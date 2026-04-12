@@ -7,6 +7,7 @@ import {
   normalEthicalMembers,
   powerTaskName,
   TrainingTasks,
+  unassignedTaskName,
 } from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
@@ -28,13 +29,6 @@ import {
   toGreen,
   toRed,
 } from "/utils/print.js";
-
-// Tasks
-// =====================
-const unassignedTask = "Unassigned";
-// All charisma tasks are also 'hacking tasks'
-// const charismaTasks = ["Phishing", "Identity Theft", "Fraud & Counterfeiting", "Money Laundering", "Cyberterrorism"];
-// const hackingTasks = ["Ransomware", "DDoS Attacks", "Plant Virus"];
 
 /* Variables */
 
@@ -523,7 +517,7 @@ function sortMemberByTask(ns, memberName) {
   const memberInfo = ns.gang.getMemberInformation(memberName);
   let taskName = memberInfo.task;
 
-  if (taskName === unassignedTask) {
+  if (taskName === unassignedTaskName) {
     const newTask = myGang.trainingTask;
     printWarn(
       ns,

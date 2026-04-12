@@ -32,6 +32,7 @@ export const normalEthicalMembers = 2;
 const maxAscensionLevel = 25;
 
 //#region Wanted Level
+
 // Wanted Level
 // =====================
 
@@ -92,7 +93,7 @@ export const BuyLimits = {
 // If the gang's minimum clash win chance is under this threshold, disengage in warfare to avoid losses
 export const clashWinChanceThreshold = 0.7;
 
-//#region Focus & Tasks
+//#region Focus&Tasks
 
 /**
  * Enum for gang focus types.
@@ -109,6 +110,7 @@ export const GangFocus = Object.freeze({
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];
 export const powerTaskName = "Territory Warfare";
+export const unassignedTaskName = "Unassigned";
 
 export function isEthicalTask(taskName) {
   return allEthicalTasks.includes(taskName);
@@ -136,4 +138,4 @@ export function getGangEthicalTask(gangFocus) {
   return EthicalTasks[gangFocus][0];
 }
 
-//#endregion Focus & Tasks
+//#endregion Focus&Tasks
