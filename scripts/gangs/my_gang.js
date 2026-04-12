@@ -514,15 +514,14 @@ export class MyGang {
   }
 
   #getNewMemberName() {
-    const members = this.memberCount();
     if (this.#killedMemberNames.length === 0) {
-      return `${memberNamePrefix} #${members}`;
+      return `${memberNamePrefix} #${this.memberCount()}`;
     }
 
     const killedMember = this.#killedMemberNames.shift();
     const idx = killedMember.indexOf(".K");
 
-    if (idx !== -1) {
+    if (idx === -1) {
       // Keves #3 -> Keves #3.K1
       return killedMember + ".K1";
     }
