@@ -66,6 +66,9 @@ export function readGangTasks(ns, isHackingGang) {
 
   const tasksJson = ns.read(filename);
   const tasks = JSON.parse(tasksJson);
+  if (tasks.length === 0) {
+    return null;
+  }
 
   // Log
   const gangType = isHackingGang ? "Hacking" : "Combat";
@@ -178,7 +181,8 @@ export function readGangEquipment(ns) {
  *
  * @param {NS} ns
  * @param {number} cost - the total cost of the equipment being considered
- * @param {{maxCostPercent: number, minCostPercent: number, type: string}} buyLimits - the cost limits for buying this type of equipment
+ * @param {{maxCostPercent: number, minCostPercent: number, type: string}} buyLimits -
+ *    the cost limits for buying this type of equipment
  * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
  * @returns {Promise<boolean>} true if we should buy this type of equipment, false otherwise
  */
