@@ -85,6 +85,8 @@ export function readGangTasks(ns, isHackingGang) {
 export function getGangEquipmentInformation(ns) {
   let augmentations = { hacking: [], combat: [] };
   let regular = { hacking: [], combat: [] };
+
+  // Add equipment by type
   for (const equipmentName of ns.gang.getEquipmentNames()) {
     const type = ns.gang.getEquipmentType(equipmentName);
     const equipmentStats = ns.gang.getEquipmentStats(equipmentName);
@@ -95,14 +97,15 @@ export function getGangEquipmentInformation(ns) {
       cost: cost,
       stats: equipmentStats,
     };
+
     if (type === "Augmentation") {
-      if (equipmentStats.hack) {
+      if (equipmentStats["hack"]) {
         augmentations.hacking.push(equipmentInfo);
       } else {
         augmentations.combat.push(equipmentInfo);
       }
     } else {
-      if (equipmentStats.hack) {
+      if (equipmentStats["hack"]) {
         regular.hacking.push(equipmentInfo);
       } else {
         regular.combat.push(equipmentInfo);
@@ -111,22 +114,13 @@ export function getGangEquipmentInformation(ns) {
   }
 
   // Costs
-  const augmentationsHackingCost = augmentations.hacking.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const augmentationsCombatCost = augmentations.combat.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const regularHackingCost = regular.hacking.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
-  const regularCombatCost = regular.combat.reduce(
-    (sum, item) => sum + item.cost,
-    0,
-  );
+  function sumCost(equipmentList) {
+    return equipmentList.reduce((sum, item) => sum + item.cost, 0);
+  }
+  const augmentationsHackingCost = sumCost(augmentations.hacking);
+  const augmentationsCombatCost = sumCost(augmentations.combat);
+  const regularHackingCost = sumCost(regular.hacking);
+  const regularCombatCost = sumCost(regular.combat);
 
   const equipment = {
     augmentations: augmentations,
@@ -148,6 +142,8 @@ export function getGangEquipmentInformation(ns) {
  * Assumes player has already created a gang and equipment is available.
  *
  * @param {NS} ns
+ * @returns {GangEquipment} The gang equipment object that was written to the file.
+ *    See getGangEquipmentInformation for details on the structure of this object.
  */
 export function writeGangEquipment(ns) {
   const fname = "writeGangEquipment";
@@ -156,6 +152,8 @@ export function writeGangEquipment(ns) {
   const equipment = getGangEquipmentInformation(ns);
   ns.write(filename, JSON.stringify(equipment, null, 2), "w");
   ns.print(`[${fname}] Equipment object written to ${filename}`);
+
+  return equipment;
 }
 
 export function readGangEquipment(ns) {

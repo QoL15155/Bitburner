@@ -1,6 +1,15 @@
-import { scriptHackingGang } from "./constants.js";
-import { writeGangEquipment, writeGangTasks } from "./utils.js";
+import { BuyLimits, scriptHackingGang } from "./constants.js";
+import { shouldBuy, writeGangEquipment, writeGangTasks } from "./utils.js";
 import { Color, printError, toGreen } from "/utils/print.js";
+
+// Arguments
+const argBuyAugmentations = "buy-augmentations";
+const argBuyEquipment = "buy-equipment";
+const argOverrideFocus = "override-focus";
+
+const paramBuyAugmentations = `--${argBuyAugmentations}`;
+const paramBuyEquipment = `--${argBuyEquipment}`;
+const paramOverrideFocus = `--${argOverrideFocus}`;
 
 /**
  * Arranges the environment for gang management, including:
@@ -18,40 +27,45 @@ import { Color, printError, toGreen } from "/utils/print.js";
  * Calls appropriate gang management script.
  * Should only be called after a gang has been formed
  *
- * @return {boolean} False when the script was called with errors
+ * @param {NS} ns - the Netscript environment
+ * @param {Object} args - the arguments passed to the script, parsed by ns.flags
+ * @return {Promise<boolean>} false when the script was called with errors
  */
-function startGangManagement(
-  ns,
-  buyAugmentations = false,
-  buyEquipment = false,
-  overrideFocus = false,
-) {
-  // Write tasks and equipment info to a json file for other scripts to use.
+async function startGangManagement(ns, args) {
+  const overrideFocus = args[argOverrideFocus];
+
   const gangInformation = ns.gang.getGangInformation();
-  let isHackingGang = gangInformation.isHacking;
-  writeGangTasks(ns, isHackingGang); // use gang's actual type (before potential override)
-  writeGangEquipment(ns);
+  // Write tasks and equipment info to a json file for other scripts to use.
+  // use gang's actual type (before potential override)
+  writeGangTasks(ns, gangInformation.isHacking);
 
   // Toggle gang type if user asked to override
+  let isHackingGang = gangInformation.isHacking;
   isHackingGang = overrideFocus ? !isHackingGang : isHackingGang;
   if (isHackingGang) {
     ns.tprint("Turning off territory warfare for hacking gang");
     ns.gang.setTerritoryWarfare(false);
   }
 
-  const gangManagementScript = scriptHackingGang;
+  const { buyAugmentations, buyEquipment } = await processBuyingOptions(
+    ns,
+    isHackingGang,
+    args,
+  );
 
+  const gangManagementScript = scriptHackingGang;
   ns.tprint(`Running ${gangManagementScript}`);
+
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
   const additionalArguments = [];
   if (buyAugmentations) {
-    additionalArguments.push("--buy-augmentations");
+    additionalArguments.push(paramBuyAugmentations);
   }
   if (buyEquipment) {
-    additionalArguments.push("--buy-equipment");
+    additionalArguments.push(paramBuyEquipment);
   }
   if (overrideFocus) {
-    additionalArguments.push("--override-focus");
+    additionalArguments.push(paramOverrideFocus);
   }
   const pid = ns.run(
     gangManagementScript,
@@ -60,6 +74,46 @@ function startGangManagement(
     ...additionalArguments,
   );
   return pid !== 0;
+}
+
+/**
+ * Checks if we should buy augmentations or equipment.
+ * The calculations here are a rough estimate of whether the player has enough money.
+ *
+ * @param {NS} ns
+ * @param {boolean} isHackingGang
+ * @param {Object} args - the arguments passed to the script, parsed by ns.flags
+ * @returns {Promise<{buyAugmentations: boolean, buyEquipment: boolean}>}
+ */
+async function processBuyingOptions(ns, isHackingGang, args) {
+  const equipment = writeGangEquipment(ns);
+
+  // Augmentations
+  const costAugmentations = isHackingGang
+    ? equipment.augmentationsCosts.hacking
+    : equipment.augmentationsCosts.combat;
+  const buyAugmentations = await shouldBuy(
+    ns,
+    costAugmentations,
+    BuyLimits.augmentations,
+    args[argBuyAugmentations] || args[argBuyEquipment],
+  );
+
+  // Equipment
+  const costEquipment = isHackingGang
+    ? equipment.regularCosts.hacking
+    : equipment.regularCosts.combat;
+  const buyEquipment = await shouldBuy(
+    ns,
+    costEquipment,
+    BuyLimits.equipment,
+    args[argBuyEquipment],
+  );
+
+  return {
+    buyAugmentations,
+    buyEquipment,
+  };
 }
 
 /**
@@ -137,21 +191,24 @@ function printUsage(ns) {
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const options = ["-k", "--kill"];
-  const equipmentOptions = ["--buy-equipment", "--buy-augmentations"];
-  const focusOptions = ["--override-focus"];
+  const moreOptions = [
+    paramBuyAugmentations,
+    paramBuyEquipment,
+    paramOverrideFocus,
+  ];
 
-  return [...defaultOptions, ...options, ...equipmentOptions, ...focusOptions];
+  return [...defaultOptions, ...options, ...moreOptions];
 }
 
 export async function main(ns) {
   const args = ns.flags([
     ["help", false],
     ["h", false],
-    ["buy-augmentations", false],
-    ["buy-equipment", false],
-    ["override-focus", false],
     ["kill", false],
     ["k", false],
+    [argBuyAugmentations, false],
+    [argBuyEquipment, false],
+    [argOverrideFocus, false],
   ]);
   if (args.help || args.h) {
     printUsage(ns);
@@ -172,12 +229,7 @@ export async function main(ns) {
   }
 
   // Run management script
-  const result = startGangManagement(
-    ns,
-    args["buy-augmentations"],
-    args["buy-equipment"],
-    args["override-focus"],
-  );
+  const result = await startGangManagement(ns, args);
 
   if (result === false) {
     printError(ns, "Failed to call gang management script");

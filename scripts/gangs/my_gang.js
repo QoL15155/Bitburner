@@ -9,7 +9,6 @@ import {
 import {
   Color,
   printLogError,
-  printLogInfo,
   toGreen,
   toMagenta,
   toRed,
@@ -250,14 +249,13 @@ export class MyGang {
    *    after ascending.
    */
   ascendMembers() {
-    const fname = "MyGang.ascendMembers";
-
     if (this.shouldWaitAscend) {
       return;
     }
 
     for (const memberName of this.#gangMemberNames) {
-      if (!shouldAscendMember(this.#ns, memberName)) {
+      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
+      if (!shouldAscendMember(this.#ns, memberInfo)) {
         continue;
       }
 
@@ -266,7 +264,6 @@ export class MyGang {
         throw new Error(`Failed to ascend member '${memberName}'.`);
       }
 
-      const memberInfo = this.#ns.gang.getMemberInformation(memberName);
       this.#buyEquipmentForMember(memberInfo);
     }
   }
@@ -575,7 +572,7 @@ export class MyGang {
         printLogError(
           this.#ns,
           `[${fname}] Failed to purchase ${itemsType} for member '${memberName}'.` +
-            ` Item: ${name}, Cost: $${formattedCost}.`,
+            ` Item name: ${name}, cost: $${formattedCost}.`,
         );
       } else {
         totalCost += item.cost;
@@ -585,11 +582,9 @@ export class MyGang {
 
     if (itemsCount > 0) {
       const formattedCost = this.#ns.formatNumber(totalCost);
-      printLogInfo(
-        this.#ns,
-        `[${fname}] Member '${memberName}' purchased ${itemsCount} items (type ${itemsType}).` +
-          ` Total cost: $${formattedCost}.`,
-      );
+      const msgPurchase = `Member '${toGreen(memberName)}' purchased ${itemsCount} items (${toGreen(itemsType)})`;
+      const msgCost = `Total cost: $${formattedCost}.`;
+      this.#ns.print(`[${fname}] ${msgPurchase}. ${toGreen(msgCost)}`);
     }
   }
 

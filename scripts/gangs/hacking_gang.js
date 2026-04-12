@@ -1,8 +1,4 @@
-import {
-  BuyLimits,
-  clashWinChanceThreshold,
-  normalEthicalMembers,
-} from "./constants.js";
+import { clashWinChanceThreshold, normalEthicalMembers } from "./constants.js";
 import { MyGang } from "./my_gang.js";
 import {
   findLeastProductiveMember,
@@ -10,9 +6,7 @@ import {
   findMemberMaxWantedLevel,
   findMemberMinHackingLevel,
   findMemberMinWantedLevel,
-  readGangEquipment,
   readGangTasks,
-  shouldBuy,
 } from "./utils.js";
 import {
   canRaiseWantedLevel,
@@ -56,8 +50,6 @@ let tasksMap = null;
 let tasksWithRespectGain = null;
 let tasksWithMoneyGain = null;
 let powerTasks = null;
-
-let equipmentByType = null;
 
 /** @type {MyGang} */
 let myGang = null;
@@ -706,28 +698,7 @@ function initializeTasks(ns, isHackingGang) {
 }
 
 /**
- * Checks if we should buy augmentations.
- * The calculations here are a rough estimate of whether the players has enough money.
- */
-async function shouldBuyAugmentation(ns, isHackingGang, buyArgument) {
-  const cost = isHackingGang
-    ? equipmentByType.augmentationsCosts.hacking
-    : equipmentByType.augmentationsCosts.combat;
-  return await shouldBuy(ns, cost, BuyLimits.augmentations, buyArgument);
-}
-
-/**
- * Checks if we should buy equipment
- * The calculations here are a rough estimate of whether the players has enough money.
- */
-async function shouldBuyEquipment(ns, isHackingGang, buyArgument) {
-  const cost = isHackingGang
-    ? equipmentByType.regularCosts.hacking
-    : equipmentByType.regularCosts.combat;
-  return await shouldBuy(ns, cost, BuyLimits.equipment, buyArgument);
-}
-
-/**
+ * Initializes MyGang and assigns members to their appropriate tasks.
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang - Hacking / Combat gang
@@ -742,14 +713,6 @@ async function initializeGang(
   buyAugmentations,
   buyEquipment,
 ) {
-  // Equipment
-  buyAugmentations = await shouldBuyAugmentation(
-    ns,
-    isHackingGang,
-    buyAugmentations,
-  );
-  buyEquipment = await shouldBuyEquipment(ns, isHackingGang, buyEquipment);
-
   myGang = new MyGang(
     ns,
     isHackingGang,
@@ -836,10 +799,6 @@ export async function main(ns) {
   let isHackingGang = ns.gang.getGangInformation().isHacking;
   // Initialize tasks from the json with gang's actual type (before potential override)
   if (!initializeTasks(ns, isHackingGang)) {
-    return;
-  }
-  equipmentByType = readGangEquipment(ns);
-  if (equipmentByType == null) {
     return;
   }
 
