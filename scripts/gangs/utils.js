@@ -174,7 +174,7 @@ export function readGangEquipment(ns) {
 
 /**
  * Checks if we should buy equipment type (Augmentation or Equipment)
- * The calculations here are a rough estimate of whether the players has enough money.
+ * The calculations here are a rough estimate of whether the player has enough money.
  * @param {NS} ns
  * @param {number} cost - the total cost of the equipment being considered
  * @param {object} buyLimits - the cost limits for buying this type of equipment
