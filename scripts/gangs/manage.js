@@ -159,7 +159,7 @@ export function shouldAscendMember(ns, member) {
     if (multiplier >= 2) {
       return true;
     }
-    return member[statName] >= 1000 && multiplier >= 1.5;
+    return member[statName] >= 1000 && multiplier >= 1.2;
   }
 
   return Object.keys(ascensionResult).some((key) => {
