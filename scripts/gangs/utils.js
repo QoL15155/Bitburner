@@ -183,7 +183,7 @@ export function readGangEquipment(ns) {
 }
 
 /**
- * Checks if we should buy equipment type (Augmentation or Upgrades)
+ * Checks if we should buy equipment type (Augmentations or Upgrades)
  * The calculations here are a rough estimate of whether the player has enough money.
  *
  * @param {NS} ns
