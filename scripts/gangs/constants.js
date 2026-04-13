@@ -6,8 +6,6 @@
 
 export const memberNamePrefix = "Keves";
 
-const maxAscensionLevel = 25;
-
 // Gang Warfare
 // =====================
 // If the gang's minimum clash win chance is under this threshold, disengage in warfare to avoid losses
@@ -60,8 +58,8 @@ export const wantedGainRaiseMax = 1;
 
 // Gang Equipment
 // =====================
-// Limits of the percentage of equipment cost out of the player's money.
-// Note that these don't take into account the current augmentation the gang members have.
+// Limits of the percentage of equipment (augmentations + upgrades) cost out of the player's money.
+// Note that these don't take into account the current augmentations (or upgrades) the gang members have.
 //
 // Buy equipment:
 // User didn't ask to buy equipment, but the percentage is lower than min
