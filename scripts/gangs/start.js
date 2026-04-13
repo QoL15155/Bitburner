@@ -1,14 +1,18 @@
 import { BuyLimits, scriptHackingGang } from "./constants.js";
-import { shouldBuy, writeGangEquipment, writeGangTasks } from "./utils.js";
+import {
+  shouldBuyEquipment,
+  writeGangEquipment,
+  writeGangTasks,
+} from "./utils.js";
 import { Color, printError, toGreen } from "/utils/print.js";
 
 // Arguments
 const argBuyAugmentations = "buy-augmentations";
-const argBuyEquipment = "buy-equipment";
+const argBuyUpgrades = "buy-upgrades";
 const argOverrideFocus = "override-focus";
 
 const paramBuyAugmentations = `--${argBuyAugmentations}`;
-const paramBuyEquipment = `--${argBuyEquipment}`;
+const paramBuyUpgrades = `--${argBuyUpgrades}`;
 const paramOverrideFocus = `--${argOverrideFocus}`;
 
 /**
@@ -17,7 +21,7 @@ const paramOverrideFocus = `--${argOverrideFocus}`;
  * - Tasks
  *          Write tasks info to a json file.
  * - Equipment
- *         Write equipment info to a json file.
+ *          Write equipment (augmentations + upgrades) info to a json file.
  * - Gang Members
  *          Calls ongoing script to manage gang members' tasks and wanted level,
  *          and recruit new members when possible.
@@ -35,7 +39,7 @@ async function startGangManagement(ns, args) {
   const overrideFocus = args[argOverrideFocus];
 
   const gangInformation = ns.gang.getGangInformation();
-  // Write tasks and equipment info to a json file for other scripts to use.
+  // Write tasks info to a json file for other scripts to use.
   // use gang's actual type (before potential override)
   writeGangTasks(ns, gangInformation.isHacking);
 
@@ -47,7 +51,7 @@ async function startGangManagement(ns, args) {
     ns.gang.setTerritoryWarfare(false);
   }
 
-  const { buyAugmentations, buyEquipment } = await processBuyingOptions(
+  const { buyAugmentations, buyUpgrades } = await processBuyingOptions(
     ns,
     isHackingGang,
     args,
@@ -61,8 +65,8 @@ async function startGangManagement(ns, args) {
   if (buyAugmentations) {
     additionalArguments.push(paramBuyAugmentations);
   }
-  if (buyEquipment) {
-    additionalArguments.push(paramBuyEquipment);
+  if (buyUpgrades) {
+    additionalArguments.push(paramBuyUpgrades);
   }
   if (overrideFocus) {
     additionalArguments.push(paramOverrideFocus);
@@ -77,13 +81,14 @@ async function startGangManagement(ns, args) {
 }
 
 /**
- * Checks if we should buy augmentations or equipment.
+ * Writes gang equipment info to a json file for other scripts to use.
+ * Checks if we should buy augmentations or upgrades.
  * The calculations here are a rough estimate of whether the player has enough money.
  *
  * @param {NS} ns
  * @param {boolean} isHackingGang
  * @param {Object} args - the arguments passed to the script, parsed by ns.flags
- * @returns {Promise<{buyAugmentations: boolean, buyEquipment: boolean}>}
+ * @returns {Promise<{buyAugmentations: boolean, buyUpgrades: boolean}>}
  */
 async function processBuyingOptions(ns, isHackingGang, args) {
   const equipment = writeGangEquipment(ns);
@@ -92,27 +97,27 @@ async function processBuyingOptions(ns, isHackingGang, args) {
   const costAugmentations = isHackingGang
     ? equipment.augmentationsCosts.hacking
     : equipment.augmentationsCosts.combat;
-  const buyAugmentations = await shouldBuy(
+  const buyAugmentations = await shouldBuyEquipment(
     ns,
     costAugmentations,
     BuyLimits.augmentations,
-    args[argBuyAugmentations] || args[argBuyEquipment],
+    args[argBuyAugmentations] || args[argBuyUpgrades],
   );
 
-  // Equipment
-  const costEquipment = isHackingGang
-    ? equipment.regularCosts.hacking
-    : equipment.regularCosts.combat;
-  const buyEquipment = await shouldBuy(
+  // Upgrades
+  const costUpgrades = isHackingGang
+    ? equipment.upgradesCosts.hacking
+    : equipment.upgradesCosts.combat;
+  const buyUpgrades = await shouldBuyEquipment(
     ns,
-    costEquipment,
-    BuyLimits.equipment,
-    args[argBuyEquipment],
+    costUpgrades,
+    BuyLimits.upgrades,
+    args[argBuyUpgrades],
   );
 
   return {
     buyAugmentations,
-    buyEquipment,
+    buyUpgrades,
   };
 }
 
@@ -173,7 +178,7 @@ function printUsage(ns) {
     `  ${toGreen("--buy-augmentations")}  Buy augmentations for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--buy-equipment")}      Buy equipment (and augmentations) for gang members.`,
+    `  ${toGreen("--buy-upgrades")}      Buy upgrades (and augmentations) for gang members.`,
   );
   ns.tprint(
     `  ${toGreen("--override-focus")}     Override gang's type and focus (hacking->combat, combat->hacking).`,
@@ -193,7 +198,7 @@ export function autocomplete(data, args) {
   const options = ["-k", "--kill"];
   const moreOptions = [
     paramBuyAugmentations,
-    paramBuyEquipment,
+    paramBuyUpgrades,
     paramOverrideFocus,
   ];
 
@@ -207,7 +212,7 @@ export async function main(ns) {
     ["kill", false],
     ["k", false],
     [argBuyAugmentations, false],
-    [argBuyEquipment, false],
+    [argBuyUpgrades, false],
     [argOverrideFocus, false],
   ]);
   if (args.help || args.h) {

@@ -6,6 +6,13 @@
 
 export const memberNamePrefix = "Keves";
 
+const maxAscensionLevel = 25;
+
+// Gang Warfare
+// =====================
+// If the gang's minimum clash win chance is under this threshold, disengage in warfare to avoid losses
+export const clashWinChanceThreshold = 0.7;
+
 //#region File names
 
 export const scriptHackingGang = "gangs/hacking_gang.js";
@@ -22,14 +29,6 @@ export const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
 export const equipmentJsonFilename = "data/gang_equipment.json";
 
 //#endregion File names
-
-/**
- * Recommended number of ethical members in a hacking gang until it is formed.
- * This is to maintain a balance between respect gain and wanted level gain.
- */
-export const normalEthicalMembers = 2;
-
-const maxAscensionLevel = 25;
 
 //#region Wanted Level
 
@@ -67,11 +66,11 @@ export const wantedGainRaiseMax = 1;
 // Buy equipment:
 // User didn't ask to buy equipment, but the percentage is lower than min
 const minAugmentationsCostPercent = 0.01;
-const minEquipmentCostPercent = 0.0001;
+const minUpgradesCostPercent = 0.0001;
 // Don't buy equipment:
 // User asked to buy equipment, but the percentage is higher than max
 const maxAugmentationsCostPercent = 0.1;
-const maxEquipmentCostPercent = 0.001;
+const maxUpgradesCostPercent = 0.001;
 
 export const BuyLimits = {
   augmentations: {
@@ -79,19 +78,14 @@ export const BuyLimits = {
     minCostPercent: minAugmentationsCostPercent,
     maxCostPercent: maxAugmentationsCostPercent,
   },
-  equipment: {
-    type: "Equipment",
-    minCostPercent: minEquipmentCostPercent,
-    maxCostPercent: maxEquipmentCostPercent,
+  upgrades: {
+    type: "Upgrades",
+    minCostPercent: minUpgradesCostPercent,
+    maxCostPercent: maxUpgradesCostPercent,
   },
 };
 
 //#endregion Equipment
-
-// Gang Warfare
-// =====================
-// If the gang's minimum clash win chance is under this threshold, disengage in warfare to avoid losses
-export const clashWinChanceThreshold = 0.7;
 
 //#region Focus&Tasks
 
@@ -106,6 +100,12 @@ export const GangFocus = Object.freeze({
   MONEY: "Money",
   COMBAT: "Combat",
 });
+
+/**
+ * Recommended number of ethical members in a hacking gang until it is formed.
+ * This is to maintain a balance between respect gain and wanted level gain.
+ */
+export const normalEthicalMembers = 2;
 
 const allTrainingTasks = ["Train Hacking", "Train Charisma", "Train Combat"];
 const allEthicalTasks = ["Ethical Hacking", "Vigilante Justice"];

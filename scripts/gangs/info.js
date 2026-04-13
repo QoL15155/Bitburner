@@ -112,7 +112,7 @@ function printGangEquipmentType(ns, name, colorMain, colorSub, equipment) {
 function printGangEquipment(ns) {
   const equipment = getGangEquipmentInformation(ns);
   const augmentations = equipment.augmentations;
-  const regular = equipment.regular;
+  const upgrades = equipment.upgrades;
 
   printGangEquipmentType(
     ns,
@@ -123,10 +123,10 @@ function printGangEquipment(ns) {
   );
   printGangEquipmentType(
     ns,
-    "Regular Equipment",
+    "Upgrades",
     Color.FgMagentaBright,
     Color.FgMagenta,
-    regular,
+    upgrades,
   );
 
   ns.tprint("");
