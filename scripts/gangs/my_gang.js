@@ -63,9 +63,9 @@ export class MyGang {
   #buyAugmentations = false;
   /** @type {boolean} */
   #buyUpgrades = false;
-  /** @type {GangEquipmentInfo[]} */
+  /** @type {GangEquipmentInfo[] | null} */
   #augmentationsList = null;
-  /** @type {GangEquipmentInfo[]} */
+  /** @type {GangEquipmentInfo[] | null} */
   #upgradesList = null;
 
   /**
@@ -638,7 +638,7 @@ export class MyGang {
    * Buys equipment for a gang member. Can be used for both augmentations and upgrades.
    * @param {string} memberName - the name of the gang member to buy equipment for
    * @param {GangEquipmentInfo[]} equipmentList - equipment items to buy
-   * @param {string} type - type of equipment (Augmentation or Upgrade)
+   * @param {"Augmentations"|"Upgrades"} type - type of equipment to buy
    */
   #buyEquipment(memberName, equipmentList, type) {
     const fname = "MyGang.#buyEquipment";
