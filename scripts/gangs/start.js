@@ -39,7 +39,6 @@ async function startGangManagement(ns, args) {
   const overrideFocus = args[argOverrideFocus];
 
   const gangInformation = ns.gang.getGangInformation();
-  // Write tasks info to a json file for other scripts to use.
   // use gang's actual type (before potential override)
   writeGangTasks(ns, gangInformation.isHacking);
 

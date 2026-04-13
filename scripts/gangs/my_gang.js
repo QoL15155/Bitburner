@@ -618,7 +618,7 @@ export class MyGang {
         member.augmentations.includes(augmentation.name) === false,
     );
 
-    this.#buyEquipment(member.name, augmentationsToBuy, "Augmentation");
+    this.#buyEquipment(member.name, augmentationsToBuy, "Augmentations");
   }
 
   /** @param {GangMemberInfo} member */
