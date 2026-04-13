@@ -267,7 +267,8 @@ export class MyGang {
         throw new Error(`Failed to ascend member '${memberName}'.`);
       }
 
-      this.#buyEquipmentForMember(memberInfo);
+      const memberAfterAscend = this.#ns.gang.getMemberInformation(memberName);
+      this.#buyEquipmentForMember(memberAfterAscend);
     }
   }
 
