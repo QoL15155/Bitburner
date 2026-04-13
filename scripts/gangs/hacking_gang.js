@@ -697,21 +697,21 @@ function initializeTasks(ns, isHackingGang) {
  * @param {boolean} isHackingGang - Hacking / Combat gang
  * @param {string[]} gangMemberNames - Array of current gang member names.
  * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
- * @param {boolean} buyEquipment - Whether to buy equipment for gang members.
+ * @param {boolean} buyUpgrades - Whether to buy upgrades for gang members.
  */
 async function initializeGang(
   ns,
   isHackingGang,
   gangMemberNames,
   buyAugmentations,
-  buyEquipment,
+  buyUpgrades,
 ) {
   myGang = new MyGang(
     ns,
     isHackingGang,
     gangMemberNames,
     buyAugmentations,
-    buyEquipment,
+    buyUpgrades,
   );
   myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
 
@@ -745,7 +745,7 @@ function printUsage(ns) {
     `  ${toGreen("--buy-augmentations")}    - Buy augmentations for gang members. `,
   );
   ns.tprint(
-    `  ${toGreen("--buy-equipment")}        - Buy equipment (and augmentations) for gang members.`,
+    `  ${toGreen("--buy-upgrades")}        - Buy upgrades (and augmentations) for gang members.`,
   );
   ns.tprint(
     `  ${toGreen("--override-focus")}       - Override gang's type and focus (hacking->combat, combat->hacking).`,
@@ -763,7 +763,7 @@ function printUsage(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--buy-augmentations", "--buy-equipment"];
+  const options = ["--buy-augmentations", "--buy-upgrades"];
   const focusOptions = ["--override-focus"];
 
   return [...defaultOptions, ...options, ...focusOptions];
@@ -775,7 +775,7 @@ export async function main(ns) {
     ["help", false],
     ["h", false],
     ["buy-augmentations", false],
-    ["buy-equipment", false],
+    ["buy-upgrades", false],
     ["override-focus", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
@@ -799,14 +799,14 @@ export async function main(ns) {
   const gangMemberNames = JSON.parse(args._[0]);
   // Toggle gang type when the override flag is set
   isHackingGang = args["override-focus"] ? !isHackingGang : isHackingGang;
-  const buyAugmentations = args["buy-augmentations"] || args["buy-equipment"];
+  const buyAugmentations = args["buy-augmentations"] || args["buy-upgrades"];
 
   await initializeGang(
     ns,
     isHackingGang,
     gangMemberNames,
     buyAugmentations,
-    args["buy-equipment"],
+    args["buy-upgrades"],
   );
 
   await manageGang(ns);

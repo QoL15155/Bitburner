@@ -95,8 +95,8 @@ export function readGangTasks(ns, isHackingGang) {
  * To be used to write gang equipment to a json file and for gang information script.
  */
 export function getGangEquipmentInformation(ns) {
-  let augmentations = { hacking: [], combat: [] };
-  let regular = { hacking: [], combat: [] };
+  let augmentationsObj = { hacking: [], combat: [] };
+  let upgradesObj = { hacking: [], combat: [] };
 
   // Add equipment by type
   for (const equipmentName of ns.gang.getEquipmentNames()) {
@@ -112,15 +112,15 @@ export function getGangEquipmentInformation(ns) {
 
     if (type === "Augmentation") {
       if (equipmentStats["hack"]) {
-        augmentations.hacking.push(equipmentInfo);
+        augmentationsObj.hacking.push(equipmentInfo);
       } else {
-        augmentations.combat.push(equipmentInfo);
+        augmentationsObj.combat.push(equipmentInfo);
       }
     } else {
       if (equipmentStats["hack"]) {
-        regular.hacking.push(equipmentInfo);
+        upgradesObj.hacking.push(equipmentInfo);
       } else {
-        regular.combat.push(equipmentInfo);
+        upgradesObj.combat.push(equipmentInfo);
       }
     }
   }
@@ -129,21 +129,21 @@ export function getGangEquipmentInformation(ns) {
   function sumCost(equipmentList) {
     return equipmentList.reduce((sum, item) => sum + item.cost, 0);
   }
-  const augmentationsHackingCost = sumCost(augmentations.hacking);
-  const augmentationsCombatCost = sumCost(augmentations.combat);
-  const regularHackingCost = sumCost(regular.hacking);
-  const regularCombatCost = sumCost(regular.combat);
+  const augmentationsHackingCost = sumCost(augmentationsObj.hacking);
+  const augmentationsCombatCost = sumCost(augmentationsObj.combat);
+  const upgradesHackingCost = sumCost(upgradesObj.hacking);
+  const upgradesCombatCost = sumCost(upgradesObj.combat);
 
   const equipment = {
-    augmentations: augmentations,
-    regular: regular,
+    augmentations: augmentationsObj,
+    upgrades: upgradesObj,
     augmentationsCosts: {
       hacking: augmentationsHackingCost,
       combat: augmentationsCombatCost,
     },
-    regularCosts: {
-      hacking: regularHackingCost,
-      combat: regularCombatCost,
+    upgradesCosts: {
+      hacking: upgradesHackingCost,
+      combat: upgradesCombatCost,
     },
   };
   return equipment;
@@ -183,7 +183,7 @@ export function readGangEquipment(ns) {
 }
 
 /**
- * Checks if we should buy equipment type (Augmentation or Equipment)
+ * Checks if we should buy equipment type (Augmentations or Upgrades)
  * The calculations here are a rough estimate of whether the player has enough money.
  *
  * @param {NS} ns
@@ -193,7 +193,7 @@ export function readGangEquipment(ns) {
  * @param {boolean} buyArgument - whether the user asked to buy this type of equipment
  * @returns {Promise<boolean>} true if we should buy this type of equipment, false otherwise
  */
-export async function shouldBuy(ns, cost, buyLimits, buyArgument) {
+export async function shouldBuyEquipment(ns, cost, buyLimits, buyArgument) {
   const playerMoney = ns.getPlayer().money;
   const costPercent = cost / Math.max(1, playerMoney);
 

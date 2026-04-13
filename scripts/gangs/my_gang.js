@@ -59,24 +59,28 @@ export class MyGang {
   #membersWorking = [];
 
   // Equipment
+  /** @type {boolean} */
   #buyAugmentations = false;
-  #buyEquipment = false;
-  #augmentations = null;
-  #equipment = null;
+  /** @type {boolean} */
+  #buyUpgrades = false;
+  /** @type {GangEquipmentInfo[] | null} */
+  #augmentationsList = null;
+  /** @type {GangEquipmentInfo[] | null} */
+  #upgradesList = null;
 
   /**
    * @param {NS} ns
    * @param {boolean} isHackingGang - Whether the gang is focused on hacking (money) or combat (power).
    * @param {string[]} gangMemberNames - Names of the gang members.
    * @param {boolean} buyAugmentations - whether to buy augmentations for gang members when they are available.
-   * @param {boolean} buyEquipment - whether to buy equipment for gang members when it is available.
+   * @param {boolean} buyUpgrades - whether to buy upgrades for gang members when it is available.
    */
   constructor(
     ns,
     isHackingGang,
     gangMemberNames,
     buyAugmentations,
-    buyEquipment,
+    buyUpgrades,
   ) {
     this.#ns = ns;
 
@@ -88,28 +92,28 @@ export class MyGang {
     this.#gangMemberNames = gangMemberNames;
 
     // Equipment
-    if (buyEquipment && !buyAugmentations) {
+    if (buyUpgrades && !buyAugmentations) {
       throw new TypeError(
-        "Buy equipment is set while buy augmentations is not set.",
+        "Buy upgrades is set while buy augmentations is not set.",
       );
     }
 
     this.#buyAugmentations = buyAugmentations;
-    this.#buyEquipment = buyEquipment;
-    if (buyEquipment || buyAugmentations) {
+    this.#buyUpgrades = buyUpgrades;
+    if (buyUpgrades || buyAugmentations) {
       const equipmentByType = readGangEquipment(ns);
       if (isHackingGang) {
-        this.#augmentations = equipmentByType.augmentations.hacking;
-        this.#equipment = equipmentByType.regular.hacking;
+        this.#augmentationsList = equipmentByType.augmentations.hacking;
+        this.#upgradesList = equipmentByType.upgrades.hacking;
       } else {
-        this.#augmentations = equipmentByType.augmentations.combat;
-        this.#equipment = equipmentByType.regular.combat;
+        this.#augmentationsList = equipmentByType.augmentations.combat;
+        this.#upgradesList = equipmentByType.upgrades.combat;
       }
 
       for (const memberName of gangMemberNames) {
         const memberInfo = this.#ns.gang.getMemberInformation(memberName);
         this.#buyAugmentationsForMember(memberInfo);
-        this.#buyEquipmentForMember(memberInfo);
+        this.#buyUpgradesForMember(memberInfo);
       }
     }
   }
@@ -210,10 +214,10 @@ export class MyGang {
     const buyAugmentations = this.#buyAugmentations
       ? toGreen("✅ Buy Augmentations")
       : toRed("❌ Don't buy Augmentations");
-    const buyEquipment = this.#buyEquipment
-      ? toGreen("✅ Buy Equipment")
-      : toRed("❌ Don't buy Equipment");
-    message += `\t${buyAugmentations}, ${buyEquipment}\n`;
+    const buyUpgrades = this.#buyUpgrades
+      ? toGreen("✅ Buy Upgrades")
+      : toRed("❌ Don't buy Upgrades");
+    message += `\t${buyAugmentations}, ${buyUpgrades}\n`;
     message += this.#membersString();
     return message;
   }
@@ -268,7 +272,7 @@ export class MyGang {
       }
 
       const memberAfterAscend = this.#ns.gang.getMemberInformation(memberName);
-      this.#buyEquipmentForMember(memberAfterAscend);
+      this.#buyUpgradesForMember(memberAfterAscend);
     }
   }
 
@@ -327,7 +331,7 @@ export class MyGang {
 
     const memberInfo = this.#ns.gang.getMemberInformation(memberName);
     this.#buyAugmentationsForMember(memberInfo);
-    this.#buyEquipmentForMember(memberInfo);
+    this.#buyUpgradesForMember(memberInfo);
 
     // Log
     const msgRecruited = `Recruited '${toGreen(memberName)}' and assigned '${this.trainingTask}' task`;
@@ -609,34 +613,40 @@ export class MyGang {
       return;
     }
 
-    const augmentationsToBuy = this.#augmentations.filter(
+    const augmentationsToBuy = this.#augmentationsList.filter(
       (augmentation) =>
         member.augmentations.includes(augmentation.name) === false,
     );
 
-    this.#buyForMember(member.name, augmentationsToBuy, "Augmentation");
+    this.#buyEquipment(member.name, augmentationsToBuy, "Augmentations");
   }
 
   /** @param {GangMemberInfo} member */
-  #buyEquipmentForMember(member) {
-    if (!this.#buyEquipment) {
+  #buyUpgradesForMember(member) {
+    if (!this.#buyUpgrades) {
       return;
     }
 
-    const equipmentToBuy = this.#equipment.filter(
-      (equipment) => member.upgrades.includes(equipment.name) === false,
+    const upgradesToBuy = this.#upgradesList.filter(
+      (upgrade) => member.upgrades.includes(upgrade.name) === false,
     );
 
-    this.#buyForMember(member.name, equipmentToBuy, "Equipment");
+    this.#buyEquipment(member.name, upgradesToBuy, "Upgrades");
   }
 
-  #buyForMember(memberName, purchaseList, itemsType) {
-    const fname = `MyGang.buyForMember`;
+  /**
+   * Buys equipment for a gang member. Can be used for both augmentations and upgrades.
+   * @param {string} memberName - the name of the gang member to buy equipment for
+   * @param {GangEquipmentInfo[]} equipmentList - equipment items to buy
+   * @param {"Augmentations"|"Upgrades"} type - type of equipment to buy
+   */
+  #buyEquipment(memberName, equipmentList, type) {
+    const fname = "MyGang.#buyEquipment";
 
     let totalCost = 0;
     let itemsCount = 0;
 
-    for (const item of purchaseList) {
+    for (const item of equipmentList) {
       const name = item.name;
       const result = this.#ns.gang.purchaseEquipment(memberName, name);
       if (!result) {
@@ -644,7 +654,7 @@ export class MyGang {
         const formattedCost = this.#ns.formatNumber(item.cost);
         printLogError(
           this.#ns,
-          `[${fname}] Failed to purchase ${itemsType} for member '${memberName}'.` +
+          `[${fname}] Failed to purchase ${type} for member '${memberName}'.` +
             ` Item name: ${name}, cost: $${formattedCost}.`,
         );
       } else {
@@ -655,7 +665,7 @@ export class MyGang {
 
     if (itemsCount > 0) {
       const formattedCost = this.#ns.formatNumber(totalCost);
-      const msgPurchase = `Member '${toGreen(memberName)}' purchased ${itemsCount} items (${toGreen(itemsType)})`;
+      const msgPurchase = `Member '${toGreen(memberName)}' purchased ${itemsCount} items (${toGreen(type)})`;
       const msgCost = `Total cost: $${formattedCost}.`;
       this.#ns.print(`[${fname}] ${msgPurchase}. ${toGreen(msgCost)}`);
     }
