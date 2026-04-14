@@ -57,7 +57,15 @@ async function startGangManagement(ns, args) {
   );
 
   const gangManagementScript = scriptHackingGang;
-  ns.tprint(`Running ${gangManagementScript}`);
+  const requiredRam = getRequiredRam(
+    ns,
+    gangManagementScript,
+    isHackingGang,
+    buyAugmentations || buyUpgrades,
+  );
+  ns.tprint(
+    `Running ${gangManagementScript} (requires ${ns.formatRam(requiredRam)} RAM)`,
+  );
 
   const gangMembers = JSON.stringify(ns.gang.getMemberNames());
   const additionalArguments = [];
@@ -72,7 +80,7 @@ async function startGangManagement(ns, args) {
   }
   const pid = ns.run(
     gangManagementScript,
-    { threads: 1 },
+    { threads: 1, ramOverride: requiredRam },
     gangMembers,
     ...additionalArguments,
   );
@@ -118,6 +126,27 @@ async function processBuyingOptions(ns, isHackingGang, args) {
     buyAugmentations,
     buyUpgrades,
   };
+}
+
+function getRequiredRam(ns, managementScript, isHackingGang, buyEquipment) {
+  let requiredRam = ns.getScriptRam(managementScript);
+  if (!buyEquipment) {
+    const ramBefore = requiredRam;
+    requiredRam -= ns.getFunctionRamCost("gang.purchaseEquipment");
+    ns.tprint(
+      `INFO Gang management will NOT buy equipment, lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
+    );
+  }
+  if (isHackingGang) {
+    const ramBefore = requiredRam;
+    requiredRam -= ns.getFunctionRamCost("gang.setTerritoryWarfare");
+    requiredRam -= ns.getFunctionRamCost("gang.getOtherGangInformation");
+    requiredRam -= ns.getFunctionRamCost("gang.getMemberNames");
+    ns.tprint(
+      `INFO Hacking Gang - remove Combat gang functions from RAM calculations. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
+    );
+  }
+  return requiredRam;
 }
 
 /**
