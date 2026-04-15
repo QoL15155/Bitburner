@@ -728,12 +728,13 @@ function printUsage(ns) {
   const optionOptions = `${Color.Italic}OPTIONS${Color.Reset}`;
   ns.tprint(`Usage: ${usageMessage} [${optionMembers}] [${optionOptions}]`);
   ns.tprint("");
-  ns.tprint("Hacking Gang Management");
+  ns.tprint("Gang Management");
   ns.tprint("=============================");
-  ns.tprint("Manages a Hacking Gang members and their tasks.");
+  ns.tprint("Manages a Gang's members and their tasks.");
   ns.tprint(
-    "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
+    "Automatically recruits new members, ascends them when possible, buys equipment, and assigns them to the appropriate tasks.",
   );
+  ns.tprint("For Combat Gangs, also manages territory warfare.");
   ns.tprint("");
   ns.tprint(
     "Note: the gang type is defaulted to Hacking regardless of the actual gang type.",
