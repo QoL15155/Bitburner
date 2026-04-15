@@ -590,19 +590,19 @@ export class MyGang {
     this.#recruitNewMembers();
 
     const gangInformation = this.#ns.gang.getGangInformation();
-    const respectForNextRecruit = gangInformation["respectForNextRecruit"];
+    const goalRespect = gangInformation["respectForNextRecruit"];
     const currentRespect = gangInformation["respect"];
 
-    if (respectForNextRecruit === Infinity) {
+    if (goalRespect === Infinity) {
       // All members have been recruited
       this.#stopRecruit();
       return;
     }
 
     // Check if should wait for ascend
-    const respectNeeded = respectForNextRecruit - currentRespect;
+    const respectNeeded = goalRespect - currentRespect;
     if (respectNeeded <= 0) {
-      const fmtRespectRequired = this.#ns.formatNumber(respectForNextRecruit);
+      const fmtRespectRequired = this.#ns.formatNumber(goalRespect);
       const fmtCurrentRespect = this.#ns.formatNumber(currentRespect);
       const message =
         `Respect requirement met but failed to recruit new member. ` +

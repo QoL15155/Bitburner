@@ -63,6 +63,7 @@ async function startGangManagement(ns, args) {
   const requiredRam = getRequiredRam(
     ns,
     gangManagementScript,
+    gangInformation["respectForNextRecruit"] !== Infinity,
     isHackingGang || args[argSkipWarfare],
     buyAugmentations || buyUpgrades,
   );
@@ -153,7 +154,13 @@ async function processBuyingOptions(ns, isHackingGang, args) {
   };
 }
 
-function getRequiredRam(ns, managementScript, skipWarfare, buyEquipment) {
+function getRequiredRam(
+  ns,
+  managementScript,
+  isRecruiting,
+  skipWarfare,
+  buyEquipment,
+) {
   let requiredRam = ns.getScriptRam(managementScript);
   if (!buyEquipment) {
     const ramBefore = requiredRam;
@@ -169,6 +176,14 @@ function getRequiredRam(ns, managementScript, skipWarfare, buyEquipment) {
     requiredRam -= ns.getFunctionRamCost("gang.getMemberNames");
     ns.tprint(
       `INFO - Skipping Territory Warfare. Lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
+    );
+  }
+
+  if (skipWarfare && !isRecruiting) {
+    const ramBefore = requiredRam;
+    requiredRam -= ns.getFunctionRamCost("gang.recruitMember");
+    ns.tprint(
+      `INFO - Skipping recruiting (already have max members). Lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
     );
   }
   // round up to 2 decimals to avoid issues with very small differences in RAM requirements
