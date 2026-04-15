@@ -640,7 +640,7 @@ async function manageGang(ns) {
     myGang.shouldWaitAscend = false;
     myGang.sanityCheckMembers();
 
-    if (myGang.focus === GangFocus.COMBAT) {
+    if (myGang.focus === GangFocus.COMBAT && !myGang.skipWarfare) {
       handleWarfare(ns);
     }
 
@@ -699,6 +699,7 @@ function initializeTasks(ns, isHackingGang) {
  * @param {string[]} gangMemberNames - Array of current gang member names.
  * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
  * @param {boolean} buyUpgrades - Whether to buy upgrades for gang members.
+ * @param {boolean} skipWarfare - Whether to skip Territory Warfare management (only affects combat gangs).
  */
 async function initializeGang(
   ns,
@@ -706,6 +707,7 @@ async function initializeGang(
   gangMemberNames,
   buyAugmentations,
   buyUpgrades,
+  skipWarfare,
 ) {
   myGang = new MyGang(
     ns,
@@ -713,6 +715,7 @@ async function initializeGang(
     gangMemberNames,
     buyAugmentations,
     buyUpgrades,
+    skipWarfare,
   );
   myGang.memberNames.forEach((memberName) => sortMemberByTask(ns, memberName));
 
@@ -756,6 +759,9 @@ function printUsage(ns) {
   ns.tprint(
     `  ${toGreen("--is-combat-gang")}        Combat gang (default is Hacking gang type).`,
   );
+  ns.tprint(
+    `  ${toGreen("--skip-warfare")}          Skip Territory Warfare management (only affects combat gangs).`,
+  );
   ns.tprint("");
   ns.tprint(
     `${Color.FgYellow}⚠ Should be run by 'gangs/start.js' script${Color.Reset}`,
@@ -770,7 +776,7 @@ function printUsage(ns) {
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
   const buyingOptions = ["--buy-augmentations", "--buy-upgrades"];
-  const gangOptions = ["--is-combat-gang"];
+  const gangOptions = ["--is-combat-gang", "--skip-warfare"];
 
   return [...defaultOptions, ...buyingOptions, ...gangOptions];
 }
@@ -783,6 +789,7 @@ export async function main(ns) {
     ["buy-augmentations", false],
     ["buy-upgrades", false],
     ["is-combat-gang", false],
+    ["skip-warfare", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
     printUsage(ns);
@@ -811,6 +818,7 @@ export async function main(ns) {
     gangMemberNames,
     buyAugmentations,
     args["buy-upgrades"],
+    args["skip-warfare"],
   );
 
   await manageGang(ns);

@@ -10,10 +10,12 @@ import { Color, printError, toGreen } from "/utils/print.js";
 const argBuyAugmentations = "buy-augmentations";
 const argBuyUpgrades = "buy-upgrades";
 const argOverrideFocus = "override-focus";
+const argSkipWarfare = "skip-warfare";
 
 const paramBuyAugmentations = `--${argBuyAugmentations}`;
 const paramBuyUpgrades = `--${argBuyUpgrades}`;
 const paramOverrideFocus = `--${argOverrideFocus}`;
+const paramSkipWarfare = `--${argSkipWarfare}`;
 // for management script
 const paramIsCombatGang = `--is-combat-gang`;
 
@@ -61,7 +63,7 @@ async function startGangManagement(ns, args) {
   const requiredRam = getRequiredRam(
     ns,
     gangManagementScript,
-    isHackingGang,
+    isHackingGang || args[argSkipWarfare],
     buyAugmentations || buyUpgrades,
   );
   ns.tprint(
@@ -78,6 +80,9 @@ async function startGangManagement(ns, args) {
   }
   if (!isHackingGang) {
     additionalArguments.push(paramIsCombatGang);
+  }
+  if (args[argSkipWarfare]) {
+    additionalArguments.push(paramSkipWarfare);
   }
   const pid = ns.run(
     gangManagementScript,
@@ -148,22 +153,22 @@ async function processBuyingOptions(ns, isHackingGang, args) {
   };
 }
 
-function getRequiredRam(ns, managementScript, isHackingGang, buyEquipment) {
+function getRequiredRam(ns, managementScript, skipWarfare, buyEquipment) {
   let requiredRam = ns.getScriptRam(managementScript);
   if (!buyEquipment) {
     const ramBefore = requiredRam;
     requiredRam -= ns.getFunctionRamCost("gang.purchaseEquipment");
     ns.tprint(
-      `INFO Gang management will NOT buy equipment, lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
+      `INFO - Gang management will NOT buy equipment. Lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
     );
   }
-  if (isHackingGang) {
+  if (skipWarfare) {
     const ramBefore = requiredRam;
     requiredRam -= ns.getFunctionRamCost("gang.setTerritoryWarfare");
     requiredRam -= ns.getFunctionRamCost("gang.getOtherGangInformation");
     requiredRam -= ns.getFunctionRamCost("gang.getMemberNames");
     ns.tprint(
-      `INFO Hacking Gang - remove Combat gang functions from RAM calculations. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
+      `INFO - Skipping Territory Warfare. Lower RAM requirements. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
     );
   }
   // round up to 2 decimals to avoid issues with very small differences in RAM requirements
@@ -185,25 +190,27 @@ function handleRunningScript(ns, scriptName, toKill) {
 
   // Script is already running
   if (!toKill) {
-    ns.tprint(`WARN Script ${scriptName} is already running. SKIPPING...`);
+    ns.tprint(`WARN - Script ${scriptName} is already running. SKIPPING...`);
     return false;
   }
 
   const killResult = ns.scriptKill(scriptName, "home");
 
   if (!killResult) {
-    ns.tprint(`ERROR Failed to kill already running script ${scriptName}.`);
+    ns.tprint(`ERROR - Failed to kill already running script ${scriptName}.`);
     return false;
   }
 
   if (ns.scriptRunning(scriptName, "home")) {
     ns.tprint(
-      `ERROR Even after killing, script ${scriptName} is still running.`,
+      `ERROR - Even after killing, script ${scriptName} is still running.`,
     );
     return false;
   }
 
-  ns.tprint(`Killed already running script ${scriptName}. Restarting...`);
+  ns.tprint(
+    `INFO - Killed already running script ${scriptName}. Restarting...`,
+  );
   return true;
 }
 
@@ -231,6 +238,9 @@ function printUsage(ns) {
   );
   ns.tprint(
     `  ${toGreen("--override-focus")}       Override gang's type and focus (hacking->combat, combat->hacking).`,
+  );
+  ns.tprint(
+    `  ${toGreen("--skip-warfare")}         Skip Territory Warfare management (only affects combat gangs).`,
   );
   ns.tprint(
     `  ${toGreen("--kill, -k")}             Kill currently running gang management script.`,
@@ -263,6 +273,7 @@ export async function main(ns) {
     [argBuyAugmentations, false],
     [argBuyUpgrades, false],
     [argOverrideFocus, false],
+    [argSkipWarfare, false],
   ]);
   if (args.help || args.h) {
     printUsage(ns);

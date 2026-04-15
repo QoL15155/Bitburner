@@ -27,6 +27,12 @@ export class MyGang {
    * @const {GangFocus}
    */
   #gangType = null;
+  /**
+   * Whether to skip Territory Warfare management.
+   * Only affects combat gangs, as hacking gangs should always skip warfare.
+   * @const {boolean} */
+  #skipWarfare = false;
+
   /** @const {string} */
   #defaultTrainingTask = null;
   /** @const {string} */
@@ -74,6 +80,7 @@ export class MyGang {
    * @param {string[]} gangMemberNames - Names of the gang members.
    * @param {boolean} buyAugmentations - whether to buy augmentations for gang members when they are available.
    * @param {boolean} buyUpgrades - whether to buy upgrades for gang members when it is available.
+   * @param {boolean} skipWarfare - whether to skip Territory Warfare management (only affects combat gangs).
    */
   constructor(
     ns,
@@ -81,11 +88,13 @@ export class MyGang {
     gangMemberNames,
     buyAugmentations,
     buyUpgrades,
+    skipWarfare,
   ) {
     this.#ns = ns;
 
     // Focus
     this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.COMBAT;
+    this.#skipWarfare = skipWarfare;
     this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
