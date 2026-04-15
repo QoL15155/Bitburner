@@ -27,6 +27,12 @@ export class MyGang {
    * @const {GangFocus}
    */
   #gangType = null;
+  /**
+   * Whether to skip Territory Warfare management.
+   * Only affects combat gangs, as hacking gangs should always skip warfare.
+   * @const {boolean} */
+  #skipWarfare = false;
+
   /** @const {string} */
   #defaultTrainingTask = null;
   /** @const {string} */
@@ -74,6 +80,7 @@ export class MyGang {
    * @param {string[]} gangMemberNames - Names of the gang members.
    * @param {boolean} buyAugmentations - whether to buy augmentations for gang members when they are available.
    * @param {boolean} buyUpgrades - whether to buy upgrades for gang members when it is available.
+   * @param {boolean} skipWarfare - whether to skip Territory Warfare management (only affects combat gangs).
    */
   constructor(
     ns,
@@ -81,11 +88,13 @@ export class MyGang {
     gangMemberNames,
     buyAugmentations,
     buyUpgrades,
+    skipWarfare,
   ) {
     this.#ns = ns;
 
     // Focus
     this.#gangType = isHackingGang ? GangFocus.MONEY : GangFocus.COMBAT;
+    this.#skipWarfare = skipWarfare;
     this.#defaultTrainingTask = getGangTrainingTask(this.#gangType);
     this.#defaultEthicalTask = getGangEthicalTask(this.#gangType);
 
@@ -126,6 +135,10 @@ export class MyGang {
 
   get focus() {
     return this.#focus;
+  }
+
+  get skipWarfare() {
+    return this.#skipWarfare;
   }
 
   get trainingTask() {
@@ -474,7 +487,8 @@ export class MyGang {
     this.#ns.print(`[${fname}] ${toMagenta("Recruiting new gang members")}`);
   }
 
-  /** Removes killed members from the gang and start recruiting new members.
+  /**
+   * Removes killed members from the gang and start recruiting new members.
    *
    * @param {string[]} memberNames - Members that were killed in combat.
    */
@@ -576,19 +590,19 @@ export class MyGang {
     this.#recruitNewMembers();
 
     const gangInformation = this.#ns.gang.getGangInformation();
-    const respectForNextRecruit = gangInformation["respectForNextRecruit"];
+    const goalRespect = gangInformation["respectForNextRecruit"];
     const currentRespect = gangInformation["respect"];
 
-    if (respectForNextRecruit === Infinity) {
+    if (goalRespect === Infinity) {
       // All members have been recruited
       this.#stopRecruit();
       return;
     }
 
     // Check if should wait for ascend
-    const respectNeeded = respectForNextRecruit - currentRespect;
+    const respectNeeded = goalRespect - currentRespect;
     if (respectNeeded <= 0) {
-      const fmtRespectRequired = this.#ns.formatNumber(respectForNextRecruit);
+      const fmtRespectRequired = this.#ns.formatNumber(goalRespect);
       const fmtCurrentRespect = this.#ns.formatNumber(currentRespect);
       const message =
         `Respect requirement met but failed to recruit new member. ` +
