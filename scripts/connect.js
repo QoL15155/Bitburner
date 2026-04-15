@@ -1,4 +1,4 @@
-import { scanHost, runTerminalCommand } from "./utils/servers.js";
+import { runTerminalCommand, scanHost } from "./utils/servers.js";
 
 /**
  * @param {AutocompleteData} data - context about the game, useful when autocompleting
@@ -106,6 +106,5 @@ export async function connectToServer(ns, serverName) {
   const connectCommand = path.join(connectString);
   ns.printf(`Executing: ${connectCommand}`);
 
-  await runTerminalCommand(ns, connectCommand);
-  return true;
+  return runTerminalCommand(ns, connectCommand);
 }
