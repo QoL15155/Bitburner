@@ -31,21 +31,29 @@ async function processBackdoor(ns, server, serverList) {
  * @return {boolean} true if backdoor received, false otherwise
  */
 async function getBackdoor(ns, serverName) {
+  const fname = "getBackdoor";
   let result = hackServer(ns, serverName);
   if (!result) {
-    ns.tprint(`Failed to hack ${serverName}`);
+    const message = `[${fname}] Failed to hack ${serverName}`;
+    ns.tprint(toRed(message));
     return false;
   }
 
   result = await connectToServer(ns, serverName);
   if (!result) {
-    ns.tprint(`Failed to connect to ${serverName}`);
+    const message = `[${fname}] Failed to connect to ${serverName}`;
+    ns.tprint(toRed(message));
     return false;
   }
 
-  await runTerminalCommand(ns, "backdoor");
+  result = await runTerminalCommand(ns, "backdoor");
+  if (!result) {
+    // Probably a UI issue. Write message to terminal
+    const message = `[${fname}] Failed to run backdoor command on ${serverName}. Please try again`;
+    ns.tprint(toRed(message));
+  }
   await runTerminalCommand(ns, "home");
-  return true;
+  return result;
 }
 
 //#endregion Backdoor

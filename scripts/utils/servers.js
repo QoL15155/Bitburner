@@ -219,13 +219,20 @@ export function hackServer(ns, serverName, validate = true) {
 /**
  * Runs a command in terminal
  *
+ * @param {NS} ns
  * @param {string} command : command to run in terminal
+ * @returns {boolean} true if command was executed successfully, false otherwise
  */
 export async function runTerminalCommand(ns, command) {
   // Work around the RAM cost of document
   const doc = eval("document");
   // Acquire a reference to the terminal text field
   const terminalInput = doc.getElementById("terminal-input");
+
+  if (terminalInput === null) {
+    return false;
+  }
+
   // Get a reference to the React event handler.
   const handler = Object.keys(terminalInput)[1];
   //Create an enter press
@@ -244,4 +251,5 @@ export async function runTerminalCommand(ns, command) {
   while (terminalInput.disabled) {
     await ns.sleep(1000);
   }
+  return true;
 }
