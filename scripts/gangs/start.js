@@ -1,4 +1,4 @@
-import { BuyLimits, scriptHackingGang } from "./constants.js";
+import { BuyLimits, scriptGangManage } from "./constants.js";
 import {
   shouldBuyEquipment,
   writeGangEquipment,
@@ -57,7 +57,7 @@ async function startGangManagement(ns, args) {
     args,
   );
 
-  const gangManagementScript = scriptHackingGang;
+  const gangManagementScript = scriptGangManage;
   const requiredRam = getRequiredRam(
     ns,
     gangManagementScript,
@@ -278,7 +278,7 @@ export async function main(ns) {
   }
 
   const toKill = args.kill || args.k;
-  if (!handleRunningScript(ns, scriptHackingGang, toKill)) {
+  if (!handleRunningScript(ns, scriptGangManage, toKill)) {
     return;
   }
 

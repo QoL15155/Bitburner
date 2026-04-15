@@ -13,11 +13,7 @@ export const clashWinChanceThreshold = 0.7;
 
 //#region File names
 
-export const scriptHackingGang = "gangs/hacking_gang.js";
-// TODO: not implemented yet
-export const scriptCombatGang = "gangs/combat_gang.js";
-
-export const recruitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
+export const scriptGangManage = "gangs/manage.js";
 
 // Task lists
 export const tasksJsonHackingFilename = "data/gang_tasks_hacking.json";
@@ -27,6 +23,8 @@ export const tasksJsonCombatFilename = "data/gang_tasks_combat.json";
 export const equipmentJsonFilename = "data/gang_equipment.json";
 
 //#endregion File names
+
+export const recruitmentMaxWaitTimeSeconds = 60 * 5; // 5 minutes
 
 //#region Wanted Level
 
