@@ -694,7 +694,8 @@ function initializeTasks(ns, isHackingGang) {
  * Initializes MyGang and assigns members to their appropriate tasks.
  *
  * @param {NS} ns
- * @param {boolean} isHackingGang - Hacking / Combat gang
+ * @param {boolean} isHackingGang - Hacking / Combat gang type.
+ *            Doesn't necessarily reflect the actual gang type.
  * @param {string[]} gangMemberNames - Array of current gang member names.
  * @param {boolean} buyAugmentations - Whether to buy augmentations for gang members.
  * @param {boolean} buyUpgrades - Whether to buy upgrades for gang members.
@@ -802,7 +803,6 @@ export async function main(ns) {
 
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
-  // Toggle gang type when the override flag is set
   const buyAugmentations = args["buy-augmentations"] || args["buy-upgrades"];
 
   await initializeGang(
