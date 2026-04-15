@@ -259,6 +259,7 @@ export function autocomplete(data, args) {
     paramBuyAugmentations,
     paramBuyUpgrades,
     paramOverrideFocus,
+    paramSkipWarfare,
   ];
 
   return [...defaultOptions, ...options, ...moreOptions];
