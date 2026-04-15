@@ -730,11 +730,15 @@ function printUsage(ns) {
   ns.tprint("");
   ns.tprint("Hacking Gang Management");
   ns.tprint("=============================");
-  ns.tprint("");
   ns.tprint("Manages a Hacking Gang members and their tasks.");
   ns.tprint(
     "Automatically recruits new members, ascends them when possible, and assigns them to the appropriate tasks.",
   );
+  ns.tprint("");
+  ns.tprint(
+    "Note: the gang type is defaulted to Hacking regardless of the actual gang type.",
+  );
+  ns.tprint("This can be overridden with the '--is-combat-gang' flag");
   ns.tprint("");
   ns.tprint("Arguments:");
   ns.tprint(
@@ -742,13 +746,13 @@ function printUsage(ns) {
   );
   ns.tprint("Options:");
   ns.tprint(
-    `  ${toGreen("--buy-augmentations")}    - Buy augmentations for gang members. `,
+    `  ${toGreen("--buy-augmentations")}     Buy augmentations for gang members. `,
   );
   ns.tprint(
-    `  ${toGreen("--buy-upgrades")}        - Buy upgrades (and augmentations) for gang members.`,
+    `  ${toGreen("--buy-upgrades")}          Buy upgrades (and augmentations) for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--override-focus")}       - Override gang's type and focus (hacking->combat, combat->hacking).`,
+    `  ${toGreen("--is-combat-gang")}        Combat gang (default is Hacking gang type).`,
   );
   ns.tprint("");
   ns.tprint(
@@ -763,10 +767,10 @@ function printUsage(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--buy-augmentations", "--buy-upgrades"];
-  const focusOptions = ["--override-focus"];
+  const buyingOptions = ["--buy-augmentations", "--buy-upgrades"];
+  const gangOptions = ["--is-combat-gang"];
 
-  return [...defaultOptions, ...options, ...focusOptions];
+  return [...defaultOptions, ...buyingOptions, ...gangOptions];
 }
 
 /** @param {NS} ns */
@@ -776,7 +780,7 @@ export async function main(ns) {
     ["h", false],
     ["buy-augmentations", false],
     ["buy-upgrades", false],
-    ["override-focus", false],
+    ["is-combat-gang", false],
   ]);
   if (args.help || args.h || args._.length !== 1) {
     printUsage(ns);
@@ -789,8 +793,8 @@ export async function main(ns) {
   ns.ui.setTailTitle("Hacking Gang Management");
   ns.ui.openTail();
 
-  let isHackingGang = ns.gang.getGangInformation().isHacking;
   // Initialize tasks from the json with gang's actual type (before potential override)
+  let isHackingGang = ns.gang.getGangInformation().isHacking;
   if (!initializeTasks(ns, isHackingGang)) {
     return;
   }
@@ -798,12 +802,11 @@ export async function main(ns) {
   // Gang
   const gangMemberNames = JSON.parse(args._[0]);
   // Toggle gang type when the override flag is set
-  isHackingGang = args["override-focus"] ? !isHackingGang : isHackingGang;
   const buyAugmentations = args["buy-augmentations"] || args["buy-upgrades"];
 
   await initializeGang(
     ns,
-    isHackingGang,
+    !args["is-combat-gang"],
     gangMemberNames,
     buyAugmentations,
     args["buy-upgrades"],

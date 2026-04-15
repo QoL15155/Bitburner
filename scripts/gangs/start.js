@@ -14,6 +14,8 @@ const argOverrideFocus = "override-focus";
 const paramBuyAugmentations = `--${argBuyAugmentations}`;
 const paramBuyUpgrades = `--${argBuyUpgrades}`;
 const paramOverrideFocus = `--${argOverrideFocus}`;
+// for management script
+const paramIsCombatGang = `--is-combat-gang`;
 
 /**
  * Arranges the environment for gang management, including:
@@ -43,8 +45,7 @@ async function startGangManagement(ns, args) {
   writeGangTasks(ns, gangInformation.isHacking);
 
   // Toggle gang type if user asked to override
-  let isHackingGang = gangInformation.isHacking;
-  isHackingGang = overrideFocus ? !isHackingGang : isHackingGang;
+  let isHackingGang = getIsHackingGang(ns, gangInformation, overrideFocus);
   if (isHackingGang) {
     ns.tprint("Turning off territory warfare for hacking gang");
     ns.gang.setTerritoryWarfare(false);
@@ -75,8 +76,8 @@ async function startGangManagement(ns, args) {
   if (buyUpgrades) {
     additionalArguments.push(paramBuyUpgrades);
   }
-  if (overrideFocus) {
-    additionalArguments.push(paramOverrideFocus);
+  if (!isHackingGang) {
+    additionalArguments.push(paramIsCombatGang);
   }
   const pid = ns.run(
     gangManagementScript,
@@ -85,6 +86,25 @@ async function startGangManagement(ns, args) {
     ...additionalArguments,
   );
   return pid !== 0;
+}
+
+function getIsHackingGang(ns, gangInformation, overrideFocus) {
+  let isHackingGang = gangInformation.isHacking;
+  isHackingGang = overrideFocus ? !isHackingGang : isHackingGang;
+
+  if (isHackingGang) {
+    return isHackingGang;
+  }
+
+  // Combat gang - but override if territory is 100%
+  if (gangInformation.territory === 1) {
+    ns.tprint(
+      "Combat gang with 100% territory - treating as hacking gang for equipment buying purposes.",
+    );
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -204,16 +224,16 @@ function printUsage(ns) {
   ns.tprint("");
   ns.tprint("Options:");
   ns.tprint(
-    `  ${toGreen("--buy-augmentations")}  Buy augmentations for gang members.`,
+    `  ${toGreen("--buy-augmentations")}    Buy augmentations for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--buy-upgrades")}      Buy upgrades (and augmentations) for gang members.`,
+    `  ${toGreen("--buy-upgrades")}         Buy upgrades (and augmentations) for gang members.`,
   );
   ns.tprint(
-    `  ${toGreen("--override-focus")}     Override gang's type and focus (hacking->combat, combat->hacking).`,
+    `  ${toGreen("--override-focus")}       Override gang's type and focus (hacking->combat, combat->hacking).`,
   );
   ns.tprint(
-    `  ${toGreen("--kill, -k")}           Kill currently running gang management script.`,
+    `  ${toGreen("--kill, -k")}             Kill currently running gang management script.`,
   );
 }
 
