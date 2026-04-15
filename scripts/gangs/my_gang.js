@@ -137,6 +137,10 @@ export class MyGang {
     return this.#focus;
   }
 
+  get skipWarfare() {
+    return this.#skipWarfare;
+  }
+
   get trainingTask() {
     return this.#defaultTrainingTask;
   }
@@ -483,7 +487,8 @@ export class MyGang {
     this.#ns.print(`[${fname}] ${toMagenta("Recruiting new gang members")}`);
   }
 
-  /** Removes killed members from the gang and start recruiting new members.
+  /**
+   * Removes killed members from the gang and start recruiting new members.
    *
    * @param {string[]} memberNames - Members that were killed in combat.
    */
