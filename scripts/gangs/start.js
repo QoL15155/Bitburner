@@ -146,7 +146,8 @@ function getRequiredRam(ns, managementScript, isHackingGang, buyEquipment) {
       `INFO Hacking Gang - remove Combat gang functions from RAM calculations. ${ns.formatRam(ramBefore)} -> ${ns.formatRam(requiredRam)}`,
     );
   }
-  return requiredRam;
+  // round up to 2 decimals to avoid issues with very small differences in RAM requirements
+  return Math.ceil(requiredRam * 100) / 100;
 }
 
 /**
