@@ -1,5 +1,5 @@
 import { connectToServer } from "/connect.js";
-import { printInfo } from "/utils/print.js";
+import { printInfo, toRed } from "/utils/print.js";
 import {
   hackServer,
   importServersData,
@@ -115,6 +115,6 @@ export async function main(ns) {
 
   if (attackedServers > 0) {
     writeServersData(ns, serverList);
-    ns.print("Updated servers data file with backdoor information.");
+    ns.tprint("Updated servers data file with backdoor information.");
   }
 }

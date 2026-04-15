@@ -106,5 +106,5 @@ export async function connectToServer(ns, serverName) {
   const connectCommand = path.join(connectString);
   ns.printf(`Executing: ${connectCommand}`);
 
-  return await runTerminalCommand(ns, connectCommand);
+  return runTerminalCommand(ns, connectCommand);
 }

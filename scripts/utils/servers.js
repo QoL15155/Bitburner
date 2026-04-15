@@ -221,7 +221,7 @@ export function hackServer(ns, serverName, validate = true) {
  *
  * @param {NS} ns
  * @param {string} command : command to run in terminal
- * @returns {boolean} true if command was executed successfully, false otherwise
+ * @returns {Promise<boolean>} true if command was executed successfully, false otherwise
  */
 export async function runTerminalCommand(ns, command) {
   // Work around the RAM cost of document
