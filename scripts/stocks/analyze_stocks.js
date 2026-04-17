@@ -1,4 +1,4 @@
-import { StockInformation } from "./utils.js";
+import { StockInformation } from "./stock_information.js";
 /**
  * Stock Market Analysis utility
  *
