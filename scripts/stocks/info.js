@@ -136,7 +136,7 @@ function printStock(ns, stock) {
 
 function analyzeStocks(ns, stocksInfo) {
   const numberOfStocks = stocksInfo.length;
-  const positiveForecastStocks = stocksInfo.filter((s) => s.forecast > 0.5);
+  const positiveForecastStocks = stocksInfo.filter((s) => s.forecast >= 0.5);
   const negativeForecastStocks = stocksInfo.filter((s) => s.forecast < 0.5);
 
   // Forecast : probability of the stock going up.
@@ -245,7 +245,7 @@ export async function main(ns) {
     return;
   }
 
-  const stocksInfo = getStocksInformation(ns, args.raw);
+  const stocksInfo = getStocksInformation(ns);
 
   analyzeStocks(ns, stocksInfo);
   if (args.raw) {
