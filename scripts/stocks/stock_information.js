@@ -22,7 +22,7 @@ class StockState {
 /**
  * Holds information about a stock
  * Both static information (symbol, organization, max shares)
- * and dynamic information (current price, forecast, volatility, etc.
+ * and dynamic information (current price, forecast, volatility, etc.)
  */
 export class StockInformation {
   /** @const {NS} */
