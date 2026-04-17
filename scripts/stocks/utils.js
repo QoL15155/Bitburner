@@ -127,16 +127,49 @@ export class StockInformation {
       Color.FgYellow,
       10,
     );
+
+    // higher forecast = better
+    const forecastTrend = this.#trendIndicator(
+      this.#prevState?.forecast,
+      this.#currentState.forecast,
+      true,
+    );
+
+    // TODO: see if volatility is const
+    // lower volatility = better
+    const volatilityTrend = this.#trendIndicator(
+      this.#prevState?.volatility,
+      this.#currentState.volatility,
+      false,
+    );
+    // lower price = better (for buying)
+    const priceTrend = this.#trendIndicator(
+      this.#prevState?.price,
+      this.#currentState.price,
+      false,
+    );
+
     const symbolPad = this.#symbol.padEnd(6);
     const orgPad = this.#organization.padEnd(22);
     this.#ns.print(
       `  ${Color.FgCyan}${symbolPad}${Color.Reset} │ ${orgPad} │ ` +
-        `Forecast: ${fmtForecast} │ ` +
-        `Volatility: ${fmtVolatility} │ ` +
-        `Price: ${fmtPrice} │ ` +
-        `Lowest : ${this.#formatPadNumber(this.#lowestPrice, 8)} │ ` +
-        `Highest: ${this.#formatPadNumber(this.#highestPrice, 8)}`,
+        `Volatility: ${fmtVolatility}${volatilityTrend} │ ` +
+        `Forecast: ${fmtForecast}${forecastTrend} │ ` +
+        `Price: ${fmtPrice}${priceTrend} │ ` +
+        `Price Range: ${this.#formatPadNumber(this.#lowestPrice)} - ${this.#formatPadNumber(this.#highestPrice)}`,
     );
+  }
+
+  /** Returns a colored ▲/▼ indicator or space based on value change.
+   * @param {boolean} higherIsBetter - if true, increase = green; if false, decrease = green */
+  #trendIndicator(prev, current, higherIsBetter) {
+    if (prev == null || prev === current) return " ";
+    const increased = current > prev;
+    const isBetter = increased === higherIsBetter;
+    const arrow = increased ? " ▲" : " ▼";
+    return isBetter
+      ? `${Color.FgGreen}${arrow}${Color.Reset}`
+      : `${Color.FgRed}${arrow}${Color.Reset}`;
   }
 
   #formatPercent(value, quality, colorHigh, padLength = 0) {

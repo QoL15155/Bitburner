@@ -43,9 +43,8 @@ async function analyzeStocks(ns) {
  */
 export function autocomplete(data, args) {
   const defaultOptions = ["-h", "--help", "--tail"];
-  const options = ["--raw"];
 
-  return [...defaultOptions, ...options];
+  return [...defaultOptions];
 }
 
 /** @param {NS} ns */
