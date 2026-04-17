@@ -65,5 +65,11 @@ export async function main(ns) {
     return;
   }
 
+  if (!ns.stock.hasTIXAPIAccess() || !ns.stock.has4SDataTIXAPI()) {
+    const message =
+      "You don't have access to the stock market API. Can't analyze stocks.";
+    ns.tprint(toRed(message));
+    return;
+  }
   await analyzeStocks(ns);
 }
