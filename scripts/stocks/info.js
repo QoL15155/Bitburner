@@ -166,7 +166,10 @@ function analyzeStocks(ns, stocksInfo) {
   return sortedStocksInfo;
 }
 
-/** General stock market information */
+/**
+ * General stock market information
+ * @returns {boolean} true if player has access to stocks API
+ */
 function generalInformation(ns) {
   printSectionHeader(ns, "General Stock Market Information");
 
@@ -178,13 +181,20 @@ function generalInformation(ns) {
     `Stock market updates normal time: ${fmtNormalUpdateTime}, bonus time: ${fmtMinUpdateTime}`,
   );
 
+  const hasWSEAccount = ns.stock.hasWSEAccount();
+  const has4SData = ns.stock.has4SData();
+  const hasTIXAPIAccess = ns.stock.hasTIXAPIAccess();
+  const has4SDataTIXAPI = ns.stock.has4SDataTIXAPI();
+
   ns.tprint("API Access:");
-  ns.tprint(formatValue(ns.stock.has4SData(), "4S Data API"));
-  ns.tprint(formatValue(ns.stock.has4SDataTIXAPI(), "4S Data TIX API"));
-  ns.tprint(formatValue(ns.stock.hasTIXAPIAccess(), "TIX API"));
-  ns.tprint(formatValue(ns.stock.hasWSEAccount(), "WSE Account"));
+  ns.tprint(formatValue(hasWSEAccount, "WSE Account"));
+  ns.tprint(formatValue(hasTIXAPIAccess, "TIX API"));
+  ns.tprint(formatValue(has4SData, "4S Data"));
+  ns.tprint(formatValue(has4SDataTIXAPI, "4S Data TIX API"));
 
   ns.tprint("");
+
+  return has4SDataTIXAPI && hasTIXAPIAccess;
 
   function formatValue(isAvailable, value) {
     return isAvailable ? "\t✅ " + toGreen(value) : "\t❌ " + toRed(value);
@@ -225,7 +235,16 @@ export async function main(ns) {
     return;
   }
 
-  generalInformation(ns);
+  const apiAccess = generalInformation(ns);
+  if (!apiAccess) {
+    ns.tprint(
+      toRed(
+        "You don't have access to the stock market API. Can't get stocks information.",
+      ),
+    );
+    return;
+  }
+
   const stocksInfo = getStocksInformation(ns, args.raw);
 
   analyzeStocks(ns, stocksInfo);
