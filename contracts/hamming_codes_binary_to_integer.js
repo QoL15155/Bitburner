@@ -25,229 +25,189 @@ Examples:
 For more information on the 'rule' of encoding, refer to Wikipedia (https://wikipedia.org/wiki/Hamming_code) or the 3Blue1Brown videos on Hamming Codes. (https://youtube.com/watch?v=X8jsijhllIA)
  */
 
+import { printError } from "../utils/print.js";
+
 const Position = {
-    Unknown: -1,
-    Flipped: 0,
-    Good: 1,
-}
-
-/** 
- * If the number is a power of 2, return the power;
- * 
- * @param {int} n: Number to check
- * @return x where `2^x==n`. 0 if n is not a power of 2
- */
-function getPowerOfTwo(n) {
-    if (n == 0)
-        return 0;
-
-    const upper = parseInt(Math.ceil(Math.log(n) / Math.log(2)));
-    const lower = parseInt(Math.floor(Math.log(n) / Math.log(2)));
-    if (upper == lower)
-        return upper;
-    return 0;
-}
-
-function isPartyChecks(num) {
-    num = parseInt(num, 2);
-
-    let onesCount = 0;
-    while (num > 0) {
-        onesCount += (num & 1);
-        num >>= 1;
-    }
-
-    return onesCount % 2 == 0;
-}
+  Unknown: -1,
+  Flipped: 0,
+  Good: 1,
+};
 
 /** @return highest order of 2 */
 function getParityPosition(len) {
-    const powerOf2 = Math.floor(getBaseLog(2, len));
-    return Math.pow(2, powerOf2);
+  const powerOf2 = Math.floor(getBaseLog(2, len));
+  return Math.pow(2, powerOf2);
 
-    function getBaseLog(base, num) {
-        return Math.log(num) / Math.log(base);
-    }
+  function getBaseLog(base, num) {
+    return Math.log(num) / Math.log(base);
+  }
 }
 
-/** 
+/**
  * @returns true when the bit checks out. (to update isFlipped)
-*/
+ */
 function checkParityBit(initialPosition, binaryCode, positionArray, isFlipped) {
-    let positions = [];
+  let positions = [];
 
-    // Count ones
-    const indexAdvance = Math.max(1, 2 * initialPosition);
-    let countOnes = 0;
-    for (let i = initialPosition; i < binaryCode.length; i += indexAdvance) {
-        positions.push(i);
-        countOnes += isOne(i);
+  // Count ones
+  const indexAdvance = Math.max(1, 2 * initialPosition);
+  let countOnes = 0;
+  for (let i = initialPosition; i < binaryCode.length; i += indexAdvance) {
+    positions.push(i);
+    countOnes += isOne(i);
 
-        for (let j = i + 1; j < i + initialPosition && j < binaryCode.length; j++) {
-            positions.push(j);
-            countOnes += isOne(j);
-        }
+    for (let j = i + 1; j < i + initialPosition && j < binaryCode.length; j++) {
+      positions.push(j);
+      countOnes += isOne(j);
     }
+  }
 
-    if (countOnes % 2 == 0) {
-        // Parity checks out. Update corresponding bits
-        // console.log(`PASSED Parity check. Parity: ${initialPosition}. Positions: ${JSON.stringify(positions)}`);
-
-        for (let pos of positions) {
-            // console.log(`Updating position ${pos} to GOOD`);
-            positionArray[pos] = Position.Good;
-        }
-
-        // console.log(`PASSED Parity check. Parity: ${initialPosition}. Positions: ${JSON.stringify(positionArray)}`);
-        return true;
+  if (countOnes % 2 == 0) {
+    // Parity checks out. Update corresponding bits
+    for (let pos of positions) {
+      positionArray[pos] = Position.Good;
     }
+    return true;
+  }
 
-    console.log(`Found fault. Initial position: ${initialPosition}`);
+  // One of the bits have been flipped
 
-    // One of the bits have been flipped
-
-    if (!isFlipped) {
-        // This is the first time we find a faulty position. 
-        // Update 'Flipped' on all relevant positions
-        for (let pos of positions) {
-            if (positionArray[pos] == Position.Unknown) {
-                positionArray[pos] = Position.Flipped;
-            }
-        }
+  if (!isFlipped) {
+    // This is the first time we find a faulty position.
+    // Update 'Flipped' on all relevant positions
+    for (let pos of positions) {
+      if (positionArray[pos] == Position.Unknown) {
+        positionArray[pos] = Position.Flipped;
+      }
     }
+  }
 
-    // We assume there is only one bad parity-bit. So whatever is not in *positions* array should be good.
-    for (let index = 0; index < positionArray.length; index++) {
-        if (positions.indexOf(index) == -1) {
-            // if (positionArray[index] == Position.Unknown) {
-            positionArray[index] = Position.Good;
-        }
+  // We assume there is only one bad parity-bit. So whatever is not in *positions* array should be good.
+  for (let index = 0; index < positionArray.length; index++) {
+    if (positions.indexOf(index) == -1) {
+      // if (positionArray[index] == Position.Unknown) {
+      positionArray[index] = Position.Good;
     }
-    // console.log(`FAIL Parity check. Parity: ${initialPosition}. Positions: ${JSON.stringify(positionArray)}`);
-    return false;
+  }
+  return false;
 
-    function isOne(idx) {
-        return binaryCode[idx] == "1";
-    }
+  function isOne(idx) {
+    return binaryCode[idx] == "1";
+  }
 }
-
 
 function sanitizePositionsArray(positionsArray, wasFaultFound) {
-    let faultCorrected = false;
-    console.log(`Positions array: ${JSON.stringify(positionsArray)} `);
-    for (let idx in positionsArray) {
-        switch (positionsArray[idx]) {
-            case Position.Good:
-                break;
-            case Position.Flipped:
-                if (wasFaultFound) {
-                    if (faultCorrected) {
-                        throw new Error(`More than one fault has been found. Position (${idx}): ${JSON.stringify(positionsArray)}`);
-                    }
-                } else {
-                    throw new Error(`Found a flipped position in an 'un-faulted' code at idx ${idx}`);
-                }
-                faultCorrected = true;
-                break;
-            default:
-                throw new Error(`Unexpected position in positions array: idx: ${idx}, Position: ${positionsArray[idx]}`);
+  let faultCorrected = false;
+  for (let idx in positionsArray) {
+    switch (positionsArray[idx]) {
+      case Position.Good:
+        break;
+      case Position.Flipped:
+        if (wasFaultFound) {
+          if (faultCorrected) {
+            throw new Error(
+              `More than one fault has been found. Position (${idx}): ${JSON.stringify(positionsArray)}`,
+            );
+          }
+        } else {
+          throw new Error(
+            `Found a flipped position in an 'un-faulted' code at idx ${idx}`,
+          );
         }
+        faultCorrected = true;
+        break;
+      default:
+        throw new Error(
+          `Unexpected position in positions array: idx: ${idx}, Position: ${positionsArray[idx]}`,
+        );
     }
+  }
 }
-
 
 function getNumericalValue(binaryCode, positionsArray) {
-    // Read numerical number
-    // let numerical = 0;
-    const initialDataPosition = 3;
-    let parityPosition = 4;  // initial parity position
-    let resultCode = "";
-    for (let idx = initialDataPosition; idx < binaryCode.length; idx++) {
-        if (idx != parityPosition) {
-            // numerical <<= 1;
-            if (positionsArray[idx] == Position.Good) {
-                // numerical += isOne(idx);
-                resultCode += binaryCode[idx]
-            } else {
-                // numerical += !isOne(idx);
-                resultCode += binaryCode[idx] == "1" ? "0" : "1";
-            }
-        } else {
-            // Skip parity position
-            parityPosition *= 2;
-        }
+  // Read numerical number
+  const initialDataPosition = 3;
+  let parityPosition = 4; // initial parity position
+  let resultCode = "";
+  for (let idx = initialDataPosition; idx < binaryCode.length; idx++) {
+    if (idx != parityPosition) {
+      if (positionsArray[idx] == Position.Good) {
+        resultCode += binaryCode[idx];
+      } else {
+        resultCode += binaryCode[idx] == "1" ? "0" : "1";
+      }
+    } else {
+      // Skip parity position
+      parityPosition *= 2;
+    }
+  }
+  resultCode = parseInt(resultCode, 2);
+  return resultCode;
+}
+
+/**
+ * Decodes a binary string encoded with an extended Hamming code and converts it to a decimal value.
+ * If a single bit is found to be altered, it is corrected before decoding.
+ *
+ * Assumes only one bit may be altered.
+ *
+ * @param {string} binaryCode - the encoded binary string to decode
+ * @returns {number} the decoded decimal value
+ */
+export function hammingCodeBinaryToInteger(binaryCode) {
+  let positionsArray = new Array(binaryCode.length).fill(Position.Unknown);
+  const len = binaryCode.length - 1;
+
+  // Check parity bit
+  let parityPosition = getParityPosition(len);
+  let wasFaultFound = false;
+  for (let idx = len; idx >= 0; idx--) {
+    if (parityPosition != idx) {
+      continue;
     }
 
-    resultCode = parseInt(resultCode, 2);
-    return resultCode;
+    const isSuccess = checkParityBit(
+      idx,
+      binaryCode,
+      positionsArray,
+      wasFaultFound,
+    );
+    wasFaultFound |= !isSuccess;
+    parityPosition = Math.floor(parityPosition / 2);
+  }
 
-    // function isOne(idx) {
-    //     return binaryCode[idx] == "1";
-    // }
+  sanitizePositionsArray(positionsArray, wasFaultFound);
+  return getNumericalValue(binaryCode, positionsArray);
 }
 
-// Assumes only one bit may be altered
-function hammingCodeBinaryToInteger(binaryCode) {
-    let positionsArray = new Array(binaryCode.length).fill(Position.Unknown);
-    const len = binaryCode.length - 1;
+function testBinaryToInteger(ns) {
+  let testCase = "11110000";
+  runTest(1, testCase, 8);
 
-    // Check parity bit
-    let parityPosition = getParityPosition(len);
-    let wasFaultFound = false;
-    console.log(`Binary code: ${binaryCode} (${binaryCode.length} bits). Initial Parity: ${parityPosition}`);
-    for (let idx = len; idx >= 0; idx--) {
-        if (parityPosition != idx) {
-            continue;
-        }
+  testCase = "1001101010";
+  runTest(2, testCase, 21);
 
-        const isSuccess = checkParityBit(idx, binaryCode, positionsArray, wasFaultFound);
-        wasFaultFound |= !isSuccess;
-        parityPosition = Math.floor(parityPosition / 2);
+  testCase = "0010100010000000000000011011101111111000001001011110110011101011";
+  runTest(3, testCase, 953418116331);
+
+  function runTest(n, testCase, expected) {
+    const result = hammingCodeBinaryToInteger(testCase);
+    if (result != expected) {
+      printError(
+        ns,
+        `TestCase #${n} failed. Expected ${expected}, got ${result}`,
+      );
+    } else {
+      ns.tprint(`TestCase #${n} passed.`);
     }
-
-    sanitizePositionsArray(positionsArray, wasFaultFound);
-    return getNumericalValue(binaryCode, positionsArray);
+  }
 }
 
-// function testParityCheck(ns) {
-//     const testCase1 = "11110000";
-//     if (isPartyChecks(testCase1) != true) {
-//         printError(ns, "TestCase #1 failed. Expected true");
-//     }
-
-//     const testCase2 = "1001101010";
-//     if (isPartyChecks(testCase2) != false) {
-//         printError(ns, "TestCase #2 failed. Expected false");
-//     }
-// }
-
-function testBinaryToInteger() {
-    let testCase = "11110000";
-    runTest(1, testCase, 8);
-
-    testCase = "1001101010";
-    runTest(2, testCase, 21);
-
-    testCase = "0010100010000000000000011011101111111000001001011110110011101011";
-    runTest(3, testCase, 953418116331);
-
-
-    function runTest(n, testCase, expected) {
-        const result = hammingCodeBinaryToInteger(testCase);
-        if (result != expected) {
-            console.error(`TestCase #${n} failed. Expected ${expected}, got ${result}`);
-        } else {
-            console.log(`TestCase #${n} passed.`);
-        }
-    }
+function test(ns) {
+  testBinaryToInteger(ns);
 }
 
-function test() {
-    // testParityCheck();
-    testBinaryToInteger();
+/** @param {NS} ns */
+export async function main(ns) {
+  test(ns);
 }
-
-
-test();
-
-
