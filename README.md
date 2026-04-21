@@ -26,7 +26,7 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 | Script | Description |
 |---|---|
 | `backdoor_all.js` | Backdoors all accessible servers. |
-| ~~`backdoor.js`~~ | ~~Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.).~~ _deprecated — use `backdoor_all.js`_ |
+| <sub>`backdoor.js`</sub> | <sub>Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.). _deprecated — use `backdoor_all.js`_</sub> |
 | `connect.js` | Connects to a server by navigating the network path from home. |
 | 🚀 **`hello.js`** | **Startup script. Should be run for new machines or after augmentation installation.** |
 | `purchase-servers.js` | Automatically purchases servers and runs a hacking script on them. |
@@ -42,9 +42,9 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 | Script | Description |
 |---|---|
 | 🚀 **`distribute.js`** | **Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. Used in early game.** |
-| ~~`distribute_simple.js`~~ | ~~Simplified version of the distribute script.~~ _deprecated_ |
-| ~~`get_money_now.js`~~ | ~~Single-script hack/grow/weaken loop against a target server.~~ _deprecated_ |
-| ~~`get_money_simple.js`~~ | ~~More efficient version of `get_money_now.js`.~~ _deprecated_ |
+| <sub>`distribute_simple.js`</sub> | <sub>Simplified version of the distribute script. _deprecated_</sub> |
+| <sub>`get_money_now.js`</sub> | <sub>Single-script hack/grow/weaken loop against a target server. _deprecated_</sub> |
+| <sub>`get_money_simple.js`</sub> | <sub>More efficient version of `get_money_now.js`. _deprecated_</sub> |
 
 
 #### Hack/Grow/Weaken scripts
