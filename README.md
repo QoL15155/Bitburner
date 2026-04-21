@@ -20,29 +20,57 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 
 ### Root Scripts
 
+> [!TIP]
+> Run `hello.js` for new machines or after augmentation installation
+
 | Script | Description |
 |---|---|
-| `backdoor.js` | Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.). |
 | `backdoor_all.js` | Backdoors all accessible servers. |
+| `backdoor.js` | Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.). _deprecated_ use `backdoor_all.js` |
 | `connect.js` | Connects to a server by navigating the network path from home. |
-| `distribute.js` | Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. |
+| **`hello.js`** | **Startup script. Should be run for new machines or after augmentation installation.** |
+| `purchase-servers.js` | Automatically purchases servers and runs a hacking script on them. |
+
+#### Information
+| Script | Description |
+|---|---|
+| `money_info.js` | Prints money-related information about servers. |
+| `server_info.js` | Displays information about servers. |
+
+#### Distribution scripts (early game)
+
+| Script | Description |
+|---|---|
+| **`distribute.js`** | Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. |
 | `distribute_simple.js` | Simplified version of the distribute script. |
+| `get_money_now.js` | Single-script hack/grow/weaken loop against a target server. _deprecated_ |
+| `get_money_simple.js` | More efficient version of `get_money_now.js`. _deprecated_ |
+
+
+#### Hack/Grow/Weaken scripts
+
+Used by the distribution scripts
+
+| Script | Description |
+|---|---|
 | `do_hack.js` | Worker script — runs `hack()` against a target server. |
 | `do_grow.js` | Worker script — runs `grow()` against a target server. |
 | `do_weaken.js` | Worker script — runs `weaken()` against a target server. |
-| `get_money_now.js` | Single-script hack/grow/weaken loop against a target server. |
-| `get_money_simple.js` | More efficient version of `get_money_now.js`. |
-| `money_info.js` | Prints money-related information about servers. |
-| `purchase-servers.js` | Automatically purchases servers and runs a hacking script on them. |
-| `server_info.js` | Displays information about servers. |
 | `target_hack.js` / `target_grow.js` / `target_weaken.js` | Targeted single-operation scripts for manual control. |
+
+#### Contracts
+| Script | Description |
+|---|---|
 | `contracts_analyze.js` | Scans all servers for coding contracts and maps them to solver functions. |
 | `contracts_find.js` | Lists all coding contracts found across the network. |
 | `contracts_solve.js` | Finds all solvable coding contracts and automatically submits answers. |
 
 ### `hack/` — Batch Hacking System
 
-A coordinated hack-grow-weaken (HGW) batch attack system.
+A coordinated hack-grow-weaken (HGW) batch attack system. Requires at least 1TB of RAM on _home_ server.
+
+> [!TIP]
+> Run `distribute_batch.js` to start running the batch attack
 
 | File | Description |
 |---|---|
@@ -50,25 +78,40 @@ A coordinated hack-grow-weaken (HGW) batch attack system.
 | `attack_batch.js` | Manages a full HGW batch for a single target, including timing, thread calculation, and execution. |
 | `attack_measurements.js` | Calculates and tracks attack timing measurements. |
 | `attack_result.js` | Tracks and reports the result of an attack batch. |
-| `belief_check.js` | Validates assumptions about server state before launching an attack. |
 | `controller_batch.js` | Orchestrates batch attacks across multiple targets. |
-| `distribute_batch.js` | Distributes batch attack scripts to attacking servers. |
-| `scan_server_issues.js` | Diagnoses issues with servers targeted for hacking. |
+| **`distribute_batch.js`** | **Distributes batch attack scripts to attacking servers.**. Invokes the `controller_batch.js` script. |
 | `utils.js` | Shared utilities for hacking calculations (thread counts, timing, server selection). |
 
+#### Information gathering (for debug)
+| File | Description |
+|---|---|
+| `belief_check.js` | Validates assumptions about server state before launching an attack. |
+| `scan_server_issues.js` | Diagnoses issues with servers targeted for hacking. |
+
 ### `gangs/` — Gang Management
+
+> [!TIP]
+> Once joining a gang, use `start.js` to automatically manage its members.
 
 | File | Description |
 |---|---|
 | `manage.js` | Main gang management controller. |
 | `my_gang.js` | Displays current gang status and member information. |
-| `start.js` | Starts or initializes gang activities. |
-| `rename_members.js` | Renames gang members. |
-| `info.js` | Prints gang and member info. |
+| **`start.js`** | **Starts gang management.**. Invokes the `manage.js` script. |
 | `constants.js` | Gang-related constants. |
 | `utils.js` | Shared gang utilities. |
 
+#### Other utils
+
+| File | Description |
+|---|---|
+| `rename_members.js` | Renames gang members. |
+| `info.js` | Prints gang and member info. |
+
 ### `stocks/` — Stock Market
+
+> [!NOTE]
+> This is still a WIP! Currently only analyzing the stock market
 
 | File | Description |
 |---|---|
@@ -80,22 +123,6 @@ A coordinated hack-grow-weaken (HGW) batch attack system.
 ### `contracts/` — In-Game Contract Solvers
 
 JavaScript implementations of Bitburner coding contract algorithms, run inside the game.
-
-| File | Algorithm |
-|---|---|
-| `algorithmic_stock_trader_1.js` | Maximum profit from one transaction. |
-| `algorithmic_stock_trader_2.js` | Maximum profit from unlimited transactions. |
-| `algorithmic_stock_trader_3.js` | Maximum profit from at most two transactions. |
-| `algorithmic_stock_trader_4.js` | Maximum profit from at most k transactions. |
-| `array_jumping_game.js` | Determine if the end of an array is reachable. |
-| `encryption_I_caesarCipher.js` | Caesar cipher encryption. |
-| `hamming_codes_binary_to_integer.js` | Decode Hamming code to integer. |
-| `largest_prime_factor.js` | Find the largest prime factor of a number. |
-| `merge_overlapping_intervals.js` | Merge overlapping intervals. |
-| `minimum_path_sum_triangle.js` | Find minimum path sum through a triangle. |
-| `square_root.js` | Compute integer square root. |
-| `unique_paths_grid_1.js` | Count unique paths in a grid (no obstacles). |
-| `unique_paths_grid_2.js` | Count unique paths in a grid (with obstacles). |
 
 ### `filesystem/` — File System Utilities
 
@@ -120,18 +147,8 @@ JavaScript implementations of Bitburner coding contract algorithms, run inside t
 
 These are Python and JavaScript implementations of contract algorithms written for local development and testing.
 
+> [!NOTE]
 > Scripts ready to run inside Bitburner are located under `scripts/contracts/`.
-
-| File | Algorithm |
-|---|---|
-| `algorithmic_stock_trader_4.js` | Maximum profit from at most k transactions (JS). |
-| `array_jumping_game.py` | Array jumping game (Python). |
-| `hamming_codes_binary_to_integer.js` | Hamming code decoding (JS). |
-| `minimum_path_sum_triangle.py` | Minimum triangle path sum (Python). |
-| `overlapping_intervals.py` | Merge overlapping intervals (Python). |
-| `prime_factor.py` | Largest prime factor (Python). |
-| `square_root.py` | Integer square root (Python). |
-| `uniqe_paths_grid_1.py` | Unique grid paths (Python). |
 
 ## Getting Started
 
@@ -160,8 +177,11 @@ Once the scripts are in the game, start with `distribute.js` to begin automated 
 
 ### Recommended Script Order for Early Game
 
-1. `get_money_simple.js <server>` — Simple hack loop to start earning money.
+> [!TIP]
+> **Always** run `hello.js` when getting a new machine / after augmentation installation
+
+1. `hello.js` — The starting script for a new machine / after augmentation installation
 2. `purchase-servers.js` — Buy private servers to increase hacking power.
 3. `distribute.js` — Distribute hack/grow/weaken across all servers for maximum efficiency.
-4. `backdoor.js` — Backdoor faction servers to join factions.
+4. `backdoor_all.js` — Backdoor faction servers to join factions.
 5. `contracts_solve.js` — Automatically solve coding contracts for reputation and money rewards.
