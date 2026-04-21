@@ -41,8 +41,8 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 
 | Script | Description |
 |---|---|
-| **`distribute.js`** | Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. |
-| `distribute_simple.js` | Simplified version of the distribute script. |
+| **`distribute.js`** | Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. Used in early game. |
+| `distribute_simple.js` | Simplified version of the distribute script.  _deprecated_ |
 | `get_money_now.js` | Single-script hack/grow/weaken loop against a target server. _deprecated_ |
 | `get_money_simple.js` | More efficient version of `get_money_now.js`. _deprecated_ |
 
@@ -70,7 +70,8 @@ Used by the distribution scripts
 A coordinated hack-grow-weaken (HGW) batch attack system. Requires at least 1TB of RAM on _home_ server.
 
 > [!TIP]
-> Run `distribute_batch.js` to start running the batch attack
+> Run `distribute_batch.js` to start running the batch attack. Required at least 1TB of RAM on _home_ server.
+> The other scripts in the list below are used when running `distribute_batch.js`
 
 | File | Description |
 |---|---|
