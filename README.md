@@ -26,9 +26,9 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 | Script | Description |
 |---|---|
 | `backdoor_all.js` | Backdoors all accessible servers. |
-| `backdoor.js` | Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.). _deprecated_ use `backdoor_all.js` |
+| ~~`backdoor.js`~~ | ~~Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.).~~ _deprecated — use `backdoor_all.js`_ |
 | `connect.js` | Connects to a server by navigating the network path from home. |
-| **`hello.js`** | **Startup script. Should be run for new machines or after augmentation installation.** |
+| 🚀 **`hello.js`** | **Startup script. Should be run for new machines or after augmentation installation.** |
 | `purchase-servers.js` | Automatically purchases servers and runs a hacking script on them. |
 
 #### Information
@@ -41,10 +41,10 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 
 | Script | Description |
 |---|---|
-| **`distribute.js`** | Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. Used in early game. |
-| `distribute_simple.js` | Simplified version of the distribute script.  _deprecated_ |
-| `get_money_now.js` | Single-script hack/grow/weaken loop against a target server. _deprecated_ |
-| `get_money_simple.js` | More efficient version of `get_money_now.js`. _deprecated_ |
+| 🚀 **`distribute.js`** | **Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Automatically selects the best target if none is specified. Used in early game.** |
+| ~~`distribute_simple.js`~~ | ~~Simplified version of the distribute script.~~ _deprecated_ |
+| ~~`get_money_now.js`~~ | ~~Single-script hack/grow/weaken loop against a target server.~~ _deprecated_ |
+| ~~`get_money_simple.js`~~ | ~~More efficient version of `get_money_now.js`.~~ _deprecated_ |
 
 
 #### Hack/Grow/Weaken scripts
@@ -80,7 +80,7 @@ A coordinated hack-grow-weaken (HGW) batch attack system. Requires at least 1TB 
 | `attack_measurements.js` | Calculates and tracks attack timing measurements. |
 | `attack_result.js` | Tracks and reports the result of an attack batch. |
 | `controller_batch.js` | Orchestrates batch attacks across multiple targets. |
-| **`distribute_batch.js`** | **Distributes batch attack scripts to attacking servers.**. Invokes the `controller_batch.js` script. |
+| 🚀 **`distribute_batch.js`** | **Distributes batch attack scripts to attacking servers.**. Invokes the `controller_batch.js` script. |
 | `utils.js` | Shared utilities for hacking calculations (thread counts, timing, server selection). |
 
 #### Information gathering (for debug)
@@ -98,7 +98,7 @@ A coordinated hack-grow-weaken (HGW) batch attack system. Requires at least 1TB 
 |---|---|
 | `manage.js` | Main gang management controller. |
 | `my_gang.js` | Displays current gang status and member information. |
-| **`start.js`** | **Starts gang management.**. Invokes the `manage.js` script. |
+| 🚀 **`start.js`** | **Starts gang management.**. Invokes the `manage.js` script. |
 | `constants.js` | Gang-related constants. |
 | `utils.js` | Shared gang utilities. |
 
