@@ -135,10 +135,28 @@ These are Python and JavaScript implementations of contract algorithms written f
 
 ## Getting Started
 
-1. Open Bitburner and navigate to the in-game terminal.
-2. Upload or copy the scripts from the `scripts/` directory into the game.
-3. Use the filesystem utilities (`filesystem/upload_file.js`) to upload files, or paste them directly into the in-game editor.
-4. Start with `distribute.js` to begin automated money farming, or run individual scripts as needed.
+### Uploading Scripts to the Game
+
+Bitburner exposes an HTTP API that external tools can use to push files directly into the game without any manual copy-pasting.
+
+**Option A — Use the VSCode extension (recommended)**
+
+Install the [Bitburner VSCode Integration](https://marketplace.visualstudio.com/items?itemName=bitburner.bitburner-vscode) extension. It connects to the Bitburner API and lets you push individual files or entire folders from your editor directly into the game with a single command.
+
+**Option B — Manual upload via `upload_file.js`**
+
+If you prefer not to use the game API, you can bootstrap the upload workflow manually:
+
+1. Open Bitburner and navigate to the in-game script editor.
+2. Create a new file called `upload_file.js` and paste the contents of [`scripts/filesystem/upload_file.js`](scripts/filesystem/upload_file.js) into it.
+3. Save and run the script from the terminal:
+   ```
+   run upload_file.js
+   ```
+4. When prompted, select a `.zip` file containing all the scripts you want to upload. The script will extract the zip and write every file into the `home` server, preserving the folder structure.
+5. You can create a zip of the entire `scripts/` directory (e.g. with `zip -r scripts.zip scripts/`) and upload it in one shot.
+
+Once the scripts are in the game, start with `distribute.js` to begin automated money farming, or run individual scripts as needed.
 
 ### Recommended Script Order for Early Game
 
