@@ -39,9 +39,9 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 
 #### Distribution scripts (early game)
 
-| Script | Description |
+| Script &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description |
 |---|---|
-| 🚀 **`distribute.js`** | **Distributes hack/grow/weaken scripts across all available servers and runs them against a target. Used in early game.** |
+| 🚀 **`distribute.js`** | **Distributes hack/grow/weaken scripts across all available servers and runs them against a target.**<br>Used in early game. |
 | <sub>`distribute_simple.js`</sub> | <sub>Simplified version of the distribute script. _deprecated_</sub> |
 | <sub>`get_money_now.js`</sub> | <sub>Single-script hack/grow/weaken loop against a target server. _deprecated_</sub> |
 | <sub>`get_money_simple.js`</sub> | <sub>More efficient version of `get_money_now.js`. _deprecated_</sub> |
