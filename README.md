@@ -28,7 +28,7 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 | `backdoor_all.js` | Backdoors all accessible servers. |
 | <sub>`backdoor.js`</sub> | <sub>Backdoors a specified server or a default list of faction-required servers (CSEC, avmnite-02h, etc.). _deprecated — use `backdoor_all.js`_</sub> |
 | `connect.js` | Connects to a server by navigating the network path from home. |
-| 🚀 **`hello.js`** | **Startup script. Should be run for new machines or after augmentation installation.** |
+| <mark>**`hello.js`**</mark> | <mark>**Startup script. Should be run for new machines or after augmentation installation.**</mark> |
 | `purchase-servers.js` | Automatically purchases servers and runs a hacking script on them. |
 
 #### Information
@@ -41,7 +41,7 @@ A collection of scripts for [Bitburner](https://github.com/bitburner-official/bi
 
 | Script &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description |
 |---|---|
-| 🚀 **`distribute.js`** | **Distributes hack/grow/weaken scripts across all available servers and runs them against a target.**<br>Used in early game. |
+| <mark>**`distribute.js`**</mark> | <mark>**Distributes hack/grow/weaken scripts across all available servers and runs them against a target.**<br>Used in early game.</mark> |
 | <sub>`distribute_simple.js`</sub> | <sub>Simplified version of the distribute script. _deprecated_</sub> |
 | <sub>`get_money_now.js`</sub> | <sub>Single-script hack/grow/weaken loop against a target server. _deprecated_</sub> |
 | <sub>`get_money_simple.js`</sub> | <sub>More efficient version of `get_money_now.js`. _deprecated_</sub> |
@@ -81,7 +81,7 @@ Work is distributed across available attacking servers, so overall attack capaci
 | `attack_measurements.js` | Calculates and tracks attack timing measurements. |
 | `attack_result.js` | Tracks and reports the result of an attack batch. |
 | `controller_batch.js` | Orchestrates batch attacks across multiple targets. |
-| 🚀 **`distribute_batch.js`** | **Distributes batch attack scripts to attacking servers.** |
+| <mark>**`distribute_batch.js`**</mark> | <mark>**Distributes batch attack scripts to attacking servers.**</mark> |
 | `utils.js` | Shared utilities for hacking calculations (thread counts, timing, server selection). |
 
 #### Information gathering (for debug)
@@ -99,7 +99,7 @@ Work is distributed across available attacking servers, so overall attack capaci
 |---|---|
 | `manage.js` | Main gang management controller. |
 | `my_gang.js` | Displays current gang status and member information. |
-| 🚀 **`start.js`** | **Starts gang management.** Invokes the `manage.js` script. |
+| <mark>**`start.js`**</mark> | <mark>**Starts gang management.** Invokes the `manage.js` script.</mark> |
 | `constants.js` | Gang-related constants. |
 | `utils.js` | Shared gang utilities. |
 
