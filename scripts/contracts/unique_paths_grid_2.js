@@ -33,8 +33,12 @@ export function uniquePathsInGrid2(obstacleGrid) {
     return 0;
   }
 
-  if (totalRows == 1 || totalColumns == 1) {
-    return 1;
+  if (totalRows === 1) {
+    return obstacleGrid[0].every((col) => col === 0) ? 1 : 0;
+  }
+
+  if (totalColumns === 1) {
+    return obstacleGrid.every((row) => row[0] === 0) ? 1 : 0;
   }
 
   return uniquePathsInGrid2Recursive(0, 0);
