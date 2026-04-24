@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mergeOverlappingIntervals } from "../../contracts/merge_overlapping_intervals.js";
+import { mergeOverlappingIntervals } from "../../scripts/contracts/merge_overlapping_intervals.js";
 
 describe("Merge Overlapping Intervals", () => {
   it("should merge overlapping intervals", () => {

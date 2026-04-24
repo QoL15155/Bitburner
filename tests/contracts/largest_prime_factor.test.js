@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findLargestPrimeFactor } from "../../contracts/largest_prime_factor.js";
+import { findLargestPrimeFactor } from "../../scripts/contracts/largest_prime_factor.js";
 
 describe("Largest Prime Factor", () => {
   it("should find largest prime factor of 56086774", () => {

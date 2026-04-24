@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { triangleMinimumPathSum } from "../../contracts/minimum_path_sum_triangle.js";
+import { triangleMinimumPathSum } from "../../scripts/contracts/minimum_path_sum_triangle.js";
 
 describe("Minimum Path Sum in a Triangle", () => {
   it("should find minimum path sum for example triangle", () => {

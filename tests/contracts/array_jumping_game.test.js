@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { arrayJumpingGame } from "../../contracts/array_jumping_game.js";
+import { arrayJumpingGame } from "../../scripts/contracts/array_jumping_game.js";
 
 describe("Array Jumping Game", () => {
   it("should return 1 when reachable", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { algorithmicStockTrader2 } from "../../contracts/algorithmic_stock_trader_2.js";
+import { algorithmicStockTrader2 } from "../../scripts/contracts/algorithmic_stock_trader_2.js";
 
 describe("Algorithmic Stock Trader II", () => {
   it("should find max profit with unlimited transactions", () => {

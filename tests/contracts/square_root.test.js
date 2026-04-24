@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findSquareRoot } from "../../contracts/square_root.js";
+import { findSquareRoot } from "../../scripts/contracts/square_root.js";
 
 describe("Square Root", () => {
   it("should find exact square root of perfect square", () => {

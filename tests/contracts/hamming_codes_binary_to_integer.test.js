@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hammingCodeBinaryToInteger } from "../../contracts/hamming_codes_binary_to_integer.js";
+import { hammingCodeBinaryToInteger } from "../../scripts/contracts/hamming_codes_binary_to_integer.js";
 
 describe("Hamming Codes: Binary to Integer", () => {
   it("should decode 11110000 to 8", () => {

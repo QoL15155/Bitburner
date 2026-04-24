@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { caesarCipher } from "../../contracts/encryption_I_caesarCipher.js";
+import { caesarCipher } from "../../scripts/contracts/encryption_I_caesarCipher.js";
 
 describe("Caesar Cipher", () => {
   it("should shift DEA by 3 to ABX", () => {

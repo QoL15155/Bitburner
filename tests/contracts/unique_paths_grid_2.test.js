@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { uniquePathsInGrid2 } from "../../contracts/unique_paths_grid_2.js";
+import { uniquePathsInGrid2 } from "../../scripts/contracts/unique_paths_grid_2.js";
 
 describe("Unique Paths in a Grid II", () => {
   it("should find 3 paths for 2x3 grid without obstacles", () => {
