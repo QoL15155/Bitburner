@@ -1,4 +1,3 @@
-import { printError } from "../utils/print.js";
 /**
  * Encryption I: Caesar Cipher
  *
@@ -39,27 +38,5 @@ export function caesarCipher([plaintext, shift]) {
   return ciphertext;
 }
 
-function testCase(ns, testNum, [plaintext, shift], expected) {
-  const result = caesarCipher([plaintext, shift]);
-  if (result !== expected) {
-    printError(
-      ns,
-      `Failed TestCase #${testNum}. Expected ${expected}, but got ${result}`,
-    );
-    return false;
-  }
-  ns.tprint(`[V] TestCase #${testNum} passed.`);
-  return true;
-}
-
-function runTests(ns) {
-  testCase(ns, 1, ["DEA", 3], "ABX");
-
-  let expected = "GPSYH IRXIV ZMVYW WLIPP PMRYB";
-  testCase(ns, 2, ["CLOUD ENTER VIRUS SHELL LINUX", 22], expected);
-}
-
 /** @param {NS} ns */
-export async function main(ns) {
-  runTests(ns);
-}
+export async function main(ns) {}

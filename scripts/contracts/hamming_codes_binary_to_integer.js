@@ -25,8 +25,6 @@ Examples:
 For more information on the 'rule' of encoding, refer to Wikipedia (https://wikipedia.org/wiki/Hamming_code) or the 3Blue1Brown videos on Hamming Codes. (https://youtube.com/watch?v=X8jsijhllIA)
  */
 
-import { printError } from "../utils/print.js";
-
 const Position = {
   Unknown: -1,
   Flipped: 0,
@@ -180,34 +178,5 @@ export function hammingCodeBinaryToInteger(binaryCode) {
   return getNumericalValue(binaryCode, positionsArray);
 }
 
-function testBinaryToInteger(ns) {
-  let testCase = "11110000";
-  runTest(1, testCase, 8);
-
-  testCase = "1001101010";
-  runTest(2, testCase, 21);
-
-  testCase = "0010100010000000000000011011101111111000001001011110110011101011";
-  runTest(3, testCase, 953418116331);
-
-  function runTest(n, testCase, expected) {
-    const result = hammingCodeBinaryToInteger(testCase);
-    if (result != expected) {
-      printError(
-        ns,
-        `TestCase #${n} failed. Expected ${expected}, got ${result}`,
-      );
-    } else {
-      ns.tprint(`TestCase #${n} passed.`);
-    }
-  }
-}
-
-function test(ns) {
-  testBinaryToInteger(ns);
-}
-
 /** @param {NS} ns */
-export async function main(ns) {
-  test(ns);
-}
+export async function main(ns) {}

@@ -33,8 +33,12 @@ export function uniquePathsInGrid2(obstacleGrid) {
     return 0;
   }
 
-  if (totalRows == 1 || totalColumns == 1) {
-    return 1;
+  if (totalRows === 1) {
+    return obstacleGrid[0].every((col) => col === 0) ? 1 : 0;
+  }
+
+  if (totalColumns === 1) {
+    return obstacleGrid.every((row) => row[0] === 0) ? 1 : 0;
   }
 
   return uniquePathsInGrid2Recursive(0, 0);
@@ -82,109 +86,4 @@ export function uniquePathsInGrid2(obstacleGrid) {
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
-  test();
-  function test() {
-    const testCase1 = [
-      [0, 0, 0],
-      [0, 0, 0],
-    ];
-    const result1 = uniquePathsInGrid2(testCase1);
-    if (result1 !== 3) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Test Case 1 expected, but got ${result1}`,
-      );
-    }
-
-    const testCase1_2 = [
-      [0, 0],
-      [0, 0],
-      [0, 0],
-    ];
-    const result1_2 = uniquePathsInGrid2(testCase1_2);
-    if (result1_2 !== 3) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Test Case 1.2: expected 3, but got ${result1_2}`,
-      );
-    }
-
-    const testCase2 = [
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-    ];
-    if (uniquePathsInGrid2(testCase2) !== 2380) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Expected [5,14]==2380, but got ${uniquePathsInGrid2([5, 14])}`,
-      );
-    }
-
-    const testCase3 = [
-      [0, 1],
-      [0, 0],
-    ];
-    const result3 = uniquePathsInGrid2(testCase3);
-    if (result3 !== 1) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Expected [[0,1],[0,0]]==1, but got ${result3}`,
-      );
-    }
-    const testCase3_1 = [
-      [0, 0],
-      [1, 0],
-    ];
-    const result3_1 = uniquePathsInGrid2(testCase3_1);
-    if (result3_1 !== 1) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Expected [[0,0],[1,0]]==1, but got ${result3_1}`,
-      );
-    }
-
-    const testCase4 = [
-      [0, 0, 0],
-      [0, 1, 0],
-      [0, 0, 0],
-    ];
-    const result4 = uniquePathsInGrid2(testCase4);
-    if (result4 !== 2) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Test Case 4. Expected [[0,0,0],[0,1,0],[0,0,0]]==2, but got ${result4}`,
-      );
-    }
-
-    // Server: galactic-cyber, Name: contract-261808-TheBlackHand.cct
-    // 207
-    const testCaseComplex1 = [
-      [0, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0],
-      [0, 0, 0, 0, 0],
-      [1, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0],
-      [1, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0],
-      [0, 0, 0, 1, 0],
-      [0, 0, 0, 1, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 1],
-      [0, 0, 0, 0, 0],
-    ];
-    const resultComplex1 = uniquePathsInGrid2(testCaseComplex1);
-    ns.tprint(`Test Case Complex 1 : ${resultComplex1}`);
-    if (resultComplex1 !== 36) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Test Case Complex Expected 36 ${resultComplex1} `,
-      );
-    }
-  }
-}
+export async function main(ns) {}

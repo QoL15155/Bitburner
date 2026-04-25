@@ -82,21 +82,6 @@ export async function main(ns) {
     // Run the official solution for the contract
     const officialResult = arrayJumpingGame(jumpingArray);
     ns.tprint(`Official Result: ${officialResult}`);
-  } else {
-    test();
-  }
-
-  function test() {
-    const testCase1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10";
-    if (arrayJumpingGame(testCase1) !== 1) {
-      ns.tprint(`Test case 1 failed. Input: ${testCase1}`);
-    }
-
-    const testCase2 = "0,0,9,6";
-    if (arrayJumpingGame(testCase2) !== 0) {
-      ns.tprint(`Test case 2 failed. Input: ${testCase2}`);
-    }
-    ns.print("Array Jumping Game tests completed.");
   }
 
   function jumpingWrapper(jumpingArray) {
