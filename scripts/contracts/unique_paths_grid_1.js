@@ -29,18 +29,4 @@ export function uniquePathsInGrid1(gridSize) {
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
-  test();
-  function test() {
-    if (uniquePathsInGrid1([2, 3]) !== 3) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Expected [2,3]==3, but got ${uniquePathsInGrid1([2, 3])}`,
-      );
-    }
-    if (uniquePathsInGrid1([5, 14]) !== 2380) {
-      ns.alert(
-        `Test failed for uniquePathsInGrid. Expected [5,14]==2380, but got ${uniquePathsInGrid1([5, 14])}`,
-      );
-    }
-  }
-}
+export async function main(ns) {}

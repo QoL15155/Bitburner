@@ -19,11 +19,11 @@ describe("Largest Prime Factor", () => {
   });
 
   it("should handle large number 971392119", () => {
-    // 971392119 = 3 * 7 * 46256767... let's just verify it runs
-    const result = Number(findLargestPrimeFactor(971392119));
-    expect(result).toBeGreaterThan(1);
-    // Verify the result is actually a factor
-    expect(971392119 % result).toBe(0);
+    expect(Number(findLargestPrimeFactor(971392119))).toBe(17041967);
+  });
+
+  it("should handle large number 912736500", () => {
+    expect(Number(findLargestPrimeFactor(912736500))).toBe(46807);
   });
 
   it("should find largest prime factor of 100", () => {

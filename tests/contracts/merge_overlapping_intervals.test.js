@@ -84,4 +84,61 @@ describe("Merge Overlapping Intervals", () => {
       ]),
     ).toEqual([[1, 10]]);
   });
+
+  it("should handle complex overlapping intervals", () => {
+    expect(
+      mergeOverlappingIntervals([
+        [12, 19],
+        [12, 17],
+        [24, 27],
+        [10, 15],
+        [5, 12],
+        [25, 28],
+        [16, 24],
+        [25, 32],
+        [3, 7],
+        [10, 17],
+        [21, 25],
+        [12, 15],
+        [14, 20],
+        [8, 11],
+        [10, 18],
+        [15, 20],
+        [7, 9],
+      ]),
+    ).toEqual([[3, 32]]);
+  });
+
+  it("should handle complex overlapping intervals", () => {
+    expect(
+      mergeOverlappingIntervals([
+        [25, 28],
+        [11, 21],
+        [15, 20],
+        [1, 5],
+        [13, 18],
+        [19, 23],
+        [22, 29],
+        [16, 19],
+        [24, 29],
+        [17, 24],
+        [4, 6],
+        [2, 11],
+        [21, 24],
+      ]),
+    ).toEqual([[1, 29]]);
+  });
+
+  it("should handle intervals with negative numbers", () => {
+    expect(
+      mergeOverlappingIntervals([
+        [-10, -1],
+        [-5, 0],
+        [1, 5],
+      ]),
+    ).toEqual([
+      [-10, 0],
+      [1, 5],
+    ]);
+  });
 });

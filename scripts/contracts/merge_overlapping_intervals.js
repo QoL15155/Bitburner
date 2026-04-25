@@ -1,4 +1,3 @@
-import { printError } from "../utils/print.js";
 /**
 Merge Overlapping Intervals
 
@@ -47,93 +46,5 @@ export function mergeOverlappingIntervals(intervalsArray) {
   return mergedInternals;
 }
 
-function runTests(ns) {
-  let testCase = [
-    [1, 3],
-    [8, 10],
-    [2, 6],
-    [10, 16],
-  ];
-  let expected = [
-    [1, 6],
-    [8, 16],
-  ];
-  doTest(ns, 1, testCase, expected);
-
-  testCase = [
-    [24, 29],
-    [19, 26],
-    [19, 20],
-    [2, 10],
-    [15, 19],
-    [13, 22],
-    [14, 24],
-    [1, 7],
-    [4, 8],
-    [6, 15],
-  ];
-  expected = [[1, 29]];
-  doTest(ns, 2, testCase, expected);
-
-  testCase = [
-    [12, 19],
-    [12, 17],
-    [24, 27],
-    [10, 15],
-    [5, 12],
-    [25, 28],
-    [16, 24],
-    [25, 32],
-    [3, 7],
-    [10, 17],
-    [21, 25],
-    [12, 15],
-    [14, 20],
-    [8, 11],
-    [10, 18],
-    [15, 20],
-    [7, 9],
-  ];
-  expected = [[3, 32]];
-  doTest(ns, 3, testCase, expected);
-
-  testCase = [
-    [25, 28],
-    [11, 21],
-    [15, 20],
-    [1, 5],
-    [13, 18],
-    [19, 23],
-    [22, 29],
-    [16, 19],
-    [24, 29],
-    [17, 24],
-    [4, 6],
-    [2, 11],
-    [21, 24],
-  ];
-  expected = [[1, 29]];
-  doTest(ns, 4, testCase, expected);
-
-  // testCase = [[12,16],[25,34],[15,16],[12,15]]
-}
-
-function doTest(ns, testNum, intervals, expected) {
-  const result = mergeOverlappingIntervals(intervals);
-  const expectedString = JSON.stringify(expected);
-  const resultString = JSON.stringify(result);
-  if (resultString !== expectedString) {
-    printError(
-      ns,
-      `Failed TestCase #${testNum}. Expected ${expectedString}, but got ${resultString}`,
-    );
-    return false;
-  }
-  ns.tprint(`[V] TestCase #${testNum} passed.`);
-  return true;
-}
-
 /** @param {NS} ns */
-export async function main(ns) {
-  runTests(ns);
-}
+export async function main(ns) {}

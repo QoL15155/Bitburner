@@ -64,19 +64,4 @@ export function algorithmicStockTrader3(stockPricesByDay) {
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
-  test();
-  function test() {
-    const stockPrices = [
-      131, 49, 85, 128, 47, 34, 117, 146, 139, 142, 104, 154, 41, 12, 149, 61,
-      41, 148, 119, 72, 85, 87, 45, 197, 150, 174, 88, 77, 16, 47, 27, 79, 180,
-      36, 122, 109, 131, 124, 109, 96, 93, 143, 89, 111, 170, 40, 170, 102,
-    ];
-    const result = algorithmicStockTrader3(stockPrices);
-    if (result !== 349) {
-      ns.alert(
-        `Test failed for algorithmicStockTrader3. Expected 349, but got ${result}`,
-      );
-    }
-  }
-}
+export async function main(ns) {}

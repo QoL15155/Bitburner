@@ -92,22 +92,18 @@ describe("Unique Paths in a Grid II", () => {
     expect(uniquePathsInGrid2(grid)).toBe(36);
   });
 
-  // BUG: single-row grid with obstacle should return 0, but returns 1
   it("should return 0 for single-row grid with obstacle", () => {
     expect(uniquePathsInGrid2([[0, 1, 0]])).toBe(0);
   });
 
-  // BUG: single-column grid with obstacle should return 0, but returns 1
   it("should return 0 for single-column grid with obstacle", () => {
     expect(uniquePathsInGrid2([[0], [1], [0]])).toBe(0);
   });
 
-  // BUG: single-row grid without obstacles should still work
   it("should return 1 for single-row grid without obstacles", () => {
     expect(uniquePathsInGrid2([[0, 0, 0]])).toBe(1);
   });
 
-  // BUG: single-column grid without obstacles should still work
   it("should return 1 for single-column grid without obstacles", () => {
     expect(uniquePathsInGrid2([[0], [0], [0]])).toBe(1);
   });

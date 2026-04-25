@@ -10,6 +10,10 @@ describe("Array Jumping Game", () => {
     ).toBe(1);
   });
 
+  it("should return 0 when not reachable", () => {
+    expect(arrayJumpingGame([0, 0, 9, 6])).toBe(0);
+  });
+
   it("should return 0 when blocked by zero", () => {
     expect(arrayJumpingGame([1, 0, 1])).toBe(0);
   });
