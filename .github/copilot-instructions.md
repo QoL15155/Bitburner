@@ -68,8 +68,7 @@ Always include the `.js` extension.
   - Might also be used to minimize RAM usage by offloading large data structures to disk.
 - **Error handling**: Throw `Error` with descriptive messages for critical failures. Use `ns.alert()` for user-facing notifications.
 - Prefer const over let; never use var
-- Use arrow functions for React components
-- Always include TypeScript type annotations
+- Use JSDoc annotations where they improve Netscript editor autocomplete and clarify script entry points.
 - Use descriptive variable names (no abbreviations)
 
 ## RAM Awareness
