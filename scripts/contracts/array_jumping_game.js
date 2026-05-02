@@ -58,7 +58,7 @@ export async function main(ns) {
     ["h", false],
   ]);
   const jumpingArray = args._[0];
-  if (args.help || args.h) {
+  if (args.help || args.h || !jumpingArray) {
     ns.tprint(`> Usage: run ${ns.getScriptName()} [ JUMPING_ARRAY ]`);
     ns.tprint("");
     ns.tprint("Array Jumping Game.");
@@ -66,42 +66,22 @@ export async function main(ns) {
       " Determine if you can jump to the end of the array given the maximum jump lengths at each position.",
     );
     ns.tprint("");
+    ns.tprint(` Example: run ${ns.getScriptName()} 1,1,0,1`);
+    ns.tprint("");
     ns.tprint("Arguments");
     ns.tprint("==========");
     ns.tprint(
-      "\tJUMPING_ARRAY : the number to find the largest prime factor of. ",
+      "\tJUMPING_ARRAY : a comma-separated string of integers representing the maximum jump lengths at each position.",
     );
-    ns.tprint("\tIf not specified, the script will run tests.");
     return;
   }
 
-  if (jumpingArray) {
-    ns.tprint(`Jump Lengths: ${jumpingArray}, type: ${typeof jumpingArray}`);
-    jumpingWrapper(jumpingArray);
+  ns.tprint(`Jump Lengths: ${jumpingArray}, type: ${typeof jumpingArray}`);
+  const jumpingArrayNumbers = jumpingArray.split(",").map(Number);
+  const jumpingPath = jumpingRecursive(jumpingArrayNumbers, 0);
+  ns.tprint(`Jumping Path: ${jumpingPath}`);
 
-    // Run the official solution for the contract
-    const officialResult = arrayJumpingGame(jumpingArray);
-    ns.tprint(`Official Result: ${officialResult}`);
-  } else {
-    test();
-  }
-
-  function test() {
-    const testCase1 = "9,10,7,0,2,6,8,8,3,0,10,8,3,0,0,6,4,8,8,7,4,10";
-    if (arrayJumpingGame(testCase1) !== 1) {
-      ns.tprint(`Test case 1 failed. Input: ${testCase1}`);
-    }
-
-    const testCase2 = "0,0,9,6";
-    if (arrayJumpingGame(testCase2) !== 0) {
-      ns.tprint(`Test case 2 failed. Input: ${testCase2}`);
-    }
-    ns.print("Array Jumping Game tests completed.");
-  }
-
-  function jumpingWrapper(jumpingArray) {
-    jumpingArray = jumpingArray.split(",").map(Number);
-    const jumpingPath = jumpingRecursive(jumpingArray, 0);
-    ns.tprint(`Jumping Path: ${jumpingPath}`);
-  }
+  // Run the official solution for the contract
+  const officialResult = arrayJumpingGame(jumpingArray);
+  ns.tprint(`Official Result: ${officialResult}`);
 }

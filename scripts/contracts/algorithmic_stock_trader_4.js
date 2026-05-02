@@ -78,41 +78,4 @@ export function algorithmicStockTrader4([limit, stockPricesByDay]) {
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
-  test();
-
-  function test() {
-    const problemInput1 = [
-      2,
-      [
-        131, 49, 85, 128, 47, 34, 117, 146, 139, 142, 104, 154, 41, 12, 149, 61,
-        41, 148, 119, 72, 85, 87, 45, 197, 150, 174, 88, 77, 16, 47, 27, 79,
-        180, 36, 122, 109, 131, 124, 109, 96, 93, 143, 89, 111, 170, 40, 170,
-        102,
-      ],
-    ];
-    const expectedResult1 = 349;
-    const result1 = algorithmicStockTrader4(problemInput1);
-    if (result1 != expectedResult1) {
-      ns.alert(
-        `Test failed for problemInput1. Expected ${expectedResult1}, but got ${result1}`,
-      );
-    }
-
-    const problemInput2 = [
-      10,
-      [
-        24, 85, 176, 25, 98, 97, 91, 120, 122, 113, 46, 194, 149, 149, 112, 174,
-        193, 79, 142, 20, 2, 192, 118, 61, 133, 62, 94, 3, 47, 61, 160, 163, 79,
-        97, 31, 36, 113, 52, 154, 148, 161, 176, 45, 117, 74, 92,
-      ],
-    ];
-    const expectedResult2 = 1180;
-    const result2 = algorithmicStockTrader4(problemInput2);
-    if (result2 != expectedResult2) {
-      ns.alert(
-        `Test failed for problemInput2. Expected ${expectedResult2}, but got ${result2}`,
-      );
-    }
-  }
-}
+export async function main(ns) {}

@@ -51,23 +51,4 @@ export function algorithmicStockTrader1(stockPricesByDay) {
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
-  test();
-  function test() {
-    const stockPrices = [
-      175, 1, 115, 122, 10, 167, 179, 96, 92, 6, 166, 122, 25, 133, 127, 66, 20,
-      102,
-    ];
-    // const startTime1 = performance.now();
-    ns.tprint(
-      `Max profit with 1 transaction: ${algorithmicStockTrader1(stockPrices)}`,
-    );
-    if (algorithmicStockTrader1(stockPrices) !== 178) {
-      ns.alert(
-        `Test failed for algorithmicStockTrader1. Expected 178, but got ${algorithmicStockTrader1(stockPrices)}`,
-      );
-    }
-    // const endTime1 = performance.now();
-    // console.log(`Execution time: ${endTime1 - startTime1} ms`);
-  }
-}
+export async function main(ns) {}

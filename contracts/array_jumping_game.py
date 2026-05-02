@@ -32,8 +32,8 @@ def do_jump(jumping_array, position: int) -> list[int] | None:
     return None
 
 
-def jumping_game(input: str):
-    jumps: list[int] = list(map(int, input.split(",")))
+def jumping_game(inputStr: str):
+    jumps: list[int] = list(map(int, inputStr.split(",")))
     result = do_jump(jumps, 0)
     if result is not None:
         print(f"Jumps: {result}")

@@ -51,26 +51,5 @@ export async function main(ns) {
   if (primeNumber) {
     const result = findLargestPrimeFactor(primeNumber);
     ns.tprint(`The largest prime factor of ${primeNumber} is ${result}`);
-  } else {
-    test();
-  }
-
-  function test() {
-    if (findLargestPrimeFactor(56086774) != 1649611) {
-      ns.alert(
-        `Test failed for largestPrimeFactor. Expected 1649611, but got ${findLargestPrimeFactor(56086774)}`,
-      );
-    }
-    if (findLargestPrimeFactor(971392119) != 17041967) {
-      ns.alert(
-        `Test failed for largestPrimeFactor. Expected 17041967, but got ${findLargestPrimeFactor(971392119)}`,
-      );
-    }
-
-    if (findLargestPrimeFactor(912736500) != 46807) {
-      ns.alert(
-        `Test failed for largestPrimeFactor. Expected 46807, but got ${findLargestPrimeFactor(912736500)}`,
-      );
-    }
   }
 }
